@@ -13,6 +13,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
         android:text="Settings"
         android:textSize="25sp"/>
 
@@ -20,42 +21,50 @@
         android:id="@+id/send_wifi_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
         android:minWidth="250dp"
-        android:text="Send WiFi"/>
+        android:text="Send WiFi"
+        android:textSize="20sp"/>
 
     <android.support.v7.widget.SwitchCompat
         android:id="@+id/send_battery_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:minWidth="250dp"
-        android:text="Send battery"/>
+        android:text="Send battery"
+        android:textSize="20sp"/>
 
     <android.support.v7.widget.SwitchCompat
         android:id="@+id/send_location_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:minWidth="250dp"
-        android:text="Send location"/>
+        android:text="Send location"
+        android:textSize="20sp"/>
 
     <android.support.v7.widget.SwitchCompat
         android:id="@+id/send_acceleration_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:minWidth="250dp"
-        android:text="Send acceleration"/>
+        android:text="Send acceleration"
+        android:textSize="20sp"/>
 
     <android.support.v7.widget.SwitchCompat
         android:id="@+id/receive_commands_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="30dp"
         android:minWidth="250dp"
-        android:text="Receive commands"/>
+        android:text="Receive commands"
+        android:textSize="20sp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
         android:layout_marginTop="50dp"
         android:text="Send message"
         android:textSize="25sp"/>
@@ -70,14 +79,16 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="50dp"
             android:hint="Send something"
-            android:singleLine="true"/>
+            android:singleLine="true"
+            android:textSize="20sp"/>
 
         <ImageView
             android:id="@+id/message_send"
-            android:layout_width="wrap_content"
+            android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            android:src="@drawable/action_send"/>
+            android:padding="10dp"
+            android:src="@drawable/action_send_inactive"/>
     </RelativeLayout>
 
 </io.relayr.iotsmartphone.widget.SettingsView>

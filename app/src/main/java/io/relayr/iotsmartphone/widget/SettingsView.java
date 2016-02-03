@@ -23,11 +23,14 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.SwitchCompat;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -74,10 +77,10 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     @InjectView(R.id.send_wifi_switch) SwitchCompat mWiFiSwitch;
     @InjectView(R.id.send_location_switch) SwitchCompat mLocSwitch;
     @InjectView(R.id.send_acceleration_switch) SwitchCompat mAccelSwitch;
+    @InjectView(R.id.receive_commands_switch) SwitchCompat mCommandsSwitch;
 
     @InjectView(R.id.message_text) EditText mMessage;
-
-    @InjectView(R.id.receive_commands_switch) SwitchCompat mCommandsSwitch;
+    @InjectView(R.id.message_send) ImageView mIconSend;
 
     private Flash mFlash;
     private boolean mHasFlash;
@@ -115,7 +118,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
         mFlash = new Flash();
         mHasFlash = mFlash.hasFlash(getContext());
-        mFlash.open();
+        mFlash.open(getContext());
 
         mSensorManager = (SensorManager) getContext().getSystemService(SENSOR_SERVICE);
         mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER), SENSOR_DELAY_NORMAL);
@@ -127,7 +130,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED)
             mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, this);
 
-        mSwitchSettings = Storage.instance().loadSettings(getContext());
+        mSwitchSettings = Storage.instance().loadSettings(getContext(), mSwitchSettings.length);
 
         mBatterySwitch.setChecked(mSwitchSettings[0]);
         mBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -156,12 +159,24 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                 mSwitchSettings[3] = isChecked;
             }
         });
-        mCommandsSwitch.setChecked(mSwitchSettings[4]);
+
         mCommandsSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[4] = isChecked;
                 if (isChecked) subscribeToCommands();
             }
+        });
+        mCommandsSwitch.setChecked(mSwitchSettings[4]);
+
+        mMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                mIconSend.setImageResource(count > 0 ? R.drawable.action_send_active : R.drawable.action_send_inactive);
+            }
+
+            @Override public void afterTextChanged(Editable s) {}
         });
     }
 
@@ -216,6 +231,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         if (message.isEmpty()) return;
 
         mMessage.setText("");
+        mIconSend.setImageResource(R.drawable.action_send_inactive);
         publish(new Reading(mNow, mNow, "message", "", message));
     }
 
@@ -282,6 +298,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         try {
             Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
             List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+            if (addresses.isEmpty()) return;
+
             Address obj = addresses.get(0);
             String address = obj.getCountryName() + ", ";
             address += obj.getAddressLine(1) + ", ";
@@ -347,7 +365,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     private void playMusic(String seconds) {
         int sec;
         try {
-            sec = Integer.parseInt(seconds) % 5;
+            sec = Integer.parseInt(seconds) % 10;
         } catch (Exception e) {
             Log.e("SettingsView", "Seconds can't be parsed: " + seconds);
             return;

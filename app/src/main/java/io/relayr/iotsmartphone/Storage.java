@@ -29,12 +29,15 @@ public class Storage {
         prefs.edit().putInt("io.relayr.iotsp.settings.value", booleansToInt(settings)).apply();
     }
 
-    public boolean[] loadSettings(Context context) {
+    public boolean[] loadSettings(Context context, int length) {
         SharedPreferences prefs = context.getSharedPreferences(
                 "io.relayr.iotsp", Context.MODE_PRIVATE);
 
         final int intValue = prefs.getInt("io.relayr.iotsp.settings.value", 0);
-        return intToBooleans(intValue, prefs.getInt("io.relayr.iotsp.settings.total", 0));
+        final int savedLength = prefs.getInt("io.relayr.iotsp.settings.total", 0);
+
+        if (savedLength == 0) return new boolean[length];
+        else return intToBooleans(intValue, savedLength);
     }
 
     private boolean[] intToBooleans(int intValue, int total) {

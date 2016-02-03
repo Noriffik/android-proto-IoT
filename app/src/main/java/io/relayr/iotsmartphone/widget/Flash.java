@@ -15,18 +15,19 @@ import static android.hardware.Camera.Parameters.FLASH_MODE_OFF;
 import static android.hardware.Camera.Parameters.FLASH_MODE_TORCH;
 import static android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE;
 import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP;
 
 public class Flash {
 
     private Camera camera = null;
     private Camera.Parameters cameraParameters;
-
     private String previousFlashMode = null;
+
+    private String cameraId = null;
+    private CameraManager cameraManager;
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public boolean hasFlash(Context context) {
-        if (SDK_INT >= LOLLIPOP) {
+        if (SDK_INT >= Build.VERSION_CODES.M) {
             CameraManager mCameraManager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
             try {
                 CameraCharacteristics cameraCharacteristics = mCameraManager.getCameraCharacteristics("0");
@@ -41,17 +42,30 @@ public class Flash {
         return false;
     }
 
-    public synchronized void open() {
-        try {
-            camera = Camera.open();
-            if (camera != null) {
-                cameraParameters = camera.getParameters();
-                previousFlashMode = cameraParameters.getFlashMode();
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP) public synchronized void open(Context context) {
+        if (SDK_INT >= Build.VERSION_CODES.M) {
+            cameraManager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
+            try {
+                for (String camId : cameraManager.getCameraIdList()) {
+                    final CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(camId);
+                    int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
+                    if (cOrientation == CameraCharacteristics.LENS_FACING_BACK) cameraId = camId;
+                }
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
             }
+        } else {
+            try {
+                camera = Camera.open();
+                if (camera != null) {
+                    cameraParameters = camera.getParameters();
+                    previousFlashMode = cameraParameters.getFlashMode();
+                }
 
-            if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
-        } catch (Exception e) {
-            Log.e("Flash", "camera failed to open");
+                if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
+            } catch (Exception e) {
+                Log.e("Flash", "camera failed to open");
+            }
         }
     }
 
@@ -64,22 +78,40 @@ public class Flash {
         }
     }
 
-    public synchronized boolean on() {
-        if (camera != null) {
-            cameraParameters.setFlashMode(FLASH_MODE_TORCH);
-            camera.setParameters(cameraParameters);
-            camera.startPreview();
-            return true;
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP) public synchronized boolean on() {
+        if (SDK_INT >= Build.VERSION_CODES.M) {
+            if (cameraManager != null && cameraId != null) try {
+                cameraManager.setTorchMode(cameraId, true);
+                return true;
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+        } else {
+            if (camera != null) {
+                cameraParameters.setFlashMode(FLASH_MODE_TORCH);
+                camera.setParameters(cameraParameters);
+                camera.startPreview();
+                return true;
+            }
         }
         return false;
     }
 
-    public synchronized boolean off() {
-        if (camera != null) {
-            cameraParameters.setFlashMode(FLASH_MODE_OFF);
-            camera.setParameters(cameraParameters);
-            camera.stopPreview();
-            return true;
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP) public synchronized boolean off() {
+        if (SDK_INT >= Build.VERSION_CODES.M) {
+            if (cameraManager != null && cameraId != null) try {
+                cameraManager.setTorchMode(cameraId, false);
+                return true;
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+        } else {
+            if (camera != null) {
+                cameraParameters.setFlashMode(FLASH_MODE_OFF);
+                camera.setParameters(cameraParameters);
+                camera.stopPreview();
+                return true;
+            }
         }
         return false;
     }
