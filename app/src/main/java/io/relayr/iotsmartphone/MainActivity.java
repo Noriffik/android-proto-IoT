@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -31,7 +32,10 @@ import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.location.LocationManager.GPS_PROVIDER;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
@@ -61,11 +65,13 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-    }
 
-    @Override protected void onResume() {
-        super.onResume();
-        checkForDevice();
+        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
+        } else {
+            checkForDevice();
+        }
     }
 
     @Override
@@ -92,8 +98,9 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
-            case 2376: {
+            case 100: {
                 if (grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
+                    checkForDevice();
                     Log.e("PERMISSION", "2376 Granted");
                 } else {
                     Log.e("PERMISSION", "2376 Denied");
@@ -135,12 +142,11 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                         }
 
                         @Override public void onNext(List<Device> devices) {
+                            mLoadingProgress.dismiss();
                             for (Device device : devices)
-                                //                                if (device.getModelId() != null && device.getModelId().equals(""))
-                                if (device.getName().equals("bero"))
+                                if (device.getModelId() != null && device.getModelId().equals("86e0a7d7-5e18-449c-b7aa-f3b089c33b67"))
                                     Storage.instance().saveDevice(device);
 
-                            mLoadingProgress.dismiss();
                             switchView(Storage.instance().getDevice() != null ? 1 : 0);
                         }
                     });

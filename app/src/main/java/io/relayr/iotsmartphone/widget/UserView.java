@@ -15,6 +15,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.Storage;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
 import io.relayr.java.model.models.error.DeviceModelsException;
@@ -23,9 +24,11 @@ import rx.android.schedulers.AndroidSchedulers;
 
 public class UserView extends BasicView {
 
+    @InjectView(R.id.used_device) TextView mUsedDevice;
     @InjectView(R.id.user_name) TextView mUsername;
     @InjectView(R.id.user_email) TextView mEmail;
     @InjectView(R.id.user_id) TextView mUserId;
+    @InjectView(R.id.total_devices) TextView mTotalDevices;
     @InjectView(R.id.user_devices) ListView mDevices;
 
     public UserView(Context context) {
@@ -43,6 +46,8 @@ public class UserView extends BasicView {
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         ButterKnife.inject(this);
+
+        mUsedDevice.setText(Storage.instance().getDevice().getName());
 
         RelayrSdk.getUser()
                 .observeOn(AndroidSchedulers.mainThread())
@@ -73,6 +78,7 @@ public class UserView extends BasicView {
                     }
 
                     @Override public void onNext(List<Device> devices) {
+                        mTotalDevices.setText("Total devices: " + devices.size());
                         mDevices.setAdapter(new DeviceAdapter(getContext(), devices));
                     }
                 });

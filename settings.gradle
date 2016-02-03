@@ -1,1 +1,1 @@
-include ':app', ':java-sdk'
+include ':app', ':java-sdk', ":android-sdk:android-sdk"

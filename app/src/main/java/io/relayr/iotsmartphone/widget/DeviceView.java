@@ -60,7 +60,7 @@ public class DeviceView extends BasicView {
         if (mName.getText().length() == 0) return;
 
         RelayrSdk.getDeviceApi()
-                .createDevice(new CreateDevice(mName.getText().toString(), DataStorage.getUserId()))
+                .createDevice(new CreateDevice(mName.getText().toString(), "86e0a7d7-5e18-449c-b7aa-f3b089c33b67", DataStorage.getUserId(), null, null))
                 .timeout(5, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Device>() {

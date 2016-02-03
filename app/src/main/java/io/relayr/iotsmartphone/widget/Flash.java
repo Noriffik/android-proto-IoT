@@ -7,6 +7,7 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
+import android.util.Log;
 
 import static android.content.Context.CAMERA_SERVICE;
 import static android.content.pm.PackageManager.FEATURE_CAMERA_FLASH;
@@ -41,13 +42,17 @@ public class Flash {
     }
 
     public synchronized void open() {
-        camera = Camera.open();
-        if (camera != null) {
-            cameraParameters = camera.getParameters();
-            previousFlashMode = cameraParameters.getFlashMode();
-        }
+        try {
+            camera = Camera.open();
+            if (camera != null) {
+                cameraParameters = camera.getParameters();
+                previousFlashMode = cameraParameters.getFlashMode();
+            }
 
-        if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
+            if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
+        } catch (Exception e) {
+            Log.e("Flash", "camera failed to open");
+        }
     }
 
     public synchronized void close() {
@@ -71,9 +76,9 @@ public class Flash {
 
     public synchronized boolean off() {
         if (camera != null) {
-            camera.stopPreview();
             cameraParameters.setFlashMode(FLASH_MODE_OFF);
             camera.setParameters(cameraParameters);
+            camera.stopPreview();
             return true;
         }
         return false;
