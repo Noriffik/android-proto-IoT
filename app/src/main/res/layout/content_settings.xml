@@ -3,67 +3,86 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="@dimen/default_padding">
 
-    <TextView
-        style="@style/TitleText"
-        android:text="Publish settings"/>
-
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/send_wifi_switch"
-        style="@style/SettingsSwitch"
-        android:text="WiFi"/>
-
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/send_battery_switch"
-        style="@style/SettingsSwitch"
-        android:text="Battery"/>
-
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/send_location_switch"
-        style="@style/SettingsSwitch"
-        android:text="Location"/>
-
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/send_acceleration_switch"
-        style="@style/SettingsSwitch"
-        android:text="Acceleration"/>
-
-    <RelativeLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/settings_padding">
+        android:layout_height="match_parent">
 
-        <EditText
-            android:id="@+id/message_text"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="50dp"
-            android:hint="Send something"
-            android:singleLine="true"
-            android:textSize="@dimen/normal_text"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/message_send"
-            android:layout_width="50dp"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:padding="@dimen/default_padding"
-            android:src="@drawable/action_send_inactive"/>
-    </RelativeLayout>
+            <TextView
+                style="@style/TitleText"
+                android:text="Publish settings"/>
 
-    <TextView
-        style="@style/TitleText"
-        android:text="Subscribe settings"/>
+            <TextView
+                style="@style/NormalText"
+                android:text="Turn ON the switches for the data you would like to be published to the cloud and visible on the dashboard."/>
 
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/receive_flash_switch"
-        style="@style/SettingsSwitch"
-        android:text="Flashlight"/>
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/send_wifi_switch"
+                style="@style/SettingsSwitch"
+                android:text="WiFi"/>
 
-    <android.support.v7.widget.SwitchCompat
-        android:id="@+id/receive_sound_switch"
-        style="@style/SettingsSwitch"
-        android:text="Sounds"/>
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/send_battery_switch"
+                style="@style/SettingsSwitch"
+                android:text="Battery"/>
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/send_location_switch"
+                style="@style/SettingsSwitch"
+                android:text="Location"/>
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/send_acceleration_switch"
+                style="@style/SettingsSwitch"
+                android:text="Acceleration"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/settings_padding">
+
+                <EditText
+                    android:id="@+id/message_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="50dp"
+                    android:hint="Send something"
+                    android:singleLine="true"
+                    android:textSize="@dimen/normal_text"/>
+
+                <ImageView
+                    android:id="@+id/message_send"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:padding="@dimen/default_padding"
+                    android:src="@drawable/action_send_inactive"/>
+            </RelativeLayout>
+
+            <TextView
+                style="@style/TitleText"
+                android:text="Subscribe settings"/>
+
+            <TextView
+                style="@style/NormalText"
+                android:text="Turn ON the switches for features to be controlled from the dashboard."/>
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/receive_flash_switch"
+                style="@style/SettingsSwitch"
+                android:text="Flashlight"/>
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/receive_sound_switch"
+                style="@style/SettingsSwitch"
+                android:text="Sounds"/>
+
+        </LinearLayout>
+    </ScrollView>
 </io.relayr.iotsmartphone.widget.SettingsView>

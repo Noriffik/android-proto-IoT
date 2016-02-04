@@ -1,5 +1,6 @@
 package io.relayr.iotsmartphone.widget;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
@@ -42,6 +43,8 @@ public class DeviceView extends BasicView {
 
     @InjectView(R.id.device_name) EditText mName;
 
+    private ProgressDialog mCreateProgress;
+
     public DeviceView(Context context) {
         super(context);
     }
@@ -63,6 +66,9 @@ public class DeviceView extends BasicView {
     public void onCreateClicked() {
         if (mName.getText().length() == 0) return;
 
+        mCreateProgress = ProgressDialog.show(getContext(), "Creating device",
+                "Please wait...", true);
+
         final CreateDevice device = new CreateDevice(mName.getText().toString(), MODEL_ID, DataStorage.getUserId(), null, null);
         RelayrSdk.getDeviceApi()
                 .createDevice(device)
@@ -72,11 +78,14 @@ public class DeviceView extends BasicView {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
+                        if (mCreateProgress != null) mCreateProgress.dismiss();
                         Toast.makeText(getContext(), "Something went wrong... Please try again.", LENGTH_LONG).show();
                         e.printStackTrace();
                     }
 
                     @Override public void onNext(Device device) {
+                        if (mCreateProgress != null) mCreateProgress.dismiss();
+
                         Storage.instance().saveDevice(device);
                         mListener.onDeviceCreated();
                     }

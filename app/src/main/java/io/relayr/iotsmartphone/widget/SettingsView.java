@@ -224,41 +224,49 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     private void setUpSwitches() {
         mSwitchSettings = Storage.instance().loadSettings(getContext(), mSwitchSettings.length);
 
-        mWiFiSwitch.setChecked(mSwitchSettings[0]);
         mWiFiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[0] = isChecked;
+                Storage.instance().saveSettings(getContext(), mSwitchSettings);
                 monitorWiFi();
             }
         });
+        mWiFiSwitch.setChecked(mSwitchSettings[0]);
+        if (mSwitchSettings[0]) monitorWiFi();
 
-        mBatterySwitch.setChecked(mSwitchSettings[1]);
         mBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[1] = isChecked;
+                Storage.instance().saveSettings(getContext(), mSwitchSettings);
                 monitorBattery();
             }
         });
+        mBatterySwitch.setChecked(mSwitchSettings[1]);
+        if (mSwitchSettings[0]) monitorBattery();
 
-        mLocSwitch.setChecked(mSwitchSettings[2]);
         mLocSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[2] = isChecked;
+                Storage.instance().saveSettings(getContext(), mSwitchSettings);
                 monitorLocation();
             }
         });
+        mLocSwitch.setChecked(mSwitchSettings[2]);
+        if (mSwitchSettings[0]) monitorLocation();
 
-        mAccelSwitch.setChecked(mSwitchSettings[3]);
         mAccelSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[3] = isChecked;
+                Storage.instance().saveSettings(getContext(), mSwitchSettings);
             }
         });
+        mAccelSwitch.setChecked(mSwitchSettings[3]);
 
         mFlashSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[4] = isChecked;
-                if (isChecked) subscribeToCommands();
+                Storage.instance().saveSettings(getContext(), mSwitchSettings);
+                if (mSwitchSettings[4]) subscribeToCommands();
             }
         });
         mFlashSwitch.setChecked(mSwitchSettings[4]);
@@ -266,10 +274,13 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         mSoundSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[5] = isChecked;
-                if (isChecked) subscribeToCommands();
+                Storage.instance().saveSettings(getContext(), mSwitchSettings);
+                if (mSwitchSettings[5]) subscribeToCommands();
             }
         });
         mSoundSwitch.setChecked(mSwitchSettings[5]);
+
+        if (mSwitchSettings[4] || mSwitchSettings[5]) subscribeToCommands();
     }
 
     private void monitorWiFi() {
@@ -347,6 +358,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     private void publishReading(final Reading reading) {
         if (reading == null || reading.meaning == null) return;
 
+        Log.e("SettingsView", "publishReading");
+
         mPublishSubscription = RelayrSdk.getWebSocketClient()
                 .publish(Storage.instance().getDevice().getId(), reading)
                 .subscribeOn(Schedulers.io())
@@ -363,6 +376,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void subscribeToCommands() {
+        Log.e("SettingsView", "subscribeToCommands");
         mCommandsSubscription = RelayrSdk.getWebSocketClient()
                 .subscribeToCommands(Storage.instance().getDevice().getId())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -396,6 +410,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
     private void playMusic(String seconds) {
         if (!mSwitchSettings[5]) return;
+        if (mIsPlaying) return;
 
         int sec;
         try {
@@ -405,12 +420,10 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             return;
         }
 
-        if (mIsPlaying) return;
-
-        mIsPlaying = true;
         Uri alarm = RingtoneManager.getDefaultUri(TYPE_ALARM);
         if (mRingManager == null) mRingManager = RingtoneManager.getRingtone(getContext(), alarm);
         mRingManager.play();
+        mIsPlaying = true;
 
         Observable
                 .create(new Observable.OnSubscribe<Object>() {

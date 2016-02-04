@@ -115,7 +115,7 @@ public class UserView extends BasicView {
     class DeviceAdapter extends ArrayAdapter<Device> {
 
         public DeviceAdapter(Context context, List<Device> devices) {
-            super(context, R.layout.content_user_device, devices);
+            super(context, R.layout.device_item, devices);
         }
 
         @Override
@@ -123,7 +123,7 @@ public class UserView extends BasicView {
             final ViewHolder holder;
             if (view == null) {
                 LayoutInflater inflater = LayoutInflater.from(getContext());
-                view = inflater.inflate(R.layout.content_user_device, parent, false);
+                view = inflater.inflate(R.layout.device_item, parent, false);
                 holder = new ViewHolder(view, getItem(position));
                 view.setTag(holder);
             } else {

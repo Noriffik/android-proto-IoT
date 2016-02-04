@@ -27,9 +27,10 @@ public class Flash {
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public boolean hasFlash(Context context) {
         if (SDK_INT >= Build.VERSION_CODES.M) {
-            CameraManager mCameraManager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
+            if (cameraManager == null)
+                cameraManager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
             try {
-                CameraCharacteristics cameraCharacteristics = mCameraManager.getCameraCharacteristics("0");
+                CameraCharacteristics cameraCharacteristics = cameraManager.getCameraCharacteristics("0");
                 final Boolean flashAvailable = cameraCharacteristics.get(FLASH_INFO_AVAILABLE);
                 return flashAvailable == null ? false : flashAvailable;
             } catch (CameraAccessException e) {
@@ -41,9 +42,11 @@ public class Flash {
         return false;
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP) public synchronized void open(Context context) throws Exception {
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public synchronized void open(Context context) throws Exception {
         if (SDK_INT >= Build.VERSION_CODES.M) {
-            cameraManager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
+            if (cameraManager == null)
+                cameraManager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
             for (String camId : cameraManager.getCameraIdList()) {
                 final CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(camId);
                 int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
@@ -57,15 +60,6 @@ public class Flash {
             }
 
             if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
-        }
-    }
-
-    public synchronized void close() {
-        if (camera != null) {
-            cameraParameters.setFlashMode(previousFlashMode);
-            camera.setParameters(cameraParameters);
-            camera.release();
-            camera = null;
         }
     }
 
@@ -105,5 +99,15 @@ public class Flash {
             }
         }
         return false;
+    }
+
+    public synchronized void close() {
+        if (camera != null) {
+            off();
+            cameraParameters.setFlashMode(previousFlashMode);
+            camera.setParameters(cameraParameters);
+            camera.release();
+            camera = null;
+        }
     }
 }
