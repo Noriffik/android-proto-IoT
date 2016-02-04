@@ -9,7 +9,12 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.BounceInterpolator;
+import android.view.animation.RotateAnimation;
+import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -22,6 +27,8 @@ import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.subscriptions.Subscriptions;
+
+import static android.view.animation.Animation.RELATIVE_TO_SELF;
 
 public class IntroActivity extends AppCompatActivity {
 
@@ -47,25 +54,36 @@ public class IntroActivity extends AppCompatActivity {
                 }
             }, 3000);
         }
+
+        AnimationSet animSet = new AnimationSet(false);
+        RotateAnimation rotate = new RotateAnimation(0f, 1440f, RELATIVE_TO_SELF, 0.5f, RELATIVE_TO_SELF, 0.5f);
+        rotate.setDuration(1500);
+        rotate.setFillAfter(true);
+
+        ScaleAnimation zoom = new ScaleAnimation(0, 1.5f, 0, 1.5f, RELATIVE_TO_SELF, 0.5f, RELATIVE_TO_SELF, 1f);
+        zoom.setDuration(2000);
+        zoom.setFillAfter(true);
+
+        animSet.addAnimation(zoom);
+        animSet.addAnimation(rotate);
+        animSet.setFillAfter(true);
+        animSet.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        mImage.setAnimation(animSet);
     }
 
     @Override protected void onResume() {
         super.onResume();
         Log.e("IA", "onResume");
 
-        DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-
-        ObjectAnimator moveAnim = ObjectAnimator.ofFloat(mImage, "Y", metrics.heightPixels / 3);
-        moveAnim.setInterpolator(new BounceInterpolator());
-        moveAnim.setDuration(RelayrSdk.isUserLoggedIn() ? 3000 : 2000);
-        moveAnim.start();
+        if (mImage != null) mImage.animate();
 
         if (!RelayrSdk.isUserLoggedIn()) {
             new Handler().postDelayed(new Runnable() {
                 @Override public void run() {
                     logIn();
                 }
-            }, 2000);
+            }, 2500);
         }
     }
 

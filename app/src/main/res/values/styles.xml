@@ -15,4 +15,38 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
+    <!--TEXT-->
+    <style name="TitleText" parent="@android:style/Widget.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">@dimen/title_text</item>
+        <item name="android:gravity">left</item>
+        <item name="android:layout_marginTop">@dimen/settings_padding</item>
+        <item name="android:layout_marginBottom">@dimen/default_padding</item>
+    </style>
+
+    <style name="SubtitleText" parent="TitleText">
+        <item name="android:layout_marginBottom">0dp</item>
+        <item name="android:layout_marginTop">0dp</item>
+        <item name="android:textSize">@dimen/subtitle_text</item>
+    </style>
+
+    <style name="NormalText" parent="SubtitleText">
+        <item name="android:textSize">@dimen/normal_text</item>
+    </style>
+
+    <style name="SmallText" parent="NormalText">
+        <item name="android:textSize">@dimen/small_text</item>
+    </style>
+
+    <style name="TinyText" parent="SmallText">
+        <item name="android:textSize">@dimen/tiny_text</item>
+    </style>
+
+    <style name="SettingsSwitch" parent="NormalText">
+        <item name="android:layout_marginLeft">@dimen/default_padding</item>
+        <item name="android:layout_marginTop">@dimen/default_padding</item>
+        <item name="android:minWidth">@dimen/settings_switch_width</item>
+    </style>
+
 </resources>

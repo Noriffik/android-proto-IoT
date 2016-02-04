@@ -28,6 +28,7 @@ import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -49,12 +50,15 @@ import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
 import rx.Observable;
 import rx.Subscriber;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+import rx.subscriptions.Subscriptions;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.Context.CONNECTIVITY_SERVICE;
+import static android.content.Context.INPUT_METHOD_SERVICE;
 import static android.content.Context.LOCATION_SERVICE;
 import static android.content.Context.SENSOR_SERVICE;
 import static android.content.Context.WIFI_SERVICE;
@@ -77,26 +81,30 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     @InjectView(R.id.send_wifi_switch) SwitchCompat mWiFiSwitch;
     @InjectView(R.id.send_location_switch) SwitchCompat mLocSwitch;
     @InjectView(R.id.send_acceleration_switch) SwitchCompat mAccelSwitch;
-    @InjectView(R.id.receive_commands_switch) SwitchCompat mCommandsSwitch;
 
     @InjectView(R.id.message_text) EditText mMessage;
     @InjectView(R.id.message_send) ImageView mIconSend;
 
+    @InjectView(R.id.receive_flash_switch) SwitchCompat mFlashSwitch;
+    @InjectView(R.id.receive_sound_switch) SwitchCompat mSoundSwitch;
+
     private Flash mFlash;
     private boolean mHasFlash;
+    private boolean mIsPlaying;
 
+    private Ringtone mRingManager;
+    private WifiManager mWifiManager;
     private SensorManager mSensorManager;
     private LocationManager mLocationManager;
     private ConnectivityManager mConnectivityManager;
-    private WifiManager mWifiManager;
 
     private long mNow = System.currentTimeMillis();
 
-    //battery, wifi, location, acceleration
-    private boolean[] mSwitchSettings = new boolean[]{false, false, false, false, false};
-    private String mDeviceId;
-    private boolean mIsPlaying;
-    private Ringtone mRingManager;
+    // wifi, battery, location, acceleration, flash, sound
+    private boolean[] mSwitchSettings = new boolean[]{false, false, false, false, false, false};
+
+    private Subscription mPublishSubscription = Subscriptions.empty();
+    private Subscription mCommandsSubscription = Subscriptions.empty();
 
     public SettingsView(Context context) {
         super(context);
@@ -114,59 +122,25 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         super.onAttachedToWindow();
         ButterKnife.inject(this);
 
-        mDeviceId = Storage.instance().getDevice().getId();
-
         mFlash = new Flash();
         mHasFlash = mFlash.hasFlash(getContext());
-        mFlash.open(getContext());
+        try {
+            mFlash.open(getContext());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         mSensorManager = (SensorManager) getContext().getSystemService(SENSOR_SERVICE);
         mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER), SENSOR_DELAY_NORMAL);
 
-        mConnectivityManager = (ConnectivityManager) getContext().getSystemService(CONNECTIVITY_SERVICE);
         mWifiManager = (WifiManager) getContext().getSystemService(WIFI_SERVICE);
+        mConnectivityManager = (ConnectivityManager) getContext().getSystemService(CONNECTIVITY_SERVICE);
 
         mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED)
             mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, this);
 
-        mSwitchSettings = Storage.instance().loadSettings(getContext(), mSwitchSettings.length);
-
-        mBatterySwitch.setChecked(mSwitchSettings[0]);
-        mBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[0] = isChecked;
-                monitorBattery();
-            }
-        });
-        mWiFiSwitch.setChecked(mSwitchSettings[1]);
-        mWiFiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[1] = isChecked;
-                monitorWiFi();
-            }
-        });
-        mLocSwitch.setChecked(mSwitchSettings[2]);
-        mLocSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[2] = isChecked;
-                monitorLocation();
-            }
-        });
-        mAccelSwitch.setChecked(mSwitchSettings[3]);
-        mAccelSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[3] = isChecked;
-            }
-        });
-
-        mCommandsSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[4] = isChecked;
-                if (isChecked) subscribeToCommands();
-            }
-        });
-        mCommandsSwitch.setChecked(mSwitchSettings[4]);
+        setUpSwitches();
 
         mMessage.addTextChangedListener(new TextWatcher() {
             @Override
@@ -182,12 +156,15 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
     @Override protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        ButterKnife.reset(this);
+        if (mFlash != null) mFlash.close();
 
+        ButterKnife.reset(this);
         Storage.instance().saveSettings(getContext(), mSwitchSettings);
+
         if (mSensorManager != null) mSensorManager.unregisterListener(this);
 
-        if (mFlash != null) mFlash.close();
+        mPublishSubscription.unsubscribe();
+        mCommandsSubscription.unsubscribe();
     }
 
     @Override public void onSensorChanged(SensorEvent event) {
@@ -217,7 +194,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                 acceleration.z = event.values[2];
         }
 
-        publish(new Reading(0, 0, "acceleration", "", acceleration));
+        publishReading(new Reading(0, 0, "acceleration", "", acceleration));
     }
 
     @Override public void onLocationChanged(Location location) {
@@ -227,12 +204,14 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
     @OnClick(R.id.message_send)
     public void onMessageSend() {
+        hideKeyboard();
+
         final String message = mMessage.getText().toString().trim();
         if (message.isEmpty()) return;
 
         mMessage.setText("");
         mIconSend.setImageResource(R.drawable.action_send_inactive);
-        publish(new Reading(mNow, mNow, "message", "", message));
+        publishReading(new Reading(mNow, mNow, "message", "", message));
     }
 
     public void refreshData() {
@@ -242,29 +221,66 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         monitorLocation();
     }
 
-    private void monitorBattery() {
-        if (!mSwitchSettings[0]) return;
+    private void setUpSwitches() {
+        mSwitchSettings = Storage.instance().loadSettings(getContext(), mSwitchSettings.length);
 
-        Intent batteryIntent = getContext().registerReceiver(null, new IntentFilter(ACTION_BATTERY_CHANGED));
-        int level = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_LEVEL, -1) : 0;
-        int scale = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_SCALE, -1) : 0;
+        mWiFiSwitch.setChecked(mSwitchSettings[0]);
+        mWiFiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mSwitchSettings[0] = isChecked;
+                monitorWiFi();
+            }
+        });
 
-        float bat;
-        if (level == -1 || scale == -1) bat = 50.0f;
-        else bat = ((float) level / (float) scale) * 100.0f;
+        mBatterySwitch.setChecked(mSwitchSettings[1]);
+        mBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mSwitchSettings[1] = isChecked;
+                monitorBattery();
+            }
+        });
 
-        publish(new Reading(mNow, mNow, "batteryLevel", "", bat));
+        mLocSwitch.setChecked(mSwitchSettings[2]);
+        mLocSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mSwitchSettings[2] = isChecked;
+                monitorLocation();
+            }
+        });
+
+        mAccelSwitch.setChecked(mSwitchSettings[3]);
+        mAccelSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mSwitchSettings[3] = isChecked;
+            }
+        });
+
+        mFlashSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mSwitchSettings[4] = isChecked;
+                if (isChecked) subscribeToCommands();
+            }
+        });
+        mFlashSwitch.setChecked(mSwitchSettings[4]);
+
+        mSoundSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mSwitchSettings[5] = isChecked;
+                if (isChecked) subscribeToCommands();
+            }
+        });
+        mSoundSwitch.setChecked(mSwitchSettings[5]);
     }
 
     private void monitorWiFi() {
-        if (!mSwitchSettings[1]) return;
+        if (!mSwitchSettings[0]) return;
 
         if (!checkWifi(mConnectivityManager))
             Toast.makeText(getContext(), "Not connected to Wifi", LENGTH_SHORT).show();
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
-            publish(new Reading(mNow, mNow, "wifi", "rssi", wifiInfo.getRssi()));
+            publishReading(new Reading(mNow, mNow, "wifi", "rssi", wifiInfo.getRssi()));
     }
 
     private boolean checkWifi(ConnectivityManager cm) {
@@ -281,6 +297,20 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         return false;
     }
 
+    private void monitorBattery() {
+        if (!mSwitchSettings[1]) return;
+
+        Intent batteryIntent = getContext().registerReceiver(null, new IntentFilter(ACTION_BATTERY_CHANGED));
+        int level = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_LEVEL, -1) : 0;
+        int scale = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_SCALE, -1) : 0;
+
+        float bat;
+        if (level == -1 || scale == -1) bat = 50.0f;
+        else bat = ((float) level / (float) scale) * 100.0f;
+
+        publishReading(new Reading(mNow, mNow, "batteryLevel", "", bat));
+    }
+
     private void monitorLocation() {
         if (!mSwitchSettings[2]) return;
 
@@ -295,6 +325,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     public void publishAddress(double lat, double lng) {
+        if (!mSwitchSettings[2]) return;
+
         try {
             Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
             List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
@@ -305,24 +337,24 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             address += obj.getAddressLine(1) + ", ";
             address += obj.getAddressLine(0);
 
-            publish(new Reading(mNow, mNow, "location", "", address));
+            publishReading(new Reading(mNow, mNow, "location", "", address));
         } catch (IOException e) {
-            Toast.makeText(getContext(), "Geocoder problem.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Geo-coder problem.", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
     }
 
-    private void publish(final Reading reading) {
+    private void publishReading(final Reading reading) {
         if (reading == null || reading.meaning == null) return;
 
-        RelayrSdk.getWebSocketClient()
-                .publish(mDeviceId, reading)
+        mPublishSubscription = RelayrSdk.getWebSocketClient()
+                .publish(Storage.instance().getDevice().getId(), reading)
                 .subscribeOn(Schedulers.io())
                 .subscribe(new Subscriber<Void>() {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
-                        Log.e("SettingsView", "publish - error");
+                        Log.e("SettingsView", "publishReading - error");
                         e.printStackTrace();
                     }
 
@@ -330,18 +362,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                 });
     }
 
-    private void toggleFlash(boolean on) {
-        if (!mHasFlash) {
-            Toast.makeText(getContext(), "Flash not available", LENGTH_SHORT).show();
-        } else {
-            if (mFlash == null) return;
-            if (on) mFlash.on();
-            else mFlash.off();
-        }
-    }
-
     private void subscribeToCommands() {
-        RelayrSdk.getWebSocketClient()
+        mCommandsSubscription = RelayrSdk.getWebSocketClient()
                 .subscribeToCommands(Storage.instance().getDevice().getId())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Command>() {
@@ -353,16 +375,28 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     }
 
                     @Override public void onNext(Command action) {
-                        if (!mSwitchSettings[4]) return;
-                        if (action.getName().equals("flashlight"))
+                        if (mSwitchSettings[4] && action.getName().equals("flashlight"))
                             toggleFlash((Boolean) action.getValue());
-                        if (action.getName().equals("playSound"))
+                        if (mSwitchSettings[5] && action.getName().equals("playSound"))
                             playMusic((String) action.getValue());
                     }
                 });
     }
 
+    private void toggleFlash(boolean on) {
+        if (!mSwitchSettings[4]) return;
+        if (!mHasFlash) {
+            Toast.makeText(getContext(), "Flash not available", LENGTH_SHORT).show();
+        } else {
+            if (mFlash == null) return;
+            if (on) mFlash.on();
+            else mFlash.off();
+        }
+    }
+
     private void playMusic(String seconds) {
+        if (!mSwitchSettings[5]) return;
+
         int sec;
         try {
             sec = Integer.parseInt(seconds) % 10;
@@ -388,6 +422,13 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                 .observeOn(AndroidSchedulers.mainThread())
                 .delaySubscription(sec, TimeUnit.SECONDS)
                 .subscribe();
+    }
+
+    private void hideKeyboard() {
+        if (mMessage != null) {
+            InputMethodManager imm = (InputMethodManager) getContext().getSystemService(INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(mMessage.getWindowToken(), 0);
+        }
     }
 
     //NOT implemented

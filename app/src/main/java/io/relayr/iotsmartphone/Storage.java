@@ -36,7 +36,7 @@ public class Storage {
         final int intValue = prefs.getInt("io.relayr.iotsp.settings.value", 0);
         final int savedLength = prefs.getInt("io.relayr.iotsp.settings.total", 0);
 
-        if (savedLength == 0) return new boolean[length];
+        if (savedLength == 0 || savedLength < length) return new boolean[length];
         else return intToBooleans(intValue, savedLength);
     }
 

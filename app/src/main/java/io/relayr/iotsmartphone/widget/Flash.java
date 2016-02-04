@@ -7,7 +7,6 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
-import android.util.Log;
 
 import static android.content.Context.CAMERA_SERVICE;
 import static android.content.pm.PackageManager.FEATURE_CAMERA_FLASH;
@@ -42,30 +41,22 @@ public class Flash {
         return false;
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP) public synchronized void open(Context context) {
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP) public synchronized void open(Context context) throws Exception {
         if (SDK_INT >= Build.VERSION_CODES.M) {
             cameraManager = (CameraManager) context.getSystemService(CAMERA_SERVICE);
-            try {
-                for (String camId : cameraManager.getCameraIdList()) {
-                    final CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(camId);
-                    int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
-                    if (cOrientation == CameraCharacteristics.LENS_FACING_BACK) cameraId = camId;
-                }
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
+            for (String camId : cameraManager.getCameraIdList()) {
+                final CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(camId);
+                int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (cOrientation == CameraCharacteristics.LENS_FACING_BACK) cameraId = camId;
             }
         } else {
-            try {
-                camera = Camera.open();
-                if (camera != null) {
-                    cameraParameters = camera.getParameters();
-                    previousFlashMode = cameraParameters.getFlashMode();
-                }
-
-                if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
-            } catch (Exception e) {
-                Log.e("Flash", "camera failed to open");
+            camera = Camera.open();
+            if (camera != null) {
+                cameraParameters = camera.getParameters();
+                previousFlashMode = cameraParameters.getFlashMode();
             }
+
+            if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
         }
     }
 

@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -24,12 +25,12 @@ import rx.android.schedulers.AndroidSchedulers;
 
 public class UserView extends BasicView {
 
-    @InjectView(R.id.used_device) TextView mUsedDevice;
+    @InjectView(R.id.used_device_name) TextView mUsedDeviceName;
+    @InjectView(R.id.used_device_id) TextView mUsedDeviceId;
     @InjectView(R.id.user_name) TextView mUsername;
     @InjectView(R.id.user_email) TextView mEmail;
     @InjectView(R.id.user_id) TextView mUserId;
-    @InjectView(R.id.total_devices) TextView mTotalDevices;
-    @InjectView(R.id.user_devices) ListView mDevices;
+    @InjectView(R.id.user_devices) ListView mDevicesList;
 
     public UserView(Context context) {
         super(context);
@@ -47,7 +48,8 @@ public class UserView extends BasicView {
         super.onAttachedToWindow();
         ButterKnife.inject(this);
 
-        mUsedDevice.setText(Storage.instance().getDevice().getName());
+        mUsedDeviceName.setText(Storage.instance().getDevice().getName());
+        mUsedDeviceId.setText(Storage.instance().getDevice().getId());
 
         RelayrSdk.getUser()
                 .observeOn(AndroidSchedulers.mainThread())
@@ -78,8 +80,8 @@ public class UserView extends BasicView {
                     }
 
                     @Override public void onNext(List<Device> devices) {
-                        mTotalDevices.setText("Total devices: " + devices.size());
-                        mDevices.setAdapter(new DeviceAdapter(getContext(), devices));
+                        mDevicesList.setAdapter(new DeviceAdapter(getContext(), devices));
+                        setListViewHeightBasedOnChildren(mDevicesList);
                     }
                 });
     }
@@ -87,6 +89,27 @@ public class UserView extends BasicView {
     @Override protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         ButterKnife.reset(this);
+    }
+
+    private void setListViewHeightBasedOnChildren(ListView listView) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null)
+            return;
+
+        int desiredWidth = MeasureSpec.makeMeasureSpec(listView.getWidth(), MeasureSpec.UNSPECIFIED);
+        int totalHeight = 0;
+        View view = null;
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+            view = listAdapter.getView(i, view, listView);
+            if (i == 0)
+                view.setLayoutParams(new ViewGroup.LayoutParams(desiredWidth, LayoutParams.WRAP_CONTENT));
+
+            view.measure(desiredWidth, MeasureSpec.UNSPECIFIED);
+            totalHeight += view.getMeasuredHeight();
+        }
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+        listView.setLayoutParams(params);
     }
 
     class DeviceAdapter extends ArrayAdapter<Device> {

@@ -6,6 +6,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -32,9 +33,12 @@ import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 
+import static android.content.Context.INPUT_METHOD_SERVICE;
 import static android.widget.Toast.LENGTH_LONG;
 
 public class DeviceView extends BasicView {
+
+    private static final String MODEL_ID = "86e0a7d7-5e18-449c-b7aa-f3b089c33b67";
 
     @InjectView(R.id.device_name) EditText mName;
 
@@ -59,8 +63,9 @@ public class DeviceView extends BasicView {
     public void onCreateClicked() {
         if (mName.getText().length() == 0) return;
 
+        final CreateDevice device = new CreateDevice(mName.getText().toString(), MODEL_ID, DataStorage.getUserId(), null, null);
         RelayrSdk.getDeviceApi()
-                .createDevice(new CreateDevice(mName.getText().toString(), "86e0a7d7-5e18-449c-b7aa-f3b089c33b67", DataStorage.getUserId(), null, null))
+                .createDevice(device)
                 .timeout(5, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Device>() {
@@ -80,6 +85,14 @@ public class DeviceView extends BasicView {
 
     @Override protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        hideKeyboard();
         ButterKnife.reset(this);
+    }
+
+    private void hideKeyboard() {
+        if (mName != null) {
+            InputMethodManager imm = (InputMethodManager) getContext().getSystemService(INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(mName.getWindowToken(), 0);
+        }
     }
 }
