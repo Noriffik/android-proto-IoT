@@ -3,7 +3,8 @@ package io.relayr.iotsmartphone.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+
+import io.relayr.iotsmartphone.helper.ControlListener;
 
 public class BasicView extends LinearLayout {
 

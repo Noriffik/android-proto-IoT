@@ -23,7 +23,7 @@ import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.widget.BasicView;
-import io.relayr.iotsmartphone.widget.ControlListener;
+import io.relayr.iotsmartphone.helper.ControlListener;
 import io.relayr.iotsmartphone.widget.SettingsView;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
@@ -35,7 +35,6 @@ import rx.functions.Func1;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static android.location.LocationManager.GPS_PROVIDER;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 

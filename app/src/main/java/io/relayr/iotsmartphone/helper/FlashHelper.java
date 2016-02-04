@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.widget;
+package io.relayr.iotsmartphone.helper;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -15,7 +15,7 @@ import static android.hardware.Camera.Parameters.FLASH_MODE_TORCH;
 import static android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE;
 import static android.os.Build.VERSION.SDK_INT;
 
-public class Flash {
+public class FlashHelper {
 
     private Camera camera = null;
     private Camera.Parameters cameraParameters;

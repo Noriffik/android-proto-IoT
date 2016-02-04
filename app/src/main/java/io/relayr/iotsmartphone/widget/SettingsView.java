@@ -12,12 +12,9 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -37,7 +34,6 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -45,10 +41,11 @@ import butterknife.OnClick;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
+import io.relayr.iotsmartphone.helper.FlashHelper;
+import io.relayr.iotsmartphone.helper.SoundHelper;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
-import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -67,7 +64,6 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
 import static android.location.LocationManager.GPS_PROVIDER;
-import static android.media.RingtoneManager.TYPE_ALARM;
 import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.os.BatteryManager.EXTRA_LEVEL;
 import static android.os.BatteryManager.EXTRA_SCALE;
@@ -88,11 +84,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     @InjectView(R.id.receive_flash_switch) SwitchCompat mFlashSwitch;
     @InjectView(R.id.receive_sound_switch) SwitchCompat mSoundSwitch;
 
-    private Flash mFlash;
-    private boolean mHasFlash;
-    private boolean mIsPlaying;
-
-    private Ringtone mRingManager;
+    private FlashHelper mFlash;
+    private SoundHelper mSound;
     private WifiManager mWifiManager;
     private SensorManager mSensorManager;
     private LocationManager mLocationManager;
@@ -122,14 +115,6 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         super.onAttachedToWindow();
         ButterKnife.inject(this);
 
-        mFlash = new Flash();
-        mHasFlash = mFlash.hasFlash(getContext());
-        try {
-            mFlash.open(getContext());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         mSensorManager = (SensorManager) getContext().getSystemService(SENSOR_SERVICE);
         mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER), SENSOR_DELAY_NORMAL);
 
@@ -157,9 +142,11 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     @Override protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         if (mFlash != null) mFlash.close();
+        if (mSound != null) mSound.close();
+        mFlash = null;
+        mSound = null;
 
         ButterKnife.reset(this);
-        Storage.instance().saveSettings(getContext(), mSwitchSettings);
 
         if (mSensorManager != null) mSensorManager.unregisterListener(this);
 
@@ -167,34 +154,26 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         mCommandsSubscription.unsubscribe();
     }
 
-    @Override public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() != TYPE_ACCELEROMETER) return;
+    @Override public void onSensorChanged(SensorEvent e) {
         if (!mSwitchSettings[3]) return;
+        if (e.sensor.getType() != TYPE_ACCELEROMETER) return;
 
-        final AccelGyroscope.Acceleration acceleration = new AccelGyroscope.Acceleration();
+        Reading reading = null;
         switch (getDisplay().getRotation()) {
             case Surface.ROTATION_0:
-                acceleration.x = event.values[0];
-                acceleration.y = event.values[1];
-                acceleration.z = event.values[2];
+                reading = createAccelReading(e.values[0], e.values[1], e.values[2]);
                 break;
             case Surface.ROTATION_90:
-                acceleration.x = -event.values[1];
-                acceleration.y = event.values[0];
-                acceleration.z = event.values[2];
+                reading = createAccelReading(-e.values[1], e.values[0], e.values[2]);
                 break;
             case Surface.ROTATION_180:
-                acceleration.x = -event.values[0];
-                acceleration.y = -event.values[1];
-                acceleration.z = event.values[2];
+                reading = createAccelReading(-e.values[0], -e.values[1], e.values[2]);
                 break;
             case Surface.ROTATION_270:
-                acceleration.x = event.values[1];
-                acceleration.y = -event.values[0];
-                acceleration.z = event.values[2];
+                reading = createAccelReading(e.values[1], -e.values[0], e.values[2]);
         }
 
-        publishReading(new Reading(0, 0, "acceleration", "", acceleration));
+        publishReading(reading);
     }
 
     @Override public void onLocationChanged(Location location) {
@@ -221,6 +200,14 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         monitorLocation();
     }
 
+    private Reading createAccelReading(float x, float y, float z) {
+        final AccelGyroscope.Acceleration acceleration = new AccelGyroscope.Acceleration();
+        acceleration.x = x;
+        acceleration.y = y;
+        acceleration.z = z;
+        return new Reading(0, 0, "acceleration", "", acceleration);
+    }
+
     private void setUpSwitches() {
         mSwitchSettings = Storage.instance().loadSettings(getContext(), mSwitchSettings.length);
 
@@ -242,7 +229,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             }
         });
         mBatterySwitch.setChecked(mSwitchSettings[1]);
-        if (mSwitchSettings[0]) monitorBattery();
+        if (mSwitchSettings[1]) monitorBattery();
 
         mLocSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -252,7 +239,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             }
         });
         mLocSwitch.setChecked(mSwitchSettings[2]);
-        if (mSwitchSettings[0]) monitorLocation();
+        if (mSwitchSettings[2]) monitorLocation();
 
         mAccelSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -266,21 +253,25 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[4] = isChecked;
                 Storage.instance().saveSettings(getContext(), mSwitchSettings);
-                if (mSwitchSettings[4]) subscribeToCommands();
+                if (mSwitchSettings[4]) createFlashHelper();
+                subscribeToCommands();
             }
         });
         mFlashSwitch.setChecked(mSwitchSettings[4]);
+        if (mSwitchSettings[4]) createFlashHelper();
 
         mSoundSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSwitchSettings[5] = isChecked;
                 Storage.instance().saveSettings(getContext(), mSwitchSettings);
-                if (mSwitchSettings[5]) subscribeToCommands();
+                if (mSwitchSettings[5]) createSoundHelper();
+                subscribeToCommands();
             }
         });
         mSoundSwitch.setChecked(mSwitchSettings[5]);
+        if (mSwitchSettings[5]) createSoundHelper();
 
-        if (mSwitchSettings[4] || mSwitchSettings[5]) subscribeToCommands();
+        subscribeToCommands();
     }
 
     private void monitorWiFi() {
@@ -355,10 +346,27 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         }
     }
 
+    private void createFlashHelper() {
+        if (mSwitchSettings[4] && mFlash != null) return;
+
+        mFlash = new FlashHelper();
+        try {
+            mFlash.open(getContext().getApplicationContext());
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Failed to instantiate flash controller.", Toast.LENGTH_SHORT).show();
+            mFlash.close();
+            mFlash = null;
+            e.printStackTrace();
+        }
+    }
+
+    private void createSoundHelper() {
+        if (mSwitchSettings[5] && mSound != null) return;
+        if (mSound == null) mSound = new SoundHelper();
+    }
+
     private void publishReading(final Reading reading) {
         if (reading == null || reading.meaning == null) return;
-
-        Log.e("SettingsView", "publishReading");
 
         mPublishSubscription = RelayrSdk.getWebSocketClient()
                 .publish(Storage.instance().getDevice().getId(), reading)
@@ -376,7 +384,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void subscribeToCommands() {
-        Log.e("SettingsView", "subscribeToCommands");
+        if (!mSwitchSettings[4] && !mSwitchSettings[5]) return;
+
         mCommandsSubscription = RelayrSdk.getWebSocketClient()
                 .subscribeToCommands(Storage.instance().getDevice().getId())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -389,18 +398,17 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     }
 
                     @Override public void onNext(Command action) {
-                        if (mSwitchSettings[4] && action.getName().equals("flashlight"))
-                            toggleFlash((Boolean) action.getValue());
-                        if (mSwitchSettings[5] && action.getName().equals("playSound"))
-                            playMusic((String) action.getValue());
+                        final String cmd = action.getName();
+                        if (cmd.equals("flashlight")) toggleFlash((Boolean) action.getValue());
+                        if (cmd.equals("playSound")) playMusic((String) action.getValue());
                     }
                 });
     }
 
     private void toggleFlash(boolean on) {
         if (!mSwitchSettings[4]) return;
-        if (!mHasFlash) {
-            Toast.makeText(getContext(), "Flash not available", LENGTH_SHORT).show();
+        if (mFlash != null && !mFlash.hasFlash(getContext())) {
+            Toast.makeText(getContext(), "FlashHelper not available", LENGTH_SHORT).show();
         } else {
             if (mFlash == null) return;
             if (on) mFlash.on();
@@ -408,33 +416,11 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         }
     }
 
-    private void playMusic(String seconds) {
-        if (!mSwitchSettings[5]) return;
-        if (mIsPlaying) return;
+    private void playMusic(String value) {
+        if (value == null) return;
+        if (mSound == null) createSoundHelper();
 
-        int sec;
-        try {
-            sec = Integer.parseInt(seconds) % 10;
-        } catch (Exception e) {
-            Log.e("SettingsView", "Seconds can't be parsed: " + seconds);
-            return;
-        }
-
-        Uri alarm = RingtoneManager.getDefaultUri(TYPE_ALARM);
-        if (mRingManager == null) mRingManager = RingtoneManager.getRingtone(getContext(), alarm);
-        mRingManager.play();
-        mIsPlaying = true;
-
-        Observable
-                .create(new Observable.OnSubscribe<Object>() {
-                    @Override public void call(Subscriber<? super Object> subscriber) {
-                        mIsPlaying = false;
-                        mRingManager.stop();
-                    }
-                })
-                .observeOn(AndroidSchedulers.mainThread())
-                .delaySubscription(sec, TimeUnit.SECONDS)
-                .subscribe();
+        mSound.playMusic(getContext(), value);
     }
 
     private void hideKeyboard() {
