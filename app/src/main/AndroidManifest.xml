@@ -37,6 +37,9 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustResize">
         </activity>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="535c5d24024e7d38bb2996ddbdbef7eac59b0667" />
     </application>
 
 </manifest>
