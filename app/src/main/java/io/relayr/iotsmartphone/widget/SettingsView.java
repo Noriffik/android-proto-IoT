@@ -1,5 +1,6 @@
 package io.relayr.iotsmartphone.widget;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,6 +18,7 @@ import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.SwitchCompat;
@@ -68,6 +70,7 @@ import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.os.BatteryManager.EXTRA_LEVEL;
 import static android.os.BatteryManager.EXTRA_SCALE;
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.widget.Toast.LENGTH_SHORT;
 
@@ -94,10 +97,11 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     private long mNow = System.currentTimeMillis();
 
     // wifi, battery, location, acceleration, flash, sound
-    private boolean[] mSwitchSettings = new boolean[]{false, false, false, false, false, false};
+    private boolean[] mSettings = new boolean[]{false, false, false, false, false, false};
 
     private Subscription mPublishSubscription = Subscriptions.empty();
     private Subscription mCommandsSubscription = Subscriptions.empty();
+    private int mSensorChange = 0;
 
     public SettingsView(Context context) {
         super(context);
@@ -121,9 +125,11 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         mWifiManager = (WifiManager) getContext().getSystemService(WIFI_SERVICE);
         mConnectivityManager = (ConnectivityManager) getContext().getSystemService(CONNECTIVITY_SERVICE);
 
-        mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED)
-            mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, this);
+        if (Storage.instance().locationGranted()) {
+            mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
+            if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED)
+                mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, this);
+        }
 
         setUpSwitches();
 
@@ -154,12 +160,23 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         mCommandsSubscription.unsubscribe();
     }
 
-    @Override public void onSensorChanged(SensorEvent e) {
-        if (!mSwitchSettings[3]) return;
+    @Override
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+    public void onSensorChanged(SensorEvent e) {
+        if (!mSettings[3]) return;
         if (e.sensor.getType() != TYPE_ACCELEROMETER) return;
 
+        if (mSensorChange++ % 3 != 0) return;
+
+        int rotation;
         Reading reading = null;
-        switch (getDisplay().getRotation()) {
+
+        if (SDK_INT >= JELLY_BEAN_MR1)
+            rotation = getDisplay().getRotation();
+        else  //noinspection deprecation
+            rotation = getDisplay().getOrientation();
+
+        switch (rotation) {
             case Surface.ROTATION_0:
                 reading = createAccelReading(e.values[0], e.values[1], e.values[2]);
                 break;
@@ -177,10 +194,11 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     @Override public void onLocationChanged(Location location) {
-        if (!mSwitchSettings[2]) return;
+        if (!mSettings[2]) return;
         publishAddress(location.getLatitude(), location.getLongitude());
     }
 
+    @SuppressWarnings("unused")
     @OnClick(R.id.message_send)
     public void onMessageSend() {
         hideKeyboard();
@@ -209,73 +227,73 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void setUpSwitches() {
-        mSwitchSettings = Storage.instance().loadSettings(getContext(), mSwitchSettings.length);
+        mSettings = Storage.instance().loadSettings(mSettings.length);
 
         mWiFiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[0] = isChecked;
-                Storage.instance().saveSettings(getContext(), mSwitchSettings);
+                mSettings[0] = isChecked;
+                Storage.instance().saveSettings(mSettings);
                 monitorWiFi();
             }
         });
-        mWiFiSwitch.setChecked(mSwitchSettings[0]);
-        if (mSwitchSettings[0]) monitorWiFi();
+        mWiFiSwitch.setChecked(mSettings[0]);
+        if (mSettings[0]) monitorWiFi();
 
         mBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[1] = isChecked;
-                Storage.instance().saveSettings(getContext(), mSwitchSettings);
+                mSettings[1] = isChecked;
+                Storage.instance().saveSettings(mSettings);
                 monitorBattery();
             }
         });
-        mBatterySwitch.setChecked(mSwitchSettings[1]);
-        if (mSwitchSettings[1]) monitorBattery();
+        mBatterySwitch.setChecked(mSettings[1]);
+        if (mSettings[1]) monitorBattery();
 
         mLocSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[2] = isChecked;
-                Storage.instance().saveSettings(getContext(), mSwitchSettings);
+                mSettings[2] = isChecked;
+                Storage.instance().saveSettings(mSettings);
                 monitorLocation();
             }
         });
-        mLocSwitch.setChecked(mSwitchSettings[2]);
-        if (mSwitchSettings[2]) monitorLocation();
+        mLocSwitch.setChecked(mSettings[2]);
+        if (mSettings[2]) monitorLocation();
 
         mAccelSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[3] = isChecked;
-                Storage.instance().saveSettings(getContext(), mSwitchSettings);
+                mSettings[3] = isChecked;
+                Storage.instance().saveSettings(mSettings);
             }
         });
-        mAccelSwitch.setChecked(mSwitchSettings[3]);
+        mAccelSwitch.setChecked(mSettings[3]);
 
         mFlashSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[4] = isChecked;
-                Storage.instance().saveSettings(getContext(), mSwitchSettings);
-                if (mSwitchSettings[4]) createFlashHelper();
+                mSettings[4] = isChecked;
+                Storage.instance().saveSettings(mSettings);
+                if (mSettings[4]) createFlashHelper();
                 subscribeToCommands();
             }
         });
-        mFlashSwitch.setChecked(mSwitchSettings[4]);
-        if (mSwitchSettings[4]) createFlashHelper();
+        mFlashSwitch.setChecked(mSettings[4]);
+        if (mSettings[4]) createFlashHelper();
 
         mSoundSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSwitchSettings[5] = isChecked;
-                Storage.instance().saveSettings(getContext(), mSwitchSettings);
-                if (mSwitchSettings[5]) createSoundHelper();
+                mSettings[5] = isChecked;
+                Storage.instance().saveSettings(mSettings);
+                if (mSettings[5]) createSoundHelper();
                 subscribeToCommands();
             }
         });
-        mSoundSwitch.setChecked(mSwitchSettings[5]);
-        if (mSwitchSettings[5]) createSoundHelper();
+        mSoundSwitch.setChecked(mSettings[5]);
+        if (mSettings[5]) createSoundHelper();
 
         subscribeToCommands();
     }
 
     private void monitorWiFi() {
-        if (!mSwitchSettings[0]) return;
+        if (!mSettings[0]) return;
 
         if (!checkWifi(mConnectivityManager))
             Toast.makeText(getContext(), "Not connected to Wifi", LENGTH_SHORT).show();
@@ -293,6 +311,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     return networkInfo.isConnected();
             }
         } else {
+            //noinspection deprecation
             NetworkInfo networkInfo = cm.getNetworkInfo(TYPE_WIFI);
             return networkInfo != null && networkInfo.isConnected();
         }
@@ -300,7 +319,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void monitorBattery() {
-        if (!mSwitchSettings[1]) return;
+        if (!mSettings[1]) return;
 
         Intent batteryIntent = getContext().registerReceiver(null, new IntentFilter(ACTION_BATTERY_CHANGED));
         int level = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_LEVEL, -1) : 0;
@@ -314,7 +333,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void monitorLocation() {
-        if (!mSwitchSettings[2]) return;
+        if (!mSettings[2] || !Storage.instance().locationGranted()) return;
 
         if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED) {
@@ -327,7 +346,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     public void publishAddress(double lat, double lng) {
-        if (!mSwitchSettings[2]) return;
+        if (!mSettings[2]) return;
 
         try {
             Geocoder geocoder = new Geocoder(getContext(), Locale.getDefault());
@@ -347,7 +366,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void createFlashHelper() {
-        if (mSwitchSettings[4] && mFlash != null) return;
+        if (mSettings[4] && mFlash != null) return;
 
         mFlash = new FlashHelper();
         try {
@@ -361,7 +380,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void createSoundHelper() {
-        if (mSwitchSettings[5] && mSound != null) return;
+        if (mSettings[5] && mSound != null) return;
         if (mSound == null) mSound = new SoundHelper();
     }
 
@@ -384,7 +403,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void subscribeToCommands() {
-        if (!mSwitchSettings[4] && !mSwitchSettings[5]) return;
+        if (!mSettings[4] && !mSettings[5]) return;
 
         mCommandsSubscription = RelayrSdk.getWebSocketClient()
                 .subscribeToCommands(Storage.instance().getDevice().getId())
@@ -406,7 +425,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     private void toggleFlash(boolean on) {
-        if (!mSwitchSettings[4]) return;
+        if (!mSettings[4]) return;
         if (mFlash != null && !mFlash.hasFlash(getContext())) {
             Toast.makeText(getContext(), "FlashHelper not available", LENGTH_SHORT).show();
         } else {

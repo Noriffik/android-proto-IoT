@@ -3,20 +3,10 @@ package io.relayr.iotsmartphone.widget;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
@@ -28,11 +18,8 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
 import io.relayr.java.model.CreateDevice;
 import io.relayr.java.model.Device;
-import io.relayr.java.model.User;
-import io.relayr.java.model.models.error.DeviceModelsException;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func1;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static android.widget.Toast.LENGTH_LONG;
@@ -62,6 +49,7 @@ public class DeviceView extends BasicView {
         ButterKnife.inject(this);
     }
 
+    @SuppressWarnings("unused")
     @OnClick(R.id.device_create_btn)
     public void onCreateClicked() {
         if (mName.getText().length() == 0) return;

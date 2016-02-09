@@ -1,7 +1,9 @@
 package io.relayr.iotsmartphone;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
@@ -9,6 +11,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -22,8 +25,8 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.android.RelayrSdk;
-import io.relayr.iotsmartphone.widget.BasicView;
 import io.relayr.iotsmartphone.helper.ControlListener;
+import io.relayr.iotsmartphone.widget.BasicView;
 import io.relayr.iotsmartphone.widget.SettingsView;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
@@ -46,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     private int mPosition = 0;
     private ProgressDialog mLoadingProgress;
     private BasicView mCurrentView;
+    private AlertDialog mLogOutDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +77,15 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         }
     }
 
+    @Override protected void onPause() {
+        super.onPause();
+
+        if (mLogOutDialog != null) mLogOutDialog.dismiss();
+        mLogOutDialog = null;
+        if (mLoadingProgress != null) mLoadingProgress.dismiss();
+        mLoadingProgress = null;
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -88,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         int id = item.getItemId();
         if (id == R.id.nav_main) switchView(1);
         else if (id == R.id.nav_user) switchView(2);
+        else if (id == R.id.nav_log_out) logOut();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -95,15 +109,11 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case 100: {
-                if (grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
-                    checkForDevice();
-                    Log.e("PERMISSION", "2376 Granted");
-                } else {
-                    Log.e("PERMISSION", "2376 Denied");
-                }
+                Storage.instance().locationPermission(grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED);
+                checkForDevice();
             }
         }
     }
@@ -112,9 +122,29 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         switchView(1);
     }
 
-    @OnClick(R.id.fab)
+    @SuppressWarnings("unused") @OnClick(R.id.fab)
     public void onFabClicked() {
-        ((SettingsView) mCurrentView).refreshData();
+        if (mCurrentView != null) ((SettingsView) mCurrentView).refreshData();
+    }
+
+    private void logOut() {
+        mLogOutDialog = new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Log out")
+                .setMessage("Are you sure you want to log out?")
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        RelayrSdk.logOut();
+                        Storage.instance().clear();
+                        finish();
+                        IntroActivity.start(MainActivity.this);
+                    }
+                }).show();
     }
 
     private void checkForDevice() {

@@ -25,21 +25,33 @@
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/send_wifi_switch"
                 style="@style/SettingsSwitch"
+                android:drawableLeft="@drawable/ic_wifi"
+                android:drawablePadding="@dimen/default_padding"
+                android:gravity="center_vertical"
                 android:text="WiFi"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/send_battery_switch"
                 style="@style/SettingsSwitch"
+                android:drawableLeft="@drawable/ic_battery"
+                android:drawablePadding="@dimen/default_padding"
+                android:gravity="center_vertical"
                 android:text="Battery"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/send_location_switch"
                 style="@style/SettingsSwitch"
+                android:drawableLeft="@drawable/ic_location"
+                android:drawablePadding="@dimen/default_padding"
+                android:gravity="center_vertical"
                 android:text="Location"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/send_acceleration_switch"
                 style="@style/SettingsSwitch"
+                android:drawableLeft="@drawable/ic_acceleration"
+                android:drawablePadding="@dimen/default_padding"
+                android:gravity="center_vertical"
                 android:text="Acceleration"/>
 
             <RelativeLayout
@@ -76,11 +88,17 @@
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/receive_flash_switch"
                 style="@style/SettingsSwitch"
+                android:drawableLeft="@drawable/ic_flash"
+                android:drawablePadding="@dimen/default_padding"
+                android:gravity="center_vertical"
                 android:text="Flashlight"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/receive_sound_switch"
                 style="@style/SettingsSwitch"
+                android:drawableLeft="@drawable/ic_sound"
+                android:drawablePadding="@dimen/default_padding"
+                android:gravity="center_vertical"
                 android:text="Sounds"/>
 
         </LinearLayout>

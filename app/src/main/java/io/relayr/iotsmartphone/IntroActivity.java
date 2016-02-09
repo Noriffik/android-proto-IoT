@@ -1,18 +1,12 @@
 package io.relayr.iotsmartphone;
 
-import android.animation.ObjectAnimator;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
-import android.view.animation.BounceInterpolator;
 import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
@@ -35,7 +29,10 @@ public class IntroActivity extends AppCompatActivity {
     @InjectView(R.id.intro_image) ImageView mImage;
 
     private Subscription mUserInfoSubscription = Subscriptions.empty();
-    private SharedPreferences mPrefs;
+
+    public static void start(MainActivity context) {
+        context.startActivity(new Intent(context, IntroActivity.class));
+    }
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,10 +40,8 @@ public class IntroActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         Log.e("IA", "onCreate");
 
-        mPrefs = getSharedPreferences("io.relayr.iotsmartphone", Context.MODE_PRIVATE);
-
         if (RelayrSdk.isUserLoggedIn()) {
-            showToast("Hello " + mPrefs.getString("io.relayr.username", ""));
+            showToast("Hello " + Storage.instance().getUsername());
             new Handler().postDelayed(new Runnable() {
                 @Override public void run() {
                     startActivity(new Intent(IntroActivity.this, MainActivity.class));
@@ -123,8 +118,7 @@ public class IntroActivity extends AppCompatActivity {
                     }
 
                     @Override public void onNext(User user) {
-                        mPrefs.edit().putString("io.relayr.username", user.getName()).apply();
-                        mPrefs.edit().putString("io.relayr.userId", user.getId()).apply();
+                        Storage.instance().saveUser(user);
 
                         showToast("Hello " + user.getName());
 
