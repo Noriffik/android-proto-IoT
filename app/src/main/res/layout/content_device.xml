@@ -10,7 +10,7 @@
     <TextView
         style="@style/SubtitleText"
         android:layout_gravity="center_horizontal"
-        android:text="Let's create a device"/>
+        android:text="@string/dv_title"/>
 
     <EditText
         android:id="@+id/device_name"
@@ -21,7 +21,7 @@
         android:layout_marginRight="@dimen/big_padding"
         android:layout_marginTop="@dimen/default_padding"
         android:gravity="center_horizontal"
-        android:hint="Device name"
+        android:hint="@string/dv_device_name_hint"
         android:singleLine="true"/>
 
     <Button
@@ -30,6 +30,6 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="@dimen/default_padding"
         android:gravity="center_horizontal"
-        android:text="Create"
+        android:text="@string/dv_button_create"
         android:textStyle="bold"/>
 </io.relayr.iotsmartphone.widget.DeviceView>

@@ -54,8 +54,9 @@ public class DeviceView extends BasicView {
     public void onCreateClicked() {
         if (mName.getText().length() == 0) return;
 
-        mCreateProgress = ProgressDialog.show(getContext(), "Creating device",
-                "Please wait...", true);
+        mCreateProgress = ProgressDialog.show(getContext(),
+                getContext().getString(R.string.dv_creating_device),
+                getContext().getString(R.string.please_wait), true);
 
         final CreateDevice device = new CreateDevice(mName.getText().toString(), MODEL_ID, DataStorage.getUserId(), null, null);
         RelayrSdk.getDeviceApi()
@@ -67,7 +68,7 @@ public class DeviceView extends BasicView {
 
                     @Override public void onError(Throwable e) {
                         if (mCreateProgress != null) mCreateProgress.dismiss();
-                        Toast.makeText(getContext(), "Something went wrong... Please try again.", LENGTH_LONG).show();
+                        Toast.makeText(getContext(), R.string.something_went_wrong, LENGTH_LONG).show();
                         e.printStackTrace();
                     }
 

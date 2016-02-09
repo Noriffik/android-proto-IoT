@@ -1,8 +1,60 @@
 <resources>
+
     <string name="app_name">IoTsmartphone</string>
 
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="navigation_drawer_open">Open</string>
+    <string name="navigation_drawer_close">Close</string>
 
-    <string name="action_settings">Settings</string>
+    <string name="initializing">Initializing…</string>
+    <string name="please_wait">Please wait…</string>
+    <string name="something_went_wrong">Something went wrong…</string>
+
+    <string name="menu_settings">Settings</string>
+    <string name="menu_user">User</string>
+    <string name="menu_log_out">Log out</string>
+
+    <!--IntroActivity-->
+    <string name="ia_hello">Hello %s</string>
+    <string name="ia_log_in_failed">Log in failed</string>
+
+    <!--MainActivity-->
+    <string name="ma_log_out_dialog_title">Log out</string>
+    <string name="ma_log_out_dialog_message">Are you sure you want to log out?</string>
+    <string name="ma_log_out_dialog_negative">No</string>
+    <string name="ma_log_out_dialog_positive">Yes</string>
+
+    <!--DeviceView-->
+    <string name="dv_title">Let\'s create a device</string>
+    <string name="dv_device_name_hint">Device name</string>
+    <string name="dv_button_create">Create</string>
+    <string name="dv_creating_device">Creating device</string>
+
+    <!--UserView-->
+    <string name="uv_iot_device">This device</string>
+    <string name="uv_iot_device_name">Name:</string>
+    <string name="uv_iot_device_id">Device ID:</string>
+    <string name="uv_details">User details</string>
+    <string name="uv_details_username">Username:</string>
+    <string name="uv_details_email">Email:</string>
+    <string name="uv_details_user_id">User ID:</string>
+    <string name="uv_all_devices">All devices</string>
+
+    <!--SettingsView-->
+    <string name="sv_no_wifi">Not connected to Wifi</string>
+    <string name="sv_location_off">Location is turned off</string>
+    <string name="sv_location_resolve_err">Problem resolving location.</string>
+    <string name="sv_err_using_flash">Error when using flash</string>
+    <string name="sv_flashlight_not_available">Flashlight not available.</string>
+    <string name="sv_publish_title">Publish settings</string>
+    <string name="sv_publish_info">Turn ON the switches for the data you would like to be published to the cloud and visible on the dashboard.</string>
+    <string name="sv_publish_wifi">WiFi</string>
+    <string name="sv_publish_battery">Battery</string>
+    <string name="sv_publish_location">Location</string>
+    <string name="sv_publish_acceleration">Acceleration</string>
+    <string name="sv_publish_message_hint">Send something</string>
+    <string name="sv_subscribe_title">Subscribe settings</string>
+    <string name="sv_subscribe_info">Turn ON the switches for features to be controlled from the dashboard.</string>
+    <string name="sv_subscribe_flash">Flashlight</string>
+    <string name="sv_subscribe_sound">Sounds</string>
+
 </resources>

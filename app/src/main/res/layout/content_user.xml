@@ -11,12 +11,12 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <TextView
                 style="@style/TitleText"
-                android:text="This device"/>
+                android:text="@string/uv_iot_device"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -28,7 +28,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="left"
-                    android:text="Name:"/>
+                    android:text="@string/uv_iot_device_name"/>
 
                 <TextView
                     android:id="@+id/used_device_name"
@@ -51,7 +51,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="left"
-                    android:text="Device ID:"/>
+                    android:text="@string/uv_iot_device_id"/>
 
                 <TextView
                     android:id="@+id/used_device_id"
@@ -66,7 +66,7 @@
 
             <TextView
                 style="@style/TitleText"
-                android:text="User details"/>
+                android:text="@string/uv_details"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -79,7 +79,7 @@
                     android:layout_weight="1"
                     android:gravity="left"
                     android:singleLine="true"
-                    android:text="Username:"/>
+                    android:text="@string/uv_details_username"/>
 
                 <TextView
                     android:id="@+id/user_name"
@@ -101,7 +101,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="left"
-                    android:text="Email:"/>
+                    android:text="@string/uv_details_email"/>
 
                 <TextView
                     android:id="@+id/user_email"
@@ -124,7 +124,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="left"
-                    android:text="User ID:"/>
+                    android:text="@string/uv_details_user_id"/>
 
                 <TextView
                     android:id="@+id/user_id"
@@ -139,7 +139,7 @@
 
             <TextView
                 style="@style/TitleText"
-                android:text="All devices"/>
+                android:text="@string/uv_all_devices"/>
 
             <ListView
                 android:id="@+id/user_devices"

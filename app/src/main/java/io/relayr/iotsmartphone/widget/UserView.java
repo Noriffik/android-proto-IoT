@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -22,6 +23,10 @@ import io.relayr.java.model.User;
 import io.relayr.java.model.models.error.DeviceModelsException;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
+
+import static android.view.View.MeasureSpec.UNSPECIFIED;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static android.widget.Toast.LENGTH_LONG;
 
 public class UserView extends BasicView {
 
@@ -57,6 +62,7 @@ public class UserView extends BasicView {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
+                        Toast.makeText(getContext(), R.string.something_went_wrong, LENGTH_LONG).show();
                         e.printStackTrace();
                     }
 
@@ -76,12 +82,13 @@ public class UserView extends BasicView {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
+                        Toast.makeText(getContext(), R.string.something_went_wrong, LENGTH_LONG).show();
                         e.printStackTrace();
                     }
 
                     @Override public void onNext(List<Device> devices) {
                         mDevicesList.setAdapter(new DeviceAdapter(getContext(), devices));
-                        setListViewHeightBasedOnChildren(mDevicesList);
+                        setHeightBasedOnChildren(mDevicesList);
                     }
                 });
     }
@@ -91,22 +98,23 @@ public class UserView extends BasicView {
         ButterKnife.reset(this);
     }
 
-    private void setListViewHeightBasedOnChildren(ListView listView) {
+    private void setHeightBasedOnChildren(ListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
         if (listAdapter == null)
             return;
 
-        int desiredWidth = MeasureSpec.makeMeasureSpec(listView.getWidth(), MeasureSpec.UNSPECIFIED);
+        int desiredWidth = MeasureSpec.makeMeasureSpec(listView.getWidth(), UNSPECIFIED);
         int totalHeight = 0;
         View view = null;
         for (int i = 0; i < listAdapter.getCount(); i++) {
             view = listAdapter.getView(i, view, listView);
             if (i == 0)
-                view.setLayoutParams(new ViewGroup.LayoutParams(desiredWidth, LayoutParams.WRAP_CONTENT));
+                view.setLayoutParams(new ViewGroup.LayoutParams(desiredWidth, WRAP_CONTENT));
 
-            view.measure(desiredWidth, MeasureSpec.UNSPECIFIED);
+            view.measure(desiredWidth, UNSPECIFIED);
             totalHeight += view.getMeasuredHeight();
         }
+
         ViewGroup.LayoutParams params = listView.getLayoutParams();
         params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
         listView.setLayoutParams(params);

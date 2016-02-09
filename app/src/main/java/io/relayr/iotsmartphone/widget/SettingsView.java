@@ -296,7 +296,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         if (!mSettings[0]) return;
 
         if (!checkWifi(mConnectivityManager))
-            Toast.makeText(getContext(), "Not connected to Wifi", LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.sv_no_wifi, LENGTH_SHORT).show();
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
@@ -341,7 +341,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             if (location != null)
                 publishAddress(location.getLatitude(), location.getLongitude());
             else
-                Toast.makeText(getContext(), "Location is turned off...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.sv_location_off, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -360,7 +360,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
             publishReading(new Reading(mNow, mNow, "location", "", address));
         } catch (IOException e) {
-            Toast.makeText(getContext(), "Geo-coder problem.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.sv_location_resolve_err, Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
     }
@@ -372,7 +372,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         try {
             mFlash.open(getContext().getApplicationContext());
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Failed to instantiate flash controller.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.sv_err_using_flash, Toast.LENGTH_SHORT).show();
             mFlash.close();
             mFlash = null;
             e.printStackTrace();
@@ -427,7 +427,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     private void toggleFlash(boolean on) {
         if (!mSettings[4]) return;
         if (mFlash != null && !mFlash.hasFlash(getContext())) {
-            Toast.makeText(getContext(), "FlashHelper not available", LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
         } else {
             if (mFlash == null) return;
             if (on) mFlash.on();

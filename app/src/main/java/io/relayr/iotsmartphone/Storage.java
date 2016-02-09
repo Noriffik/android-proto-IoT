@@ -8,14 +8,22 @@ import io.relayr.java.model.User;
 
 public class Storage {
 
-    private static Storage singleton = new Storage();
-
+    private final static Storage singleton = new Storage();
     private static Device sDevice;
+
+    private static final String PREFS_NAME = "io.relayr.iotsp";
+
     private final SharedPreferences PREFS;
 
+    private final String PREFS_SETTINGS_TOTAL = "io.relayr.iotsp.settings.total";
+    private final String PREFS_SETTINGS_VALUE = "io.relayr.iotsp.settings.value";
+    private final String PREFS_SETTINGS_LOCATION = "io.relayr.iotsp.permission.location";
+
+    private final String PREFS_USERNAME = "io.relayr.username";
+    private final String PREFS_USER_ID = "io.relayr.userId";
+
     private Storage() {
-        PREFS = IotApplication.context().getSharedPreferences(
-                "io.relayr.iotsp", Context.MODE_PRIVATE);
+        PREFS = IotApplication.context().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     public static Storage instance() {return singleton;}
@@ -25,13 +33,13 @@ public class Storage {
     public void saveDevice(Device device) {sDevice = device;}
 
     public void saveSettings(boolean[] settings) {
-        PREFS.edit().putInt("io.relayr.iotsp.settings.total", settings.length).apply();
-        PREFS.edit().putInt("io.relayr.iotsp.settings.value", booleansToInt(settings)).apply();
+        PREFS.edit().putInt(PREFS_SETTINGS_TOTAL, settings.length).apply();
+        PREFS.edit().putInt(PREFS_SETTINGS_VALUE, booleansToInt(settings)).apply();
     }
 
     public boolean[] loadSettings(int length) {
-        final int intValue = PREFS.getInt("io.relayr.iotsp.settings.value", 0);
-        final int savedLength = PREFS.getInt("io.relayr.iotsp.settings.total", 0);
+        final int intValue = PREFS.getInt(PREFS_SETTINGS_VALUE, 0);
+        final int savedLength = PREFS.getInt(PREFS_SETTINGS_TOTAL, 0);
 
         if (savedLength == 0 || savedLength < length) return new boolean[length];
         else return intToBooleans(intValue, savedLength);
@@ -51,11 +59,11 @@ public class Storage {
     }
 
     public void locationPermission(boolean granted) {
-        PREFS.edit().putBoolean("io.relayr.iotsp.permission.location", granted).apply();
+        PREFS.edit().putBoolean(PREFS_SETTINGS_LOCATION, granted).apply();
     }
 
     public boolean locationGranted() {
-        return PREFS.getBoolean("io.relayr.iotsp.permission.location", false);
+        return PREFS.getBoolean(PREFS_SETTINGS_LOCATION, false);
     }
 
     public void clear() {
@@ -63,11 +71,11 @@ public class Storage {
     }
 
     public void saveUser(User user) {
-        PREFS.edit().putString("io.relayr.username", user.getName()).apply();
-        PREFS.edit().putString("io.relayr.userId", user.getId()).apply();
+        PREFS.edit().putString(PREFS_USERNAME, user.getName()).apply();
+        PREFS.edit().putString(PREFS_USER_ID, user.getId()).apply();
     }
 
     public String getUsername() {
-        return PREFS.getString("io.relayr.username", "");
+        return PREFS.getString(PREFS_USERNAME, "");
     }
 }

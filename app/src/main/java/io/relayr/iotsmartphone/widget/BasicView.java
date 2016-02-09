@@ -8,7 +8,7 @@ import io.relayr.iotsmartphone.helper.ControlListener;
 
 public class BasicView extends LinearLayout {
 
-    protected ControlListener mListener;
+    ControlListener mListener;
 
     public BasicView(Context context) {
         super(context);

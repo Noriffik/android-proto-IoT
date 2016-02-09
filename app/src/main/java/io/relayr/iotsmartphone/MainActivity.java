@@ -129,14 +129,14 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
 
     private void logOut() {
         mLogOutDialog = new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Log out")
-                .setMessage("Are you sure you want to log out?")
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                .setTitle(getString(R.string.ma_log_out_dialog_title))
+                .setMessage(getString(R.string.ma_log_out_dialog_message))
+                .setNegativeButton(getString(R.string.ma_log_out_dialog_negative), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
                 })
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                .setPositiveButton(getString(R.string.ma_log_out_dialog_positive), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                         RelayrSdk.logOut();
@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         if (Storage.instance().getDevice() != null) {
             switchView(1);
         } else {
-            mLoadingProgress = ProgressDialog.show(this, "Initializing...", "Please wait", true);
+            mLoadingProgress = ProgressDialog.show(this, getString(R.string.initializing), getString(R.string.please_wait), true);
 
             RelayrSdk.getUser()
                     .flatMap(new Func1<User, Observable<List<Device>>>() {

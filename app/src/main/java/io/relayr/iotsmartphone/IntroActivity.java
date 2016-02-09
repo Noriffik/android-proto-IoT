@@ -4,8 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
@@ -28,6 +28,7 @@ public class IntroActivity extends AppCompatActivity {
 
     @InjectView(R.id.intro_image) ImageView mImage;
 
+    private final int ANIMATION_DURATION = 2500;
     private Subscription mUserInfoSubscription = Subscriptions.empty();
 
     public static void start(MainActivity context) {
@@ -38,39 +39,22 @@ public class IntroActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_intro);
         ButterKnife.inject(this);
-        Log.e("IA", "onCreate");
 
         if (RelayrSdk.isUserLoggedIn()) {
-            showToast("Hello " + Storage.instance().getUsername());
+            showToast(getString(R.string.ia_hello, Storage.instance().getUsername()));
             new Handler().postDelayed(new Runnable() {
                 @Override public void run() {
                     startActivity(new Intent(IntroActivity.this, MainActivity.class));
                     finish();
                 }
-            }, 3000);
+            }, ANIMATION_DURATION);
         }
 
-        AnimationSet animSet = new AnimationSet(false);
-        RotateAnimation rotate = new RotateAnimation(0f, 1440f, RELATIVE_TO_SELF, 0.5f, RELATIVE_TO_SELF, 0.5f);
-        rotate.setDuration(1500);
-        rotate.setFillAfter(true);
-
-        ScaleAnimation zoom = new ScaleAnimation(0, 1.5f, 0, 1.5f, RELATIVE_TO_SELF, 0.5f, RELATIVE_TO_SELF, 1f);
-        zoom.setDuration(2000);
-        zoom.setFillAfter(true);
-
-        animSet.addAnimation(zoom);
-        animSet.addAnimation(rotate);
-        animSet.setFillAfter(true);
-        animSet.setInterpolator(new AccelerateDecelerateInterpolator());
-
-        mImage.setAnimation(animSet);
+        mImage.setAnimation(createAnimation());
     }
 
     @Override protected void onResume() {
         super.onResume();
-        Log.e("IA", "onResume");
-
         if (mImage != null) mImage.animate();
 
         if (!RelayrSdk.isUserLoggedIn()) {
@@ -78,13 +62,31 @@ public class IntroActivity extends AppCompatActivity {
                 @Override public void run() {
                     logIn();
                 }
-            }, 2500);
+            }, ANIMATION_DURATION);
         }
     }
 
     @Override protected void onPause() {
         super.onPause();
         mUserInfoSubscription.unsubscribe();
+    }
+
+    private Animation createAnimation() {
+        AnimationSet animSet = new AnimationSet(false);
+        RotateAnimation rotate = new RotateAnimation(0f, 1440f, RELATIVE_TO_SELF, 0.5f, RELATIVE_TO_SELF, 0.5f);
+        rotate.setDuration((long) (ANIMATION_DURATION * .7f));
+        rotate.setFillAfter(true);
+
+        ScaleAnimation zoom = new ScaleAnimation(0, 1.5f, 0, 1.5f, RELATIVE_TO_SELF, 0.5f, RELATIVE_TO_SELF, 1f);
+        zoom.setDuration((long) (ANIMATION_DURATION * .9f));
+        zoom.setFillAfter(true);
+
+        animSet.addAnimation(zoom);
+        animSet.addAnimation(rotate);
+        animSet.setFillAfter(true);
+        animSet.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        return animSet;
     }
 
     private void logIn() {
@@ -94,7 +96,7 @@ public class IntroActivity extends AppCompatActivity {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
-                        showToast("Log in failed");
+                        showToast(getString(R.string.ia_log_in_failed));
                     }
 
                     @Override public void onNext(User user) {
@@ -110,7 +112,7 @@ public class IntroActivity extends AppCompatActivity {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
-                        showToast("Something went wrong.");
+                        showToast(getString(R.string.something_went_wrong));
                         e.printStackTrace();
 
                         startActivity(new Intent(IntroActivity.this, MainActivity.class));
@@ -120,7 +122,7 @@ public class IntroActivity extends AppCompatActivity {
                     @Override public void onNext(User user) {
                         Storage.instance().saveUser(user);
 
-                        showToast("Hello " + user.getName());
+                        showToast(getString(R.string.ia_hello, user.getName()));
 
                         startActivity(new Intent(IntroActivity.this, MainActivity.class));
                         finish();

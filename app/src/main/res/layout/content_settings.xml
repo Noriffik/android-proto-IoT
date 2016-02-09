@@ -11,16 +11,16 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <TextView
                 style="@style/TitleText"
-                android:text="Publish settings"/>
+                android:text="@string/sv_publish_title"/>
 
             <TextView
                 style="@style/NormalText"
-                android:text="Turn ON the switches for the data you would like to be published to the cloud and visible on the dashboard."/>
+                android:text="@string/sv_publish_info"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/send_wifi_switch"
@@ -28,7 +28,7 @@
                 android:drawableLeft="@drawable/ic_wifi"
                 android:drawablePadding="@dimen/default_padding"
                 android:gravity="center_vertical"
-                android:text="WiFi"/>
+                android:text="@string/sv_publish_wifi"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/send_battery_switch"
@@ -36,7 +36,7 @@
                 android:drawableLeft="@drawable/ic_battery"
                 android:drawablePadding="@dimen/default_padding"
                 android:gravity="center_vertical"
-                android:text="Battery"/>
+                android:text="@string/sv_publish_battery"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/send_location_switch"
@@ -44,7 +44,7 @@
                 android:drawableLeft="@drawable/ic_location"
                 android:drawablePadding="@dimen/default_padding"
                 android:gravity="center_vertical"
-                android:text="Location"/>
+                android:text="@string/sv_publish_location"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/send_acceleration_switch"
@@ -52,7 +52,7 @@
                 android:drawableLeft="@drawable/ic_acceleration"
                 android:drawablePadding="@dimen/default_padding"
                 android:gravity="center_vertical"
-                android:text="Acceleration"/>
+                android:text="@string/sv_publish_acceleration"/>
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -64,7 +64,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginRight="50dp"
-                    android:hint="Send something"
+                    android:hint="@string/sv_publish_message_hint"
                     android:singleLine="true"
                     android:textSize="@dimen/normal_text"/>
 
@@ -79,11 +79,11 @@
 
             <TextView
                 style="@style/TitleText"
-                android:text="Subscribe settings"/>
+                android:text="@string/sv_subscribe_title"/>
 
             <TextView
                 style="@style/NormalText"
-                android:text="Turn ON the switches for features to be controlled from the dashboard."/>
+                android:text="@string/sv_subscribe_info"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/receive_flash_switch"
@@ -91,7 +91,7 @@
                 android:drawableLeft="@drawable/ic_flash"
                 android:drawablePadding="@dimen/default_padding"
                 android:gravity="center_vertical"
-                android:text="Flashlight"/>
+                android:text="@string/sv_subscribe_flash"/>
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/receive_sound_switch"
@@ -99,7 +99,7 @@
                 android:drawableLeft="@drawable/ic_sound"
                 android:drawablePadding="@dimen/default_padding"
                 android:gravity="center_vertical"
-                android:text="Sounds"/>
+                android:text="@string/sv_subscribe_sound"/>
 
         </LinearLayout>
     </ScrollView>
