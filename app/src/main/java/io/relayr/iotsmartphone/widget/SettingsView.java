@@ -26,11 +26,14 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Surface;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -143,6 +146,17 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
             @Override public void afterTextChanged(Editable s) {}
         });
+
+        mMessage.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    onMessageSend();
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     @Override protected void onDetachedFromWindow() {
@@ -201,10 +215,10 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     @SuppressWarnings("unused")
     @OnClick(R.id.message_send)
     public void onMessageSend() {
-        hideKeyboard();
-
         final String message = mMessage.getText().toString().trim();
         if (message.isEmpty()) return;
+
+        hideKeyboard();
 
         mMessage.setText("");
         mIconSend.setImageResource(R.drawable.action_send_inactive);
@@ -450,7 +464,13 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     //NOT implemented
-    @Override public void onProviderEnabled(String provider) {}
+    @Override public void onProviderEnabled(String provider) {
+        if (Storage.instance().locationGranted()) {
+            mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
+            if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED)
+                mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, this);
+        }
+    }
 
     //NOT implemented
     @Override public void onProviderDisabled(String provider) {}

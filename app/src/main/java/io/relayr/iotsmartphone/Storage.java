@@ -63,7 +63,7 @@ public class Storage {
     }
 
     public boolean locationGranted() {
-        return PREFS.getBoolean(PREFS_SETTINGS_LOCATION, false);
+        return PREFS.getBoolean(PREFS_SETTINGS_LOCATION, true);
     }
 
     public void clear() {
