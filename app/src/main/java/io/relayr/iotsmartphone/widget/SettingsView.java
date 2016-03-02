@@ -38,6 +38,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -205,7 +207,6 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                 reading = createAccelReading(e.values[1], -e.values[0], e.values[2]);
         }
 
-        Log.e("PUB", "acc");
         publishReading(reading);
     }
 
@@ -417,6 +418,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
+                        Crashlytics.log("publishReading - error");
                         Log.e("SettingsView", "publishReading - error");
                         e.printStackTrace();
                     }
@@ -435,6 +437,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
+                        Crashlytics.log("subscribeToCommands - error");
                         Log.e("SettingsView", "subscribeToCommands - error");
                         e.printStackTrace();
                     }

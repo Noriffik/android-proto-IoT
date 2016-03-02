@@ -19,6 +19,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import com.crashlytics.android.Crashlytics;
+
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -164,6 +166,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                         @Override public void onCompleted() {}
 
                         @Override public void onError(Throwable e) {
+                            Crashlytics.log("Loading devices failed.");
                             Log.e("MA", "Loading devices failed.");
                             e.printStackTrace();
                             if (mLoadingProgress != null) mLoadingProgress.dismiss();
