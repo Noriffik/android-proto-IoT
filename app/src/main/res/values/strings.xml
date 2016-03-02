@@ -5,6 +5,7 @@
     <string name="navigation_drawer_open">Open</string>
     <string name="navigation_drawer_close">Close</string>
 
+    <string name="ok">OK</string>
     <string name="initializing">Initializing…</string>
     <string name="please_wait">Please wait…</string>
     <string name="something_went_wrong">Something went wrong…</string>
@@ -56,5 +57,8 @@
     <string name="sv_subscribe_info">Turn ON the switches for features to be controlled from the dashboard.</string>
     <string name="sv_subscribe_flash">Flashlight</string>
     <string name="sv_subscribe_sound">Sounds</string>
+    <string name="sv_warning_dialog_title">Mobile data warning</string>
+    <string name="sv_warning_dialog_text">Be aware that sending accelerometer readings is using a lot of Internet data.</string>
+    <string name="sv_warning_toast">Accelerometer readings are using a lot of Internet data.</string>
 
 </resources>

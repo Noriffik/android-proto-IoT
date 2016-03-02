@@ -21,7 +21,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">@dimen/title_text</item>
         <item name="android:gravity">left</item>
-        <item name="android:layout_marginTop">@dimen/settings_padding</item>
+        <item name="android:layout_marginTop">@dimen/default_padding</item>
         <item name="android:layout_marginBottom">@dimen/default_padding</item>
     </style>
 
@@ -47,6 +47,8 @@
         <item name="android:layout_marginLeft">@dimen/default_padding</item>
         <item name="android:layout_marginTop">@dimen/default_padding</item>
         <item name="android:minWidth">@dimen/settings_switch_width</item>
+        <item name="android:layout_width">@dimen/settings_switch_width</item>
+        <item name="android:width">@dimen/settings_switch_width</item>
     </style>
 
 </resources>

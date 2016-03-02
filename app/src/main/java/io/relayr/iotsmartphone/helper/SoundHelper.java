@@ -24,6 +24,7 @@ public class SoundHelper {
 
     public void playMusic(Context context, String seconds) {
         if (mIsPlaying) return;
+        mIsPlaying = true;
 
         int sec;
         try {
@@ -35,9 +36,8 @@ public class SoundHelper {
 
         Uri alarm = RingtoneManager.getDefaultUri(TYPE_ALARM);
         if (mRingManager == null) mRingManager = RingtoneManager.getRingtone(context, alarm);
-        mRingManager.play();
-        mIsPlaying = true;
         vibrate(context, sec * 1000);
+        mRingManager.play();
 
         Observable
                 .create(new Observable.OnSubscribe<Object>() {

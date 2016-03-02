@@ -8,6 +8,8 @@ import io.relayr.java.model.User;
 
 public class Storage {
 
+    public static final String MODEL_ID = "86e0a7d7-5e18-449c-b7aa-f3b089c33b67";
+
     private final static Storage singleton = new Storage();
     private static Device sDevice;
 
@@ -21,6 +23,8 @@ public class Storage {
 
     private final String PREFS_USERNAME = "io.relayr.username";
     private final String PREFS_USER_ID = "io.relayr.userId";
+
+    private final String PREFS_WARNING = "io.relayr.warning";
 
     private Storage() {
         PREFS = IotApplication.context().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -77,5 +81,13 @@ public class Storage {
 
     public String getUsername() {
         return PREFS.getString(PREFS_USERNAME, "");
+    }
+
+    public void warningShown() {
+        PREFS.edit().putBoolean(PREFS_WARNING, true).apply();
+    }
+
+    public boolean isWarningShown() {
+        return PREFS.getBoolean(PREFS_WARNING, false);
     }
 }

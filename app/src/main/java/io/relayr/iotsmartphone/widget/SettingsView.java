@@ -2,6 +2,7 @@ package io.relayr.iotsmartphone.widget;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.Sensor;
@@ -21,6 +22,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -75,6 +77,7 @@ import static android.os.BatteryManager.EXTRA_SCALE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
+import static android.widget.Toast.LENGTH_LONG;
 import static android.widget.Toast.LENGTH_SHORT;
 
 public class SettingsView extends BasicView implements SensorEventListener, LocationListener {
@@ -179,17 +182,15 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     public void onSensorChanged(SensorEvent e) {
         if (!mSettings[3]) return;
         if (e.sensor.getType() != TYPE_ACCELEROMETER) return;
-
         if (mSensorChange++ % 3 != 0) return;
 
         int rotation;
-        Reading reading = null;
-
         if (SDK_INT >= JELLY_BEAN_MR1)
             rotation = getDisplay().getRotation();
         else  //noinspection deprecation
             rotation = getDisplay().getOrientation();
 
+        Reading reading = null;
         switch (rotation) {
             case Surface.ROTATION_0:
                 reading = createAccelReading(e.values[0], e.values[1], e.values[2]);
@@ -204,12 +205,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                 reading = createAccelReading(e.values[1], -e.values[0], e.values[2]);
         }
 
+        Log.e("PUB", "acc");
         publishReading(reading);
-    }
-
-    @Override public void onLocationChanged(Location location) {
-        if (!mSettings[2]) return;
-        publishAddress(location.getLatitude(), location.getLongitude());
     }
 
     @SuppressWarnings("unused")
@@ -237,7 +234,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         acceleration.x = x;
         acceleration.y = y;
         acceleration.z = z;
-        return new Reading(0, 0, "acceleration", "", acceleration);
+        mNow = System.currentTimeMillis();
+        return new Reading(mNow, mNow, "acceleration", "", acceleration);
     }
 
     private void setUpSwitches() {
@@ -251,7 +249,6 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             }
         });
         mWiFiSwitch.setChecked(mSettings[0]);
-        if (mSettings[0]) monitorWiFi();
 
         mBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -261,7 +258,6 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             }
         });
         mBatterySwitch.setChecked(mSettings[1]);
-        if (mSettings[1]) monitorBattery();
 
         mLocSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -271,12 +267,17 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             }
         });
         mLocSwitch.setChecked(mSettings[2]);
-        if (mSettings[2]) monitorLocation();
 
         mAccelSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSettings[3] = isChecked;
                 Storage.instance().saveSettings(mSettings);
+                if (mSettings[3]) {
+                    if (!Storage.instance().isWarningShown())
+                        showAccelerometerWarning();
+                    else
+                        Toast.makeText(getContext(), getContext().getString(R.string.sv_warning_toast), LENGTH_LONG).show();
+                }
             }
         });
         mAccelSwitch.setChecked(mSettings[3]);
@@ -290,7 +291,6 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             }
         });
         mFlashSwitch.setChecked(mSettings[4]);
-        if (mSettings[4]) createFlashHelper();
 
         mSoundSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -301,9 +301,18 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             }
         });
         mSoundSwitch.setChecked(mSettings[5]);
-        if (mSettings[5]) createSoundHelper();
+    }
 
-        subscribeToCommands();
+    private void showAccelerometerWarning() {
+        new AlertDialog.Builder(getContext()).setTitle(getContext().getString(R.string.sv_warning_dialog_title))
+                .setIcon(R.drawable.ic_warning)
+                .setMessage(getContext().getString(R.string.sv_warning_dialog_text))
+                .setPositiveButton(getContext().getString(R.string.ok), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int i) {
+                        Storage.instance().warningShown();
+                        dialog.dismiss();
+                    }
+                }).show();
     }
 
     private void monitorWiFi() {
@@ -314,7 +323,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
-            publishReading(new Reading(mNow, mNow, "wifi", "rssi", wifiInfo.getRssi()));
+            publishReading(new Reading(mNow, mNow, "rssi", "wifi", wifiInfo.getRssi()));
     }
 
     private boolean checkWifi(ConnectivityManager cm) {
@@ -432,7 +441,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
                     @Override public void onNext(Command action) {
                         final String cmd = action.getName();
-                        if (cmd.equals("flashlight")) toggleFlash((Boolean) action.getValue());
+                        if (cmd.equals("flashlight"))
+                            toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
                         if (cmd.equals("playSound")) playMusic((String) action.getValue());
                     }
                 });
@@ -463,7 +473,6 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         }
     }
 
-    //NOT implemented
     @Override public void onProviderEnabled(String provider) {
         if (Storage.instance().locationGranted()) {
             mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
@@ -480,4 +489,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
     //NOT implemented
     @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+    //NOT implemented
+    @Override public void onLocationChanged(Location location) {}
 }

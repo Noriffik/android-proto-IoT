@@ -166,14 +166,14 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                         @Override public void onError(Throwable e) {
                             Log.e("MA", "Loading devices failed.");
                             e.printStackTrace();
-                            mLoadingProgress.dismiss();
+                            if (mLoadingProgress != null) mLoadingProgress.dismiss();
                             checkForDevice();
                         }
 
                         @Override public void onNext(List<Device> devices) {
-                            mLoadingProgress.dismiss();
+                            if (mLoadingProgress != null) mLoadingProgress.dismiss();
                             for (Device device : devices)
-                                if (device.getModelId() != null && device.getModelId().equals("86e0a7d7-5e18-449c-b7aa-f3b089c33b67"))
+                                if (device.getModelId() != null && device.getModelId().equals(Storage.MODEL_ID))
                                     Storage.instance().saveDevice(device);
 
                             switchView(Storage.instance().getDevice() != null ? 1 : 0);
@@ -188,17 +188,21 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     }
 
     private void switchView() {
-        mFab.setVisibility(mPosition == 1 ? VISIBLE : GONE);
+        runOnUiThread(new Runnable() {
+            @Override public void run() {
+                mFab.setVisibility(mPosition == 1 ? VISIBLE : GONE);
 
-        mContainer.removeAllViews();
-        if (mPosition == 0)
-            mCurrentView = (BasicView) View.inflate(this, R.layout.content_device, null);
-        else if (mPosition == 1)
-            mCurrentView = (BasicView) View.inflate(this, R.layout.content_settings, null);
-        else if (mPosition == 2)
-            mCurrentView = (BasicView) View.inflate(this, R.layout.content_user, null);
+                mContainer.removeAllViews();
+                if (mPosition == 0)
+                    mCurrentView = (BasicView) View.inflate(MainActivity.this, R.layout.content_device, null);
+                else if (mPosition == 1)
+                    mCurrentView = (BasicView) View.inflate(MainActivity.this, R.layout.content_main, null);
+                else if (mPosition == 2)
+                    mCurrentView = (BasicView) View.inflate(MainActivity.this, R.layout.content_user, null);
 
-        mCurrentView.setListener(this);
-        mContainer.addView(mCurrentView);
+                mCurrentView.setListener(MainActivity.this);
+                mContainer.addView(mCurrentView);
+            }
+        });
     }
 }

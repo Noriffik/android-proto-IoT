@@ -7,6 +7,7 @@ import com.crashlytics.android.Crashlytics;
 
 import io.fabric.sdk.android.Fabric;
 import io.relayr.android.RelayrSdk;
+import retrofit.RestAdapter;
 
 public class IotApplication extends Application {
 
@@ -18,7 +19,7 @@ public class IotApplication extends Application {
         mContext = getApplicationContext();
 
         Fabric.with(this, new Crashlytics());
-        new RelayrSdk.Builder(this).cacheModels(true).build();
+        new RelayrSdk.Builder(this).setLogLevel(RestAdapter.LogLevel.BASIC).build();
     }
 
     public static Context context() {

@@ -26,8 +26,6 @@ import static android.widget.Toast.LENGTH_LONG;
 
 public class DeviceView extends BasicView {
 
-    private static final String MODEL_ID = "86e0a7d7-5e18-449c-b7aa-f3b089c33b67";
-
     @InjectView(R.id.device_name) EditText mName;
 
     private ProgressDialog mCreateProgress;
@@ -58,7 +56,8 @@ public class DeviceView extends BasicView {
                 getContext().getString(R.string.dv_creating_device),
                 getContext().getString(R.string.please_wait), true);
 
-        final CreateDevice device = new CreateDevice(mName.getText().toString(), MODEL_ID, DataStorage.getUserId(), null, null);
+        final CreateDevice device = new CreateDevice(mName.getText().toString(), Storage.MODEL_ID,
+                DataStorage.getUserId(), null, null);
         RelayrSdk.getDeviceApi()
                 .createDevice(device)
                 .timeout(5, TimeUnit.SECONDS)
