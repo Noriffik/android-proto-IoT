@@ -53,13 +53,20 @@ public class FlashHelper {
                 if (cOrientation == CameraCharacteristics.LENS_FACING_BACK) cameraId = camId;
             }
         } else {
-            camera = Camera.open();
-            if (camera != null) {
-                cameraParameters = camera.getParameters();
-                previousFlashMode = cameraParameters.getFlashMode();
+            int numberOfCameras = Camera.getNumberOfCameras();
+            for (int i = 0; i < numberOfCameras; i++) {
+                Camera.CameraInfo info = new Camera.CameraInfo();
+                Camera.getCameraInfo(i, info);
+                if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                    camera = Camera.open(i);
+                    if (this.camera != null) {
+                        cameraParameters = this.camera.getParameters();
+                        previousFlashMode = cameraParameters.getFlashMode();
+                    }
+                    if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
+                    break;
+                }
             }
-
-            if (previousFlashMode == null) previousFlashMode = FLASH_MODE_OFF;
         }
     }
 

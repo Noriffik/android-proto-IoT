@@ -28,7 +28,8 @@ public class SoundHelper {
 
         int sec;
         try {
-            sec = Integer.parseInt(seconds) % 10;
+            sec = Integer.parseInt(seconds);
+            if (sec > 10) sec = sec % 10;
         } catch (Exception e) {
             Log.e("SettingsView", "Seconds can't be parsed: " + seconds);
             return;

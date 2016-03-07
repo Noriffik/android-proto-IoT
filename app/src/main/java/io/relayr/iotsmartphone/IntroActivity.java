@@ -28,7 +28,7 @@ public class IntroActivity extends AppCompatActivity {
 
     @InjectView(R.id.intro_image) ImageView mImage;
 
-    private final int ANIMATION_DURATION = 2500;
+    private final int ANIMATION_DURATION = 1500;
     private Subscription mUserInfoSubscription = Subscriptions.empty();
 
     public static void start(MainActivity context) {

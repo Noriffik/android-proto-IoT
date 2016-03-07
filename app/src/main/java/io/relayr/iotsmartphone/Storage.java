@@ -9,22 +9,17 @@ import io.relayr.java.model.User;
 public class Storage {
 
     public static final String MODEL_ID = "86e0a7d7-5e18-449c-b7aa-f3b089c33b67";
+    private static final String PREFS_NAME = "io.relayr.iotsp";
+    private static final String PREFS_SETTINGS_TOTAL = "io.relayr.iotsp.settings.total";
+    private static final String PREFS_SETTINGS_VALUE = "io.relayr.iotsp.settings.value";
+    private static final String PREFS_SETTINGS_LOCATION = "io.relayr.iotsp.permission.location";
+    private static final String PREFS_USERNAME = "io.relayr.username";
+    private static final String PREFS_USER_ID = "io.relayr.userId";
+    private static final String PREFS_WARNING = "io.relayr.warning";
 
     private final static Storage singleton = new Storage();
     private static Device sDevice;
-
-    private static final String PREFS_NAME = "io.relayr.iotsp";
-
     private final SharedPreferences PREFS;
-
-    private final String PREFS_SETTINGS_TOTAL = "io.relayr.iotsp.settings.total";
-    private final String PREFS_SETTINGS_VALUE = "io.relayr.iotsp.settings.value";
-    private final String PREFS_SETTINGS_LOCATION = "io.relayr.iotsp.permission.location";
-
-    private final String PREFS_USERNAME = "io.relayr.username";
-    private final String PREFS_USER_ID = "io.relayr.userId";
-
-    private final String PREFS_WARNING = "io.relayr.warning";
 
     private Storage() {
         PREFS = IotApplication.context().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);

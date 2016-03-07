@@ -20,7 +20,9 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
+import io.relayr.java.model.models.DeviceModel;
 import io.relayr.java.model.models.error.DeviceModelsException;
+import rx.Observer;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -53,8 +55,10 @@ public class UserView extends BasicView {
         super.onAttachedToWindow();
         ButterKnife.inject(this);
 
-        mUsedDeviceName.setText(Storage.instance().getDevice().getName());
-        mUsedDeviceId.setText(Storage.instance().getDevice().getId());
+        if (Storage.instance().getDevice() != null) {
+            mUsedDeviceName.setText(Storage.instance().getDevice().getName());
+            mUsedDeviceId.setText(Storage.instance().getDevice().getId());
+        }
 
         RelayrSdk.getUser()
                 .observeOn(AndroidSchedulers.mainThread())
@@ -154,11 +158,20 @@ public class UserView extends BasicView {
 
             public void setData(Device device) {
                 name.setText(device.getName());
-                try {
-                    model.setText(device.getDeviceModel().getName());
-                } catch (DeviceModelsException e) {
-                    e.printStackTrace();
-                }
+                device.getDeviceModel()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Observer<DeviceModel>() {
+                            @Override public void onCompleted() {}
+
+                            @Override public void onError(Throwable e) {
+                                e.printStackTrace();
+                            }
+
+                            @Override public void onNext(DeviceModel deviceModel) {
+                                if (deviceModel != null)
+                                    model.setText(deviceModel.getName());
+                            }
+                        });
             }
         }
     }
