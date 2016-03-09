@@ -7,6 +7,9 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
+import android.util.Log;
+
+import com.crashlytics.android.Crashlytics;
 
 import static android.content.Context.CAMERA_SERVICE;
 import static android.content.pm.PackageManager.FEATURE_CAMERA_FLASH;
@@ -34,6 +37,7 @@ public class FlashHelper {
                 final Boolean flashAvailable = cameraCharacteristics.get(FLASH_INFO_AVAILABLE);
                 return flashAvailable == null ? false : flashAvailable;
             } catch (CameraAccessException e) {
+                Crashlytics.log(Log.ERROR, "FlashH", "Check flash availability failed.");
                 e.printStackTrace();
             }
         } else {
@@ -72,12 +76,14 @@ public class FlashHelper {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP) public synchronized boolean on() {
         if (SDK_INT >= Build.VERSION_CODES.M) {
-            if (cameraManager != null && cameraId != null) try {
-                cameraManager.setTorchMode(cameraId, true);
-                return true;
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
+            if (cameraManager != null && cameraId != null)
+                try {
+                    cameraManager.setTorchMode(cameraId, true);
+                    return true;
+                } catch (CameraAccessException e) {
+                    Crashlytics.log(Log.ERROR, "FlashH", "Failed to access camera when turning ON.");
+                    e.printStackTrace();
+                }
         } else {
             if (camera != null) {
                 cameraParameters.setFlashMode(FLASH_MODE_TORCH);
@@ -91,12 +97,14 @@ public class FlashHelper {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP) public synchronized boolean off() {
         if (SDK_INT >= Build.VERSION_CODES.M) {
-            if (cameraManager != null && cameraId != null) try {
-                cameraManager.setTorchMode(cameraId, false);
-                return true;
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
+            if (cameraManager != null && cameraId != null)
+                try {
+                    cameraManager.setTorchMode(cameraId, false);
+                    return true;
+                } catch (CameraAccessException e) {
+                    Crashlytics.log(Log.ERROR, "FlashH", "Failed to access camera when turning OFF.");
+                    e.printStackTrace();
+                }
         } else {
             if (camera != null) {
                 cameraParameters.setFlashMode(FLASH_MODE_OFF);

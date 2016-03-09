@@ -21,6 +21,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
@@ -184,7 +185,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     public void onSensorChanged(SensorEvent e) {
         if (!mSettings[3]) return;
         if (e.sensor.getType() != TYPE_ACCELEROMETER) return;
-        if (mSensorChange++ % 3 != 0) return;
+        if (mSensorChange++ % 5 != 0) return;
 
         int rotation;
         if (SDK_INT >= JELLY_BEAN_MR1)
@@ -220,7 +221,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
         mMessage.setText("");
         mIconSend.setImageResource(R.drawable.action_send_inactive);
-        publishReading(new Reading(mNow, mNow, "message", "", message));
+        publishReading(new Reading(mNow, mNow, "message", "/", message));
     }
 
     public void refreshData() {
@@ -236,7 +237,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         acceleration.y = y;
         acceleration.z = z;
         mNow = System.currentTimeMillis();
-        return new Reading(mNow, mNow, "acceleration", "", acceleration);
+        return new Reading(mNow, mNow, "acceleration", "/", acceleration);
     }
 
     private void setUpSwitches() {
@@ -304,18 +305,6 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         mSoundSwitch.setChecked(mSettings[5]);
     }
 
-    private void showAccelerometerWarning() {
-        new AlertDialog.Builder(getContext()).setTitle(getContext().getString(R.string.sv_warning_dialog_title))
-                .setIcon(R.drawable.ic_warning)
-                .setMessage(getContext().getString(R.string.sv_warning_dialog_text))
-                .setPositiveButton(getContext().getString(R.string.ok), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int i) {
-                        Storage.instance().warningShown();
-                        dialog.dismiss();
-                    }
-                }).show();
-    }
-
     private void monitorWiFi() {
         if (!mSettings[0]) return;
 
@@ -353,7 +342,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         if (level == -1 || scale == -1) bat = 50.0f;
         else bat = ((float) level / (float) scale) * 100.0f;
 
-        publishReading(new Reading(mNow, mNow, "batteryLevel", "", bat));
+        publishReading(new Reading(mNow, mNow, "batteryLevel", "/", bat));
     }
 
     private void monitorLocation() {
@@ -362,14 +351,12 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED) {
             Location location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            if (location != null)
-                publishAddress(location.getLatitude(), location.getLongitude());
-            else
-                Toast.makeText(getContext(), R.string.sv_location_off, Toast.LENGTH_SHORT).show();
+            if (location != null) publishLocation(location.getLatitude(), location.getLongitude());
+            else showLocationDialog();
         }
     }
 
-    public void publishAddress(double lat, double lng) {
+    public void publishLocation(double lat, double lng) {
         if (!mSettings[2]) return;
 
         try {
@@ -382,11 +369,42 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             address += obj.getAddressLine(1) + ", ";
             address += obj.getAddressLine(0);
 
-            publishReading(new Reading(mNow, mNow, "location", "", address));
+            publishReading(new Reading(mNow, mNow, "location", "/", address));
         } catch (IOException e) {
             Toast.makeText(getContext(), R.string.sv_location_resolve_err, Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
+    }
+
+    private void showAccelerometerWarning() {
+        new AlertDialog.Builder(getContext()).setTitle(getContext().getString(R.string.sv_warning_dialog_title))
+                .setIcon(R.drawable.ic_warning)
+                .setMessage(getContext().getString(R.string.sv_warning_dialog_text))
+                .setPositiveButton(getContext().getString(R.string.ok), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int i) {
+                        Storage.instance().warningShown();
+                        dialog.dismiss();
+                    }
+                }).show();
+    }
+
+    private void showLocationDialog() {
+        new AlertDialog.Builder(getContext()).setTitle(getContext().getString(R.string.sv_location_off_title))
+                .setIcon(R.drawable.ic_warning)
+                .setMessage(getContext().getString(R.string.sv_location_off_message))
+                .setPositiveButton(getContext().getString(R.string.ok), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int i) {
+                        dialog.dismiss();
+                        Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                        getContext().startActivity(myIntent);
+                    }
+                })
+                .setNegativeButton(getContext().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
     }
 
     private void createFlashHelper() {
@@ -396,10 +414,12 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         try {
             mFlash.open(getContext().getApplicationContext());
         } catch (Exception e) {
+            Crashlytics.log(Log.ERROR, "SV", "Failed to create FlashHelper.");
+            e.printStackTrace();
+
             Toast.makeText(getContext(), R.string.sv_err_using_flash, Toast.LENGTH_SHORT).show();
             mFlash.close();
             mFlash = null;
-            e.printStackTrace();
         }
     }
 
@@ -418,8 +438,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
-                        Crashlytics.log("publishReading - error");
-                        Log.e("SettingsView", "publishReading - error");
+                        Crashlytics.log(Log.ERROR, "SV", "publishReading - error");
                         e.printStackTrace();
                     }
 
@@ -494,5 +513,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     //NOT implemented
-    @Override public void onLocationChanged(Location location) {}
+    @Override public void onLocationChanged(Location location) {
+        publishLocation(location.getLatitude(), location.getLongitude());
+    }
 }

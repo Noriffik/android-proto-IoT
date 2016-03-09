@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
@@ -11,6 +12,11 @@ import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.crashlytics.android.Crashlytics;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -96,7 +102,13 @@ public class IntroActivity extends AppCompatActivity {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
+                        Crashlytics.log(Log.ERROR, "IA", "Login failed.");
+                        e.printStackTrace();
+
                         showToast(getString(R.string.ia_log_in_failed));
+
+                        if (e instanceof TimeoutException) logIn();
+                        else finish();
                     }
 
                     @Override public void onNext(User user) {
@@ -107,16 +119,19 @@ public class IntroActivity extends AppCompatActivity {
 
     private void loadUserInfo() {
         mUserInfoSubscription = RelayrSdk.getUser()
+                .timeout(7, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<User>() {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
-                        showToast(getString(R.string.something_went_wrong));
+                        Crashlytics.log(Log.ERROR, "IA", "Failed to load user info.");
                         e.printStackTrace();
 
-                        startActivity(new Intent(IntroActivity.this, MainActivity.class));
-                        finish();
+                        showToast(getString(R.string.something_went_wrong));
+
+                        if (e instanceof TimeoutException) loadUserInfo();
+                        else finish();
                     }
 
                     @Override public void onNext(User user) {

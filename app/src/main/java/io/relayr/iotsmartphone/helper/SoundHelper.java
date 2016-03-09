@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.Vibrator;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
+
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
@@ -31,7 +33,8 @@ public class SoundHelper {
             sec = Integer.parseInt(seconds);
             if (sec > 10) sec = sec % 10;
         } catch (Exception e) {
-            Log.e("SettingsView", "Seconds can't be parsed: " + seconds);
+            Crashlytics.log(Log.ERROR, "SoundH", "Seconds can't be parsed: " + seconds);
+            e.printStackTrace();
             return;
         }
 

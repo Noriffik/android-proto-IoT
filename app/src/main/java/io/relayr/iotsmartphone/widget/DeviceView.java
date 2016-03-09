@@ -3,9 +3,12 @@ package io.relayr.iotsmartphone.widget;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.crashlytics.android.Crashlytics;
 
 import java.util.concurrent.TimeUnit;
 
@@ -66,9 +69,11 @@ public class DeviceView extends BasicView {
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
+                        Crashlytics.log(Log.ERROR, "DV", "Failed to create device.");
+                        e.printStackTrace();
+
                         if (mCreateProgress != null) mCreateProgress.dismiss();
                         Toast.makeText(getContext(), R.string.something_went_wrong, LENGTH_LONG).show();
-                        e.printStackTrace();
                     }
 
                     @Override public void onNext(Device device) {

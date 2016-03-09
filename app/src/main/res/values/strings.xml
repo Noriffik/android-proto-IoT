@@ -42,7 +42,6 @@
 
     <!--SettingsView-->
     <string name="sv_no_wifi">Not connected to Wifi</string>
-    <string name="sv_location_off">Location is turned off</string>
     <string name="sv_location_resolve_err">Problem resolving location.</string>
     <string name="sv_err_using_flash">Error when using flash</string>
     <string name="sv_flashlight_not_available">Flashlight not available.</string>
@@ -60,5 +59,7 @@
     <string name="sv_warning_dialog_title">Mobile data warning</string>
     <string name="sv_warning_dialog_text">Be aware that sending accelerometer readings is using a lot of Internet data.</string>
     <string name="sv_warning_toast">Accelerometer readings are using a lot of Internet data.</string>
+    <string name="sv_location_off_title">Location is OFF</string>
+    <string name="sv_location_off_message">Would you like to turn it on?</string>
 
 </resources>

@@ -63,8 +63,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         setSupportActionBar(toolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
@@ -114,7 +113,9 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case 100: {
-                Storage.instance().locationPermission(grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED);
+                final boolean granted = grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED;
+                Crashlytics.log(Log.INFO, "MA", "User granted permission: " + granted);
+                Storage.instance().locationPermission(granted);
                 checkForDevice();
             }
         }
@@ -140,9 +141,10 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                 })
                 .setPositiveButton(getString(R.string.ma_log_out_dialog_positive), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
+                        Crashlytics.log(Log.INFO, "MA", "User logged out.");
                         RelayrSdk.logOut();
                         Storage.instance().clear();
+                        dialog.dismiss();
                         finish();
                         IntroActivity.start(MainActivity.this);
                     }
@@ -166,8 +168,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                         @Override public void onCompleted() {}
 
                         @Override public void onError(Throwable e) {
-                            Crashlytics.log("Loading devices failed.");
-                            Log.e("MA", "Loading devices failed.");
+                            Crashlytics.log(Log.ERROR, "MA", "Loading devices failed.");
                             e.printStackTrace();
                             if (mLoadingProgress != null) mLoadingProgress.dismiss();
                             checkForDevice();
