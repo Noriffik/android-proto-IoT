@@ -9,6 +9,6 @@ import static retrofit.RestAdapter.LogLevel.FULL;
 
 public abstract class RelayrSdkInitializer {
     static void initSdk(Context context) {
-        new RelayrSdk.Builder(context).setLogLevel(RestAdapter.LogLevel.BASIC).build();
+        new RelayrSdk.Builder(context).setLogLevel(RestAdapter.LogLevel.BASIC).cacheModels(false).build();
     }
 }

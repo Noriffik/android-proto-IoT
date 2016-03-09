@@ -4,7 +4,7 @@
 # work without any subsequent effort. If you choose this strategy, the proguard
 # configuration for the project is simply the line below.
 
--keep class io.relayr.wunderbar.** { *; }
+-keep class io.relayr.iotsmartphone.** { *; }
 
 # The more involved strategy is to specifically provide rules to keep portions of your
 # app's codebase unmodified while allowing proguard to optimize the rest. 
@@ -48,9 +48,10 @@
     @butterknife.* <methods>;
 }
 
+#Google
 -keep class com.google.**
 -dontwarn com.google.**
-# Google support libs
+# Support libs
 #support-design
 -dontwarn android.support.design.**
 -keep class android.support.design.** { *; }
@@ -104,7 +105,6 @@
 -dontwarn okio.**
 
 # RxJava 0.21
-
 -keep class rx.schedulers.Schedulers {
     public static <methods>;
 }
