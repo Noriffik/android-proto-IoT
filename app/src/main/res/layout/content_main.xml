@@ -8,10 +8,12 @@
 
     <TextView
         style="@style/TitleText"
+        android:paddingBottom="@dimen/default_padding"
         android:text="@string/sv_publish_title"/>
 
     <TextView
         style="@style/NormalText"
+        android:singleLine="false"
         android:text="@string/sv_publish_info"/>
 
     <android.support.v7.widget.SwitchCompat
@@ -72,10 +74,12 @@
 
     <TextView
         style="@style/TitleText"
+        android:paddingBottom="@dimen/default_padding"
         android:text="@string/sv_subscribe_title"/>
 
     <TextView
         style="@style/NormalText"
+        android:singleLine="false"
         android:text="@string/sv_subscribe_info"/>
 
     <android.support.v7.widget.SwitchCompat

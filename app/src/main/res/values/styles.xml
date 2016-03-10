@@ -21,8 +21,8 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">@dimen/title_text</item>
         <item name="android:gravity">left</item>
+        <item name="android:textColor">@color/colorPrimaryDark</item>
         <item name="android:layout_marginTop">@dimen/default_padding</item>
-        <item name="android:layout_marginBottom">@dimen/default_padding</item>
     </style>
 
     <style name="SubtitleText" parent="TitleText">
@@ -33,6 +33,7 @@
 
     <style name="NormalText" parent="SubtitleText">
         <item name="android:textSize">@dimen/normal_text</item>
+        <item name="android:singleLine">true</item>
     </style>
 
     <style name="SmallText" parent="NormalText">
@@ -51,4 +52,31 @@
         <item name="android:width">@dimen/settings_switch_width</item>
     </style>
 
+    <!--WIDGET-->
+    <style name="MatchMatch" parent="@android:style/Widget">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="MatchMatchHor" parent="MatchMatch">
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="MatchWrap" parent="MatchMatch">
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="MatchWrapHor" parent="MatchWrap">
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="WrapWrap" parent="MatchMatch">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="WrapWrapHor" parent="WrapWrap">
+        <item name="android:orientation">horizontal</item>
+    </style>
 </resources>

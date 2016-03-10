@@ -5,8 +5,8 @@
 
     <dimen name="fab_margin">32dp</dimen>
 
-    <dimen name="title_text">30sp</dimen>
-    <dimen name="subtitle_text">22sp</dimen>
+    <dimen name="title_text">22sp</dimen>
+    <dimen name="subtitle_text">20sp</dimen>
     <dimen name="normal_text">18sp</dimen>
     <dimen name="small_text">14sp</dimen>
     <dimen name="tiny_text">12sp</dimen>

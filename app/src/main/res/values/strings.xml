@@ -35,7 +35,7 @@
     <string name="uv_iot_device_name">Name:</string>
     <string name="uv_iot_device_id">Device ID:</string>
     <string name="uv_details">User details</string>
-    <string name="uv_details_username">Username:</string>
+    <string name="uv_details_username">Name:</string>
     <string name="uv_details_email">Email:</string>
     <string name="uv_details_user_id">User ID:</string>
     <string name="uv_all_devices">All devices</string>
@@ -61,5 +61,6 @@
     <string name="sv_warning_toast">Accelerometer readings are using a lot of Internet data.</string>
     <string name="sv_location_off_title">Location is OFF</string>
     <string name="sv_location_off_message">Would you like to turn it on?</string>
+    <string name="sv_sending_in_bck">IoTSmartphone is still sending data in the background</string>
 
 </resources>

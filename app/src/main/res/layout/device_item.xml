@@ -1,27 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
+    style="@style/WrapWrapHor"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
     android:padding="@dimen/default_padding">
 
     <TextView
         android:id="@+id/device_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:singleLine="true"
-        android:textSize="@dimen/device_name_text"
+        style="@style/TinyText"
         android:textStyle="bold"/>
 
     <TextView
         android:id="@+id/device_model"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/TinyText"
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/default_padding"
-        android:layout_toRightOf="@id/device_name"
-        android:singleLine="true"
-        android:textSize="@dimen/tiny_text"/>
+        android:layout_toRightOf="@id/device_name"/>
 
 </RelativeLayout>

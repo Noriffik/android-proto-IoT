@@ -21,8 +21,9 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.text.Editable;
@@ -31,6 +32,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Surface;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
@@ -44,6 +46,7 @@ import com.crashlytics.android.Crashlytics;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -56,6 +59,8 @@ import io.relayr.iotsmartphone.helper.SoundHelper;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
+import rx.Observable;
+import rx.Observer;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -80,6 +85,7 @@ import static android.os.BatteryManager.EXTRA_SCALE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
+import static android.support.v4.content.ContextCompat.checkSelfPermission;
 import static android.widget.Toast.LENGTH_LONG;
 import static android.widget.Toast.LENGTH_SHORT;
 
@@ -128,18 +134,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         super.onAttachedToWindow();
         ButterKnife.inject(this);
 
-        mSensorManager = (SensorManager) getContext().getSystemService(SENSOR_SERVICE);
-        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER), SENSOR_DELAY_NORMAL);
-
-        mWifiManager = (WifiManager) getContext().getSystemService(WIFI_SERVICE);
-        mConnectivityManager = (ConnectivityManager) getContext().getSystemService(CONNECTIVITY_SERVICE);
-
-        if (Storage.instance().locationGranted()) {
-            mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
-            if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED)
-                mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, this);
-        }
-
+        mSettings = Storage.instance().loadSettings(mSettings.length);
         setUpSwitches();
 
         mMessage.addTextChangedListener(new TextWatcher() {
@@ -163,6 +158,18 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                 return false;
             }
         });
+
+        Observable.interval(10, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Long>() {
+                    @Override public void onCompleted() {}
+
+                    @Override public void onError(Throwable e) {}
+
+                    @Override public void onNext(Long aLong) {
+                        refreshData();
+                    }
+                });
     }
 
     @Override protected void onDetachedFromWindow() {
@@ -174,10 +181,17 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
         ButterKnife.reset(this);
 
-        if (mSensorManager != null) mSensorManager.unregisterListener(this);
+        if (mSensorManager != null) turnSensorOff();
+        if (mLocationManager != null) turnOffLocation();
 
         mPublishSubscription.unsubscribe();
         mCommandsSubscription.unsubscribe();
+    }
+
+    @Override protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (visibility != VISIBLE && (mSettings[0] || mSettings[1] || mSettings[2] || mSettings[3]))
+            Toast.makeText(getContext(), R.string.sv_sending_in_bck, LENGTH_LONG).show();
     }
 
     @Override
@@ -193,22 +207,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         else  //noinspection deprecation
             rotation = getDisplay().getOrientation();
 
-        Reading reading = null;
-        switch (rotation) {
-            case Surface.ROTATION_0:
-                reading = createAccelReading(e.values[0], e.values[1], e.values[2]);
-                break;
-            case Surface.ROTATION_90:
-                reading = createAccelReading(-e.values[1], e.values[0], e.values[2]);
-                break;
-            case Surface.ROTATION_180:
-                reading = createAccelReading(-e.values[0], -e.values[1], e.values[2]);
-                break;
-            case Surface.ROTATION_270:
-                reading = createAccelReading(e.values[1], -e.values[0], e.values[2]);
-        }
-
-        publishReading(reading);
+        publishAcceleration(e, rotation);
     }
 
     @SuppressWarnings("unused")
@@ -231,22 +230,12 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         monitorLocation();
     }
 
-    private Reading createAccelReading(float x, float y, float z) {
-        final AccelGyroscope.Acceleration acceleration = new AccelGyroscope.Acceleration();
-        acceleration.x = x;
-        acceleration.y = y;
-        acceleration.z = z;
-        mNow = System.currentTimeMillis();
-        return new Reading(mNow, mNow, "acceleration", "/", acceleration);
-    }
-
     private void setUpSwitches() {
-        mSettings = Storage.instance().loadSettings(mSettings.length);
-
         mWiFiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSettings[0] = isChecked;
                 Storage.instance().saveSettings(mSettings);
+                if (isChecked) initWifiManager();
                 monitorWiFi();
             }
         });
@@ -265,7 +254,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSettings[2] = isChecked;
                 Storage.instance().saveSettings(mSettings);
-                monitorLocation();
+                if (isChecked) initLocationManager();
+                else turnOffLocation();
             }
         });
         mLocSwitch.setChecked(mSettings[2]);
@@ -274,12 +264,9 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSettings[3] = isChecked;
                 Storage.instance().saveSettings(mSettings);
-                if (mSettings[3]) {
-                    if (!Storage.instance().isWarningShown())
-                        showAccelerometerWarning();
-                    else
-                        Toast.makeText(getContext(), getContext().getString(R.string.sv_warning_toast), LENGTH_LONG).show();
-                }
+                if (isChecked) initSensorManager();
+                if (isChecked) showAccelerometerWarning();
+                else turnSensorOff();
             }
         });
         mAccelSwitch.setChecked(mSettings[3]);
@@ -288,7 +275,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSettings[4] = isChecked;
                 Storage.instance().saveSettings(mSettings);
-                if (mSettings[4]) createFlashHelper();
+                if (isChecked) createFlashHelper();
                 subscribeToCommands();
             }
         });
@@ -298,11 +285,70 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mSettings[5] = isChecked;
                 Storage.instance().saveSettings(mSettings);
-                if (mSettings[5]) createSoundHelper();
+                if (isChecked) createSoundHelper();
                 subscribeToCommands();
             }
         });
         mSoundSwitch.setChecked(mSettings[5]);
+    }
+
+    private void initSensorManager() {
+        if (mSensorManager == null)
+            mSensorManager = (SensorManager) getContext().getSystemService(SENSOR_SERVICE);
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER), SENSOR_DELAY_NORMAL);
+    }
+
+    private void turnSensorOff() {
+        if (mSensorManager != null)
+            mSensorManager.unregisterListener(SettingsView.this);
+    }
+
+    private void publishAcceleration(SensorEvent e, int rotation) {
+        Reading reading = null;
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                reading = createAccelReading(e.values[0], e.values[1], e.values[2]);
+                break;
+            case Surface.ROTATION_90:
+                reading = createAccelReading(-e.values[1], e.values[0], e.values[2]);
+                break;
+            case Surface.ROTATION_180:
+                reading = createAccelReading(-e.values[0], -e.values[1], e.values[2]);
+                break;
+            case Surface.ROTATION_270:
+                reading = createAccelReading(e.values[1], -e.values[0], e.values[2]);
+        }
+        publishReading(reading);
+    }
+
+    private Reading createAccelReading(float x, float y, float z) {
+        final AccelGyroscope.Acceleration acceleration = new AccelGyroscope.Acceleration();
+        acceleration.x = x;
+        acceleration.y = y;
+        acceleration.z = z;
+        mNow = System.currentTimeMillis();
+        return new Reading(mNow, mNow, "acceleration", "/", acceleration);
+    }
+
+    private void showAccelerometerWarning() {
+        if (Storage.instance().isWarningShown())
+            Toast.makeText(getContext(), getContext().getString(R.string.sv_warning_toast), LENGTH_LONG).show();
+        else
+            new AlertDialog.Builder(getContext()).setTitle(getContext().getString(R.string.sv_warning_dialog_title))
+                    .setIcon(R.drawable.ic_warning)
+                    .setMessage(getContext().getString(R.string.sv_warning_dialog_text))
+                    .setPositiveButton(getContext().getString(R.string.ok), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int i) {
+                            Storage.instance().warningShown();
+                            dialog.dismiss();
+                        }
+                    }).show();
+    }
+
+    private void initWifiManager() {
+        if (mWifiManager != null) return;
+        mWifiManager = (WifiManager) getContext().getSystemService(WIFI_SERVICE);
+        mConnectivityManager = (ConnectivityManager) getContext().getSystemService(CONNECTIVITY_SERVICE);
     }
 
     private void monitorWiFi() {
@@ -345,15 +391,34 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         publishReading(new Reading(mNow, mNow, "batteryLevel", "/", bat));
     }
 
-    private void monitorLocation() {
-        if (!mSettings[2] || !Storage.instance().locationGranted()) return;
-
-        if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(getContext(), ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED) {
-            Location location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            if (location != null) publishLocation(location.getLatitude(), location.getLongitude());
-            else showLocationDialog();
+    private void initLocationManager() {
+        if (Storage.instance().locationGranted()) {
+            new Handler().post(new Runnable() {
+                @Override public void run() {
+                    if (mLocationManager == null)
+                        mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
+                    if (checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
+                        mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, SettingsView.this);
+                        monitorLocation();
+                    }
+                }
+            });
         }
+    }
+
+    private void monitorLocation() {
+        if (!mSettings[2]) return;
+        new Handler().post(new Runnable() {
+            @Override public void run() {
+                if (checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
+                        checkSelfPermission(getContext(), ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED) {
+                    Location location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    if (location != null)
+                        publishLocation(location.getLatitude(), location.getLongitude());
+                    else showLocationDialog();
+                }
+            }
+        });
     }
 
     public void publishLocation(double lat, double lng) {
@@ -376,16 +441,11 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         }
     }
 
-    private void showAccelerometerWarning() {
-        new AlertDialog.Builder(getContext()).setTitle(getContext().getString(R.string.sv_warning_dialog_title))
-                .setIcon(R.drawable.ic_warning)
-                .setMessage(getContext().getString(R.string.sv_warning_dialog_text))
-                .setPositiveButton(getContext().getString(R.string.ok), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int i) {
-                        Storage.instance().warningShown();
-                        dialog.dismiss();
-                    }
-                }).show();
+    private void turnOffLocation() {
+        if (mLocationManager != null)
+            if (checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
+                    checkSelfPermission(getContext(), ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED)
+                mLocationManager.removeUpdates(this);
     }
 
     private void showLocationDialog() {
@@ -438,7 +498,7 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
-                        Crashlytics.log(Log.ERROR, "SV", "publishReading - error");
+                        Crashlytics.log(Log.ERROR, "SettingsView", "publishReading - error");
                         e.printStackTrace();
                     }
 
@@ -456,13 +516,13 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
-                        Crashlytics.log("subscribeToCommands - error");
-                        Log.e("SettingsView", "subscribeToCommands - error");
+                        Crashlytics.log(Log.ERROR, "SettingsView", "subscribeToCommands - error");
                         e.printStackTrace();
                     }
 
                     @Override public void onNext(Command action) {
                         final String cmd = action.getName();
+                        Crashlytics.log(Log.INFO, "SettingsView", "CMD - " + cmd);
                         if (cmd.equals("flashlight"))
                             toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
                         if (cmd.equals("playSound")) playMusic((String) action.getValue());
@@ -496,15 +556,13 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     }
 
     @Override public void onProviderEnabled(String provider) {
-        if (Storage.instance().locationGranted()) {
-            mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
-            if (ActivityCompat.checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED)
-                mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, this);
-        }
+        initLocationManager();
     }
 
     //NOT implemented
-    @Override public void onProviderDisabled(String provider) {}
+    @Override public void onProviderDisabled(String provider) {
+        if (mLocSwitch != null) mLocSwitch.setChecked(false);
+    }
 
     //NOT implemented
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
@@ -514,6 +572,5 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
 
     //NOT implemented
     @Override public void onLocationChanged(Location location) {
-        publishLocation(location.getLatitude(), location.getLongitude());
     }
 }

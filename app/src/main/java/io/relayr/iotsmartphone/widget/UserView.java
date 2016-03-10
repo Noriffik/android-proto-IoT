@@ -11,7 +11,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -39,6 +41,9 @@ public class UserView extends BasicView {
     @InjectView(R.id.user_id) TextView mUserId;
     @InjectView(R.id.user_devices) ListView mDevicesList;
 
+    private List<Device> mDevices = new ArrayList<>();
+    private DeviceAdapter mDeviceAdapter;
+
     public UserView(Context context) {
         super(context);
     }
@@ -60,7 +65,11 @@ public class UserView extends BasicView {
             mUsedDeviceId.setText(Storage.instance().getDevice().getId());
         }
 
+        mDeviceAdapter = new DeviceAdapter(getContext(), mDevices);
+        mDevicesList.setAdapter(mDeviceAdapter);
+
         RelayrSdk.getUser()
+                .timeout(3, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<User>() {
                     @Override public void onCompleted() {}
@@ -81,6 +90,7 @@ public class UserView extends BasicView {
 
     private void showDevices(User user) {
         user.getDevices()
+                .timeout(10, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<List<Device>>() {
                     @Override public void onCompleted() {}
@@ -91,7 +101,8 @@ public class UserView extends BasicView {
                     }
 
                     @Override public void onNext(List<Device> devices) {
-                        mDevicesList.setAdapter(new DeviceAdapter(getContext(), devices));
+                        mDevices.addAll(devices);
+                        mDeviceAdapter.notifyDataSetChanged();
                         setHeightBasedOnChildren(mDevicesList);
                     }
                 });
@@ -140,8 +151,9 @@ public class UserView extends BasicView {
                 view.setTag(holder);
             } else {
                 holder = (ViewHolder) view.getTag();
-                holder.setData(getItem(position));
             }
+
+            holder.setData(getItem(position));
 
             return view;
         }
