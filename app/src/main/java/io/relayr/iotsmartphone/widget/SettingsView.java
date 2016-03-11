@@ -78,7 +78,6 @@ import static android.content.Intent.ACTION_BATTERY_CHANGED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
-import static android.location.LocationManager.GPS_PROVIDER;
 import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.os.BatteryManager.EXTRA_LEVEL;
 import static android.os.BatteryManager.EXTRA_SCALE;
@@ -114,8 +113,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     // wifi, battery, location, acceleration, flash, sound
     private boolean[] mSettings = new boolean[]{false, false, false, false, false, false};
 
-    private Subscription mPublishSubscription = Subscriptions.empty();
-    private Subscription mCommandsSubscription = Subscriptions.empty();
+    private Subscription mPublishSubscription = null;
+    private Subscription mCommandsSubscription = null;
     private int mSensorChange = 0;
 
     public SettingsView(Context context) {
@@ -184,8 +183,8 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
         if (mSensorManager != null) turnSensorOff();
         if (mLocationManager != null) turnOffLocation();
 
-        mPublishSubscription.unsubscribe();
-        mCommandsSubscription.unsubscribe();
+        if (mPublishSubscription != null) mPublishSubscription.unsubscribe();
+        if (mCommandsSubscription != null) mCommandsSubscription.unsubscribe();
     }
 
     @Override protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
@@ -398,8 +397,18 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
                     if (mLocationManager == null)
                         mLocationManager = (LocationManager) getContext().getSystemService(LOCATION_SERVICE);
                     if (checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
-                        mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, SettingsView.this);
-                        monitorLocation();
+                        try {
+                            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, SettingsView.this);
+                            monitorLocation();
+                        } catch (Exception e) {
+                            Crashlytics.log(Log.ERROR, "SV", "GPS_PROVIDER doesn't exist.");
+                            try {
+                                mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, SettingsView.this);
+                                monitorLocation();
+                            } catch (Exception e1) {
+                                Crashlytics.log(Log.ERROR, "SV", "NETWORK_PROVIDER doesn't exist.");
+                            }
+                        }
                     }
                 }
             });
@@ -509,25 +518,26 @@ public class SettingsView extends BasicView implements SensorEventListener, Loca
     private void subscribeToCommands() {
         if (!mSettings[4] && !mSettings[5]) return;
 
-        mCommandsSubscription = RelayrSdk.getWebSocketClient()
-                .subscribeToCommands(Storage.instance().getDevice().getId())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Command>() {
-                    @Override public void onCompleted() {}
+        if (mCommandsSubscription == null)
+            mCommandsSubscription = RelayrSdk.getWebSocketClient()
+                    .subscribeToCommands(Storage.instance().getDevice().getId())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Subscriber<Command>() {
+                        @Override public void onCompleted() {}
 
-                    @Override public void onError(Throwable e) {
-                        Crashlytics.log(Log.ERROR, "SettingsView", "subscribeToCommands - error");
-                        e.printStackTrace();
-                    }
+                        @Override public void onError(Throwable e) {
+                            Crashlytics.log(Log.ERROR, "SettingsView", "subscribeToCommands - error");
+                            e.printStackTrace();
+                        }
 
-                    @Override public void onNext(Command action) {
-                        final String cmd = action.getName();
-                        Crashlytics.log(Log.INFO, "SettingsView", "CMD - " + cmd);
-                        if (cmd.equals("flashlight"))
-                            toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
-                        if (cmd.equals("playSound")) playMusic((String) action.getValue());
-                    }
-                });
+                        @Override public void onNext(Command action) {
+                            final String cmd = action.getName();
+                            Crashlytics.log(Log.INFO, "SettingsView", "CMD - " + cmd);
+                            if (cmd.equals("flashlight"))
+                                toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
+                            if (cmd.equals("playSound")) playMusic((String) action.getValue());
+                        }
+                    });
     }
 
     private void toggleFlash(boolean on) {

@@ -14,13 +14,14 @@ import java.util.concurrent.TimeUnit;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 
 import static android.content.Context.VIBRATOR_SERVICE;
 import static android.media.RingtoneManager.TYPE_ALARM;
 
 public class SoundHelper {
 
-    private boolean mIsPlaying;
+    private static boolean mIsPlaying;
     private Ringtone mRingManager;
     private Vibrator mVibrator;
 
@@ -33,8 +34,8 @@ public class SoundHelper {
             sec = Integer.parseInt(seconds);
             if (sec > 10) sec = sec % 10;
         } catch (Exception e) {
+            mIsPlaying = false;
             Crashlytics.log(Log.ERROR, "SoundH", "Seconds can't be parsed: " + seconds);
-            e.printStackTrace();
             return;
         }
 
@@ -44,8 +45,8 @@ public class SoundHelper {
         mRingManager.play();
 
         Observable
-                .create(new Observable.OnSubscribe<Object>() {
-                    @Override public void call(Subscriber<? super Object> subscriber) {
+                .create(new Observable.OnSubscribe<Void>() {
+                    @Override public void call(Subscriber<? super Void> subscriber) {
                         mIsPlaying = false;
                         if (mRingManager != null) mRingManager.stop();
                         if (mVibrator != null) mVibrator.cancel();
@@ -53,7 +54,15 @@ public class SoundHelper {
                 })
                 .observeOn(AndroidSchedulers.mainThread())
                 .delaySubscription(sec, TimeUnit.SECONDS)
-                .subscribe();
+                .subscribe(new Action1<Void>() {
+                    @Override public void call(Void aVoid) {
+                        mIsPlaying = false;
+                    }
+                }, new Action1<Throwable>() {
+                    @Override public void call(Throwable throwable) {
+                        mIsPlaying = false;
+                    }
+                });
     }
 
     public void close() {
