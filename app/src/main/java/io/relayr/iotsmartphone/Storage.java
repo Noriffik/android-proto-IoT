@@ -17,6 +17,9 @@ public class Storage {
     private static final String PREFS_USER_ID = "io.relayr.userId";
     private static final String PREFS_WARNING = "io.relayr.warning";
 
+    private static final String PREFS_DELAY = "io.relayr.delay";
+    private static final String PREFS_INTENSITY = "io.relayr.intensity";
+
     private final static Storage singleton = new Storage();
     private static Device sDevice;
     private final SharedPreferences PREFS;
@@ -84,5 +87,21 @@ public class Storage {
 
     public boolean isWarningShown() {
         return PREFS.getBoolean(PREFS_WARNING, false);
+    }
+
+    public void saveDelay(int delay) {
+        PREFS.edit().putInt(PREFS_DELAY, delay).apply();
+    }
+
+    public int loadDelay() {
+        return PREFS.getInt(PREFS_DELAY, 10);
+    }
+
+    public void saveIntensity(int intensity) {
+        PREFS.edit().putInt(PREFS_INTENSITY, intensity).apply();
+    }
+
+    public int loadIntensity() {
+        return PREFS.getInt(PREFS_INTENSITY, 1);
     }
 }

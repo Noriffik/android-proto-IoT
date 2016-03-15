@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
 import android.support.v4.app.ActivityCompat;
@@ -25,11 +24,9 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import butterknife.OnClick;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.helper.ControlListener;
 import io.relayr.iotsmartphone.widget.BasicView;
-import io.relayr.iotsmartphone.widget.SettingsView;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
 import rx.Observable;
@@ -40,13 +37,10 @@ import rx.functions.Func1;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements OnNavigationItemSelectedListener, ControlListener {
 
     @InjectView(R.id.container) FrameLayout mContainer;
-    @InjectView(R.id.fab) FloatingActionButton mFab;
 
     private int mPosition = 0;
     private ProgressDialog mLoadingProgress;
@@ -92,6 +86,8 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if (mPosition == 2 || mPosition == 3) {
+            switchView(1);
         } else {
             super.onBackPressed();
         }
@@ -100,8 +96,9 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_main) switchView(1);
-        else if (id == R.id.nav_user) switchView(2);
+        if (id == R.id.nav_send_receive) switchView(1);
+        else if (id == R.id.nav_main) switchView(2);
+        else if (id == R.id.nav_user) switchView(3);
         else if (id == R.id.nav_log_out) logOut();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -125,9 +122,8 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         switchView(1);
     }
 
-    @SuppressWarnings("unused") @OnClick(R.id.fab)
-    public void onFabClicked() {
-        if (mCurrentView != null) ((SettingsView) mCurrentView).refreshData();
+    @Override public void startSettings() {
+        switchView(2);
     }
 
     private void logOut() {
@@ -194,14 +190,14 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     private void switchView() {
         runOnUiThread(new Runnable() {
             @Override public void run() {
-                mFab.setVisibility(mPosition == 1 ? VISIBLE : GONE);
-
                 mContainer.removeAllViews();
                 if (mPosition == 0)
                     mCurrentView = (BasicView) View.inflate(MainActivity.this, R.layout.content_device, null);
                 else if (mPosition == 1)
-                    mCurrentView = (BasicView) View.inflate(MainActivity.this, R.layout.content_main, null);
+                    mCurrentView = (BasicView) View.inflate(MainActivity.this, R.layout.content_send_receive, null);
                 else if (mPosition == 2)
+                    mCurrentView = (BasicView) View.inflate(MainActivity.this, R.layout.content_settings, null);
+                else if (mPosition == 3)
                     mCurrentView = (BasicView) View.inflate(MainActivity.this, R.layout.content_user, null);
 
                 mCurrentView.setListener(MainActivity.this);

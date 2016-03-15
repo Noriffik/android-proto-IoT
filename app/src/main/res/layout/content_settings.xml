@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.relayr.iotsmartphone.widget.SettingsView
+    style="@style/MatchMatch"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="@dimen/default_padding">
+
+    <TextView
+        style="@style/TitleText"
+        android:paddingBottom="@dimen/default_padding"
+        android:text="@string/sv_publish_title"/>
+
+    <TextView
+        style="@style/NormalText"
+        android:singleLine="false"
+        android:text="@string/stv_publish_timing"/>
+
+    <LinearLayout
+        style="@style/MatchWrapHor"
+        android:gravity="center_vertical">
+
+        <ImageView
+            style="@style/WrapWrap"
+            android:padding="@dimen/default_padding"
+            android:src="@drawable/ic_delay"/>
+
+        <SeekBar
+            android:id="@+id/publish_delay"
+            style="@style/SettingsSwitch"
+            android:layout_marginTop="0dp"
+            android:max="59"/>
+
+        <TextView
+            android:id="@+id/publish_delay_info"
+            style="@style/SmallText"/>
+    </LinearLayout>
+
+    <TextView
+        style="@style/NormalText"
+        android:layout_marginTop="@dimen/big_padding"
+        android:singleLine="false"
+        android:text="@string/stv_acceleration_intensity"/>
+
+    <LinearLayout
+        style="@style/MatchWrapHor"
+        android:gravity="center_vertical">
+
+        <ImageView
+            style="@style/WrapWrap"
+            android:padding="@dimen/default_padding"
+            android:src="@drawable/ic_acceleration"/>
+
+        <SeekBar
+            android:id="@+id/acceleration_intensity"
+            style="@style/SettingsSwitch"
+            android:layout_marginTop="0dp"
+            android:max="2"/>
+
+        <TextView
+            android:id="@+id/acceleration_info"
+            style="@style/SmallText"/>
+    </LinearLayout>
+</io.relayr.iotsmartphone.widget.SettingsView>

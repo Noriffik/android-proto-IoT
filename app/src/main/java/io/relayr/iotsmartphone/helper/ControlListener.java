@@ -4,4 +4,5 @@ public interface ControlListener {
 
     void onDeviceCreated();
 
+    void startSettings();
 }

@@ -40,7 +40,7 @@
     <string name="uv_details_user_id">User ID:</string>
     <string name="uv_all_devices">All devices</string>
 
-    <!--SettingsView-->
+    <!--SendReceiveView-->
     <string name="sv_no_wifi">Not connected to Wifi</string>
     <string name="sv_location_resolve_err">Problem resolving location.</string>
     <string name="sv_err_using_flash">Error when using flash</string>
@@ -62,5 +62,15 @@
     <string name="sv_location_off_title">Location is OFF</string>
     <string name="sv_location_off_message">Would you like to turn it on?</string>
     <string name="sv_sending_in_bck">IoTSmartphone is still sending data in the background</string>
+    <string name="menu_send_receive">Send/receive</string>
+
+    <!--SettingsView-->
+    <string name="stv_publish_timing">Select the delay between publishing WiFi, battery and location readings.</string>
+    <string name="stv_publish_time">Publish delay set to: %s</string>
+    <string name="stv_low">Low</string>
+    <string name="stv_normal">Normal</string>
+    <string name="stv_high">High</string>
+    <string name="stv_acceleration_intensity">Select intensity of publishing acceleration readings.</string>
+    <string name="stv_delay">%s sec</string>
 
 </resources>
