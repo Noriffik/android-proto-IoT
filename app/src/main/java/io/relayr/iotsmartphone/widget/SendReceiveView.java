@@ -137,8 +137,8 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         super.onAttachedToWindow();
         ButterKnife.inject(this);
 
-        mPublishDelay = Storage.instance().loadDelay() + 1;
-        mAccIntensity = 15 / (Storage.instance().loadIntensity());
+        mPublishDelay = Storage.instance().loadDelay();
+        mAccIntensity = 15 / (Storage.instance().loadIntensity()+1);
         Crashlytics.log(Log.INFO, "SRV", "Delay " + mPublishDelay + " intensity " + mAccIntensity);
 
         mSettings = Storage.instance().loadSettings(mSettings.length);

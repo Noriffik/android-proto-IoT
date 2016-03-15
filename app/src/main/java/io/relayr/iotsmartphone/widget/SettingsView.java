@@ -53,7 +53,8 @@ public class SettingsView extends BasicView {
             public void onProgressChanged(SeekBar seekBar, int intensity, boolean fromUser) {
                 mAccelerationInfo.setText(intensity == 0 ? getContext().getString(R.string.stv_low) :
                         intensity == 1 ? getContext().getString(R.string.stv_normal) :
-                                getContext().getString(R.string.stv_high));
+                                intensity == 2 ? getContext().getString(R.string.stv_high) :
+                                        getContext().getString(R.string.stv_very_high));
                 Storage.instance().saveIntensity(intensity);
             }
 
@@ -65,7 +66,8 @@ public class SettingsView extends BasicView {
         int intensity = Storage.instance().loadIntensity();
         mAccelerationInfo.setText(intensity == 0 ? getContext().getString(R.string.stv_low) :
                 intensity == 1 ? getContext().getString(R.string.stv_normal) :
-                        getContext().getString(R.string.stv_high));
+                        intensity == 2 ? getContext().getString(R.string.stv_high) :
+                                getContext().getString(R.string.stv_very_high));
         mAccelerationIntensity.setProgress(intensity);
     }
 
