@@ -34,12 +34,22 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
+            android:launchMode="singleInstance"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustResize">
         </activity>
+
         <meta-data
             android:name="io.fabric.ApiKey"
-            android:value="535c5d24024e7d38bb2996ddbdbef7eac59b0667" />
+            android:value="535c5d24024e7d38bb2996ddbdbef7eac59b0667"/>
+
+        <receiver
+            android:name=".helper.DemandIntentReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.androidweardocs.first_wearable.ACTION_DEMAND"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

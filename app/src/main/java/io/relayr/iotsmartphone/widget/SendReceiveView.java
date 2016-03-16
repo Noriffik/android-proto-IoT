@@ -1,6 +1,9 @@
 package io.relayr.iotsmartphone.widget;
 
 import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -24,6 +27,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.text.Editable;
@@ -52,9 +58,9 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.android.RelayrSdk;
-import io.relayr.iotsmartphone.MainActivity;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
+import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
 import io.relayr.java.model.AccelGyroscope;
@@ -116,7 +122,6 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
     private Subscription mCommandsSubscription = null;
     private int mSensorChange = 0;
 
-    private int mPublishDelay = 10;
     private int mAccIntensity = 0;
 
     private Subscription mRefreshSubs;
@@ -137,9 +142,9 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         super.onAttachedToWindow();
         ButterKnife.inject(this);
 
-        mPublishDelay = Storage.instance().loadDelay();
-        mAccIntensity = 15 / (Storage.instance().loadIntensity()+1);
-        Crashlytics.log(Log.INFO, "SRV", "Delay " + mPublishDelay + " intensity " + mAccIntensity);
+        int publishDelay = Storage.instance().loadDelay();
+        mAccIntensity = 15 / (Storage.instance().loadIntensity() + 1);
+        Crashlytics.log(Log.INFO, "SRV", "Delay " + publishDelay + " intensity " + mAccIntensity);
 
         mSettings = Storage.instance().loadSettings(mSettings.length);
         setUpSwitches();
@@ -166,7 +171,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             }
         });
 
-        mRefreshSubs = Observable.interval(mPublishDelay, TimeUnit.SECONDS)
+        mRefreshSubs = Observable.interval(publishDelay, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Long>() {
                     @Override public void onCompleted() {}
@@ -175,6 +180,11 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
 
                     @Override public void onNext(Long aLong) {refreshData();}
                 });
+
+        // Register the local broadcast receiver for the users demand.
+        IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
+        MessageReceiver messageReceiver = new MessageReceiver();
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(messageReceiver, messageFilter);
     }
 
     @Override protected void onDetachedFromWindow() {
@@ -439,7 +449,9 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             @Override public void run() {
                 if (checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
                         checkSelfPermission(getContext(), ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED) {
-                    Location location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    if (location == null)
+                        location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (location != null)
                         publishLocation(location.getLatitude(), location.getLongitude());
                     else showLocationDialog();
@@ -563,6 +575,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         if (mFlash != null && !mFlash.hasFlash(getContext())) {
             Toast.makeText(getContext(), R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
         } else {
+            flashOnNotification(on);
             if (mFlash == null) return;
             if (on) mFlash.on();
             else mFlash.off();
@@ -583,6 +596,45 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         }
     }
 
+    private void flashOnNotification(boolean on) {
+        if (on) {
+            Intent demandIntent = new Intent(getContext(), DemandIntentReceiver.class)
+                    .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, false)
+                    .setAction(DemandIntentReceiver.ACTION_DEMAND);
+            PendingIntent demandPendingIntent = PendingIntent.getBroadcast(getContext(), 0, demandIntent, 0);
+            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
+                    getContext().getString(R.string.srv_turn_off_flash), demandPendingIntent).build();
+            showNotification(action, true);
+        } else {
+            showNotification(null, false);
+        }
+    }
+
+    private void showNotification(NotificationCompat.Action action, boolean on) {
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext())
+                .setSmallIcon(R.mipmap.logo)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setContentTitle(getContext().getString(R.string.app_name))
+                .setContentText(getContext().getString(R.string.srv_flash_status, on ? "ON" : "OFF"));
+
+        if (on) {
+            builder.addAction(action);
+            builder.extend(new NotificationCompat.WearableExtender().addAction(action));
+        } else {
+            builder.extend(new NotificationCompat.WearableExtender().setHintShowBackgroundOnly(true));
+        }
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+        notificationManager.notify(2376, builder.build());
+    }
+
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override public void onReceive(Context context, Intent intent) {
+            //            final boolean extra = intent.getBooleanExtra(DemandIntentReceiver.EXTRA_MESSAGE, false);
+            toggleFlash(false);
+        }
+    }
+
     @Override public void onProviderEnabled(String provider) {
         initLocationManager();
     }
@@ -598,6 +650,5 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
     @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     //NOT implemented
-    @Override public void onLocationChanged(Location location) {
-    }
+    @Override public void onLocationChanged(Location location) {}
 }

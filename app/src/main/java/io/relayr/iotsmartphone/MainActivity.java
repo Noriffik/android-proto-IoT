@@ -40,6 +40,8 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 public class MainActivity extends AppCompatActivity implements OnNavigationItemSelectedListener, ControlListener {
 
+    public static final String WEAR_FLASH = "wear_flash";
+
     @InjectView(R.id.container) FrameLayout mContainer;
 
     private int mPosition = 0;

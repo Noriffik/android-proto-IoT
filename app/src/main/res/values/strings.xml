@@ -73,5 +73,7 @@
     <string name="stv_very_high">Very high</string>
     <string name="stv_acceleration_intensity">Select intensity of publishing acceleration readings.</string>
     <string name="stv_delay">%s sec</string>
+    <string name="srv_flash_status">Flashlight turned %s</string>
+    <string name="srv_turn_off_flash">Turn off flash</string>
 
 </resources>
