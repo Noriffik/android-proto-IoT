@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -197,38 +198,32 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     }
 
     @Override public void showNotification(boolean show, boolean wearEnabled) {
-        if (show) {
-            Intent demandIntent = new Intent(this, DemandIntentReceiver.class)
-                    .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, false)
-                    .setAction(DemandIntentReceiver.ACTION_DEMAND);
-            PendingIntent demandPendingIntent = PendingIntent.getBroadcast(this, 0, demandIntent, 0);
-            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
-                    this.getString(R.string.srv_turn_off_flash), demandPendingIntent).build();
-            showNotification(action, true, wearEnabled);
-        } else {
-            showNotification(null, false, wearEnabled);
-        }
+        if (!show) return;
+        Intent demandIntent = new Intent(this, DemandIntentReceiver.class)
+                .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, false)
+                .setAction(DemandIntentReceiver.ACTION_DEMAND);
+        PendingIntent demandPendingIntent = PendingIntent.getBroadcast(this, 0, demandIntent, 0);
+        NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
+                this.getString(R.string.srv_turn_off_flash), demandPendingIntent).build();
+        showNotification(action, wearEnabled);
     }
 
-    private void showNotification(NotificationCompat.Action action, boolean on, boolean wearEnabled) {
+    private void showNotification(NotificationCompat.Action action, boolean wearEnabled) {
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.logo)
+                .setSmallIcon(R.mipmap.notification)
                 .setDefaults(Notification.DEFAULT_ALL)
                 .setContentTitle(this.getString(R.string.app_name))
-                .setContentText(this.getString(R.string.srv_flash_status, on ? "ON" : "OFF"));
+                .setContentText(this.getString(R.string.srv_flash_status, "ON"));
 
-        Bitmap bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888);
-        bitmap.eraseColor(ContextCompat.getColor(this, R.color.colorPrimary));
-        if (on) builder.addAction(action);
-        if (!on && wearEnabled)
-            builder.extend(new NotificationCompat.WearableExtender()
-                    .setHintShowBackgroundOnly(true).setBackground(bitmap));
-        if (on && wearEnabled)
-            builder.extend(new NotificationCompat.WearableExtender()
-                    .addAction(action).setBackground(bitmap));
+        if (wearEnabled) {
+            Bitmap bg = BitmapFactory.decodeResource(getResources(), R.color.colorPrimary);
+            builder.extend(new NotificationCompat.WearableExtender().addAction(action).setBackground(bg));
+        }
+        builder.addAction(action);
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        notificationManager.notify(2376, builder.build());
+
+        final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(this);
+        managerCompat.notify(2376, builder.build());
     }
 
     private void logOut() {

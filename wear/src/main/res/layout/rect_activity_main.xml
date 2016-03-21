@@ -18,7 +18,7 @@
         android:layout_height="@dimen/icon_size"
         android:layout_margin="0dp"
         android:padding="0dp"
-        android:src="@drawable/logo"/>
+        android:src="@mipmap/logo"/>
 
     <android.support.wearable.view.CardFrame
         android:layout_width="match_parent"
