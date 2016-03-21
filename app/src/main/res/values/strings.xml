@@ -78,5 +78,6 @@
     <string name="sv_wearable_title">Wearable settings</string>
     <string name="sv_wearable_info">Turn ON to send data from your wearable</string>
     <string name="sv_wearable_data">Wearable data</string>
+    <string name="srv_no_wearable">It seems you don\'t have any wearable connected.</string>
 
 </resources>

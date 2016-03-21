@@ -6,12 +6,14 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
@@ -26,6 +28,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
@@ -59,6 +62,7 @@ import rx.schedulers.Schedulers;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.support.design.widget.Snackbar.LENGTH_LONG;
 
 public class MainActivity extends AppCompatActivity implements OnNavigationItemSelectedListener, ControlListener,
         DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -175,8 +179,16 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     }
 
     @Override public void activateWearable(boolean active) {
-        mActivateWearable = active;
-        if (mGoogleApiClient.isConnected()) sendToWearable(active);
+        try {
+            getPackageManager().getPackageInfo("com.google.android.wearable.app", PackageManager.GET_META_DATA);
+            mActivateWearable = active;
+            if (mGoogleApiClient.isConnected()) sendToWearable(active);
+        } catch (PackageManager.NameNotFoundException e) {
+            //android wear app is not installed
+            final View view = findViewById(android.R.id.content);
+            if (view == null || !active) return;
+            Snackbar.make(view, getString(R.string.srv_no_wearable), LENGTH_LONG).show();
+        }
     }
 
     @Override public void publishReading(Reading reading) {
