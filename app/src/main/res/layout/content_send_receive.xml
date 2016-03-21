@@ -100,4 +100,22 @@
         android:drawablePadding="@dimen/default_padding"
         android:gravity="center_vertical"
         android:text="@string/sv_subscribe_sound"/>
+
+    <TextView
+        style="@style/TitleText"
+        android:paddingBottom="@dimen/default_padding"
+        android:text="@string/sv_wearable_title"/>
+
+    <TextView
+        style="@style/NormalText"
+        android:singleLine="false"
+        android:text="@string/sv_wearable_info"/>
+
+    <android.support.v7.widget.SwitchCompat
+        android:id="@+id/wearable_switch"
+        style="@style/SettingsSwitch"
+        android:drawableLeft="@drawable/ic_wearable"
+        android:drawablePadding="@dimen/default_padding"
+        android:gravity="center_vertical"
+        android:text="@string/sv_wearable_data"/>
 </io.relayr.iotsmartphone.widget.SendReceiveView>

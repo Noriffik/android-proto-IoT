@@ -1,12 +1,20 @@
 package io.relayr.iotsmartphone;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -19,6 +27,16 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.data.FreezableUtils;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
 
 import java.util.List;
 
@@ -26,21 +44,29 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.helper.ControlListener;
+import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.widget.BasicView;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
+import io.relayr.java.model.action.Reading;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-public class MainActivity extends AppCompatActivity implements OnNavigationItemSelectedListener, ControlListener {
+public class MainActivity extends AppCompatActivity implements OnNavigationItemSelectedListener, ControlListener,
+        DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    public static final String WEAR_FLASH = "wear_flash";
+    private static final int REQUEST_RESOLVE_ERROR = 1000;
+    private static final String ACTIVATE_PATH = "/activate";
+    private static final String ACTIVATE = "activate";
+    private static final String SENSOR_PATH = "/sensor";
+    private static final String SENSOR = "sensor";
 
     @InjectView(R.id.container) FrameLayout mContainer;
 
@@ -48,6 +74,10 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
     private ProgressDialog mLoadingProgress;
     private BasicView mCurrentView;
     private AlertDialog mLogOutDialog;
+
+    private boolean mResolvingError = false;
+    private GoogleApiClient mGoogleApiClient;
+    private boolean mActivateWearable = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +90,18 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+        if (!mResolvingError) mGoogleApiClient.connect();
 
         if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
@@ -76,7 +113,6 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
 
     @Override protected void onPause() {
         super.onPause();
-
         if (mLogOutDialog != null) mLogOutDialog.dismiss();
         mLogOutDialog = null;
         if (mLoadingProgress != null) mLoadingProgress.dismiss();
@@ -93,6 +129,15 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override protected void onDestroy() {
+        if (!mResolvingError) {
+            sendToWearable(false);
+            Wearable.DataApi.removeListener(mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -126,6 +171,64 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
 
     @Override public void startSettings() {
         switchView(2);
+    }
+
+    @Override public void activateWearable(boolean active) {
+        mActivateWearable = active;
+        if (mGoogleApiClient.isConnected()) sendToWearable(active);
+    }
+
+    @Override public void publishReading(Reading reading) {
+        if (reading == null || reading.meaning == null) return;
+
+        RelayrSdk.getWebSocketClient()
+                .publish(Storage.instance().getDevice().getId(), reading)
+                .subscribeOn(Schedulers.io())
+                .subscribe(new Subscriber<Void>() {
+                    @Override public void onCompleted() {}
+
+                    @Override public void onError(Throwable e) {
+                        Crashlytics.log(Log.ERROR, "SettingsView", "publishReading - error");
+                        e.printStackTrace();
+                    }
+
+                    @Override public void onNext(Void aVoid) {}
+                });
+    }
+
+    @Override public void showNotification(boolean show, boolean wearEnabled) {
+        if (show) {
+            Intent demandIntent = new Intent(this, DemandIntentReceiver.class)
+                    .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, false)
+                    .setAction(DemandIntentReceiver.ACTION_DEMAND);
+            PendingIntent demandPendingIntent = PendingIntent.getBroadcast(this, 0, demandIntent, 0);
+            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
+                    this.getString(R.string.srv_turn_off_flash), demandPendingIntent).build();
+            showNotification(action, true, wearEnabled);
+        } else {
+            showNotification(null, false, wearEnabled);
+        }
+    }
+
+    private void showNotification(NotificationCompat.Action action, boolean on, boolean wearEnabled) {
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.logo)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setContentTitle(this.getString(R.string.app_name))
+                .setContentText(this.getString(R.string.srv_flash_status, on ? "ON" : "OFF"));
+
+        Bitmap bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888);
+        bitmap.eraseColor(ContextCompat.getColor(this, R.color.colorPrimary));
+        if (on) builder.addAction(action);
+        if (!on && wearEnabled)
+            builder.extend(new NotificationCompat.WearableExtender()
+                    .setHintShowBackgroundOnly(true).setBackground(bitmap));
+        if (on && wearEnabled)
+            builder.extend(new NotificationCompat.WearableExtender()
+                    .addAction(action).setBackground(bitmap));
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(2376, builder.build());
     }
 
     private void logOut() {
@@ -206,5 +309,55 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                 mContainer.addView(mCurrentView);
             }
         });
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        Log.e("APP", "Google API Client was connected");
+        mResolvingError = false;
+        Wearable.DataApi.addListener(mGoogleApiClient, this);
+        sendToWearable(mActivateWearable);
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+        Log.e("APP", "Connection to Google API client was suspended");
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
+        if (mResolvingError) return;
+        if (result.hasResolution()) {
+            try {
+                mResolvingError = true;
+                result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
+            } catch (IntentSender.SendIntentException e) {
+                mGoogleApiClient.connect();
+            }
+        } else {
+            mResolvingError = false;
+            Wearable.DataApi.removeListener(mGoogleApiClient, this);
+        }
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEvents) {
+        for (DataEvent event : FreezableUtils.freezeIterable(dataEvents)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED) {
+                if (SENSOR_PATH.equals(event.getDataItem().getUri().getPath())) {
+                    DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
+                    int val = dataMapItem.getDataMap().getInt(SENSOR);
+                    final long timeMillis = System.currentTimeMillis();
+                    publishReading(new Reading(timeMillis, timeMillis, "message", "/", val + " lux"));
+                }
+            }
+        }
+    }
+
+    private void sendToWearable(boolean active) {
+        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(ACTIVATE_PATH);
+        putDataMapRequest.getDataMap().putBoolean(ACTIVATE, active);
+        PutDataRequest request = putDataMapRequest.asPutDataRequest();
+        Wearable.DataApi.putDataItem(mGoogleApiClient, request);
     }
 }

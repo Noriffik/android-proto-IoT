@@ -41,6 +41,11 @@ android {
 }
 
 dependencies {
+    wearApp project(':wear')
+    compile "com.android.support:support-v4:23.1.0"
+    compile "com.android.support:support-v13:23.1.0"
+    compile 'com.google.android.gms:play-services-wearable:8.4.0'
+
     compile(project(':java-sdk'))
     compile(project(':android-sdk:android-sdk'))
 

@@ -1,8 +1,6 @@
 package io.relayr.iotsmartphone.widget;
 
 import android.annotation.TargetApi;
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -27,8 +25,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
@@ -60,7 +56,6 @@ import butterknife.OnClick;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
-import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
 import io.relayr.java.model.AccelGyroscope;
@@ -71,7 +66,6 @@ import rx.Observer;
 import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
@@ -107,6 +101,8 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
     @InjectView(R.id.receive_flash_switch) SwitchCompat mFlashSwitch;
     @InjectView(R.id.receive_sound_switch) SwitchCompat mSoundSwitch;
 
+    @InjectView(R.id.wearable_switch) SwitchCompat mWearableSwitch;
+
     private FlashHelper mFlash;
     private SoundHelper mSound;
     private WifiManager mWifiManager;
@@ -117,7 +113,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
     private long mNow = System.currentTimeMillis();
 
     // wifi, battery, location, acceleration, flash, sound
-    private boolean[] mSettings = new boolean[]{false, false, false, false, false, false};
+    private boolean[] mSettings = new boolean[]{false, false, false, false, false, false, false};
 
     private Subscription mCommandsSubscription = null;
     private int mSensorChange = 0;
@@ -181,7 +177,6 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
                     @Override public void onNext(Long aLong) {refreshData();}
                 });
 
-        // Register the local broadcast receiver for the users demand.
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(messageReceiver, messageFilter);
@@ -235,7 +230,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
 
         mMessage.setText("");
         mIconSend.setImageResource(R.drawable.action_send_inactive);
-        publishReading(new Reading(mNow, mNow, "message", "/", message));
+        mListener.publishReading(new Reading(mNow, mNow, "message", "/", message));
     }
 
     @SuppressWarnings("unused")
@@ -317,6 +312,15 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             }
         });
         mSoundSwitch.setChecked(mSettings[5]);
+
+        mWearableSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mSettings[6] = isChecked;
+                Storage.instance().saveSettings(mSettings);
+                mListener.activateWearable(isChecked);
+            }
+        });
+        mWearableSwitch.setChecked(mSettings[6]);
     }
 
     private void initSensorManager() {
@@ -345,7 +349,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             case Surface.ROTATION_270:
                 reading = createAccelReading(e.values[1], -e.values[0], e.values[2]);
         }
-        publishReading(reading);
+        mListener.publishReading(reading);
     }
 
     private Reading createAccelReading(float x, float y, float z) {
@@ -386,7 +390,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
-            publishReading(new Reading(mNow, mNow, "rssi", "wifi", wifiInfo.getRssi()));
+            mListener.publishReading(new Reading(mNow, mNow, "rssi", "wifi", wifiInfo.getRssi()));
     }
 
     private boolean checkWifi(ConnectivityManager cm) {
@@ -415,7 +419,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         if (level == -1 || scale == -1) bat = 50.0f;
         else bat = ((float) level / (float) scale) * 100.0f;
 
-        publishReading(new Reading(mNow, mNow, "batteryLevel", "/", bat));
+        mListener.publishReading(new Reading(mNow, mNow, "batteryLevel", "/", bat));
     }
 
     private void initLocationManager() {
@@ -473,7 +477,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             address += obj.getAddressLine(1) + ", ";
             address += obj.getAddressLine(0);
 
-            publishReading(new Reading(mNow, mNow, "location", "/", address));
+            mListener.publishReading(new Reading(mNow, mNow, "location", "/", address));
         } catch (IOException e) {
             Toast.makeText(getContext(), R.string.sv_location_resolve_err, Toast.LENGTH_SHORT).show();
             e.printStackTrace();
@@ -527,24 +531,6 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         if (mSound == null) mSound = new SoundHelper();
     }
 
-    private void publishReading(final Reading reading) {
-        if (reading == null || reading.meaning == null) return;
-
-        RelayrSdk.getWebSocketClient()
-                .publish(Storage.instance().getDevice().getId(), reading)
-                .subscribeOn(Schedulers.io())
-                .subscribe(new Subscriber<Void>() {
-                    @Override public void onCompleted() {}
-
-                    @Override public void onError(Throwable e) {
-                        Crashlytics.log(Log.ERROR, "SettingsView", "publishReading - error");
-                        e.printStackTrace();
-                    }
-
-                    @Override public void onNext(Void aVoid) {}
-                });
-    }
-
     private void subscribeToCommands() {
         if (!mSettings[4] && !mSettings[5]) return;
 
@@ -575,7 +561,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         if (mFlash != null && !mFlash.hasFlash(getContext())) {
             Toast.makeText(getContext(), R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
         } else {
-            flashOnNotification(on);
+            mListener.showNotification(on, mSettings[6]);
             if (mFlash == null) return;
             if (on) mFlash.on();
             else mFlash.off();
@@ -596,45 +582,6 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         }
     }
 
-    private void flashOnNotification(boolean on) {
-        if (on) {
-            Intent demandIntent = new Intent(getContext(), DemandIntentReceiver.class)
-                    .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, false)
-                    .setAction(DemandIntentReceiver.ACTION_DEMAND);
-            PendingIntent demandPendingIntent = PendingIntent.getBroadcast(getContext(), 0, demandIntent, 0);
-            NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
-                    getContext().getString(R.string.srv_turn_off_flash), demandPendingIntent).build();
-            showNotification(action, true);
-        } else {
-            showNotification(null, false);
-        }
-    }
-
-    private void showNotification(NotificationCompat.Action action, boolean on) {
-        final NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext())
-                .setSmallIcon(R.mipmap.logo)
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setContentTitle(getContext().getString(R.string.app_name))
-                .setContentText(getContext().getString(R.string.srv_flash_status, on ? "ON" : "OFF"));
-
-        if (on) {
-            builder.addAction(action);
-            builder.extend(new NotificationCompat.WearableExtender().addAction(action));
-        } else {
-            builder.extend(new NotificationCompat.WearableExtender().setHintShowBackgroundOnly(true));
-        }
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-        notificationManager.notify(2376, builder.build());
-    }
-
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override public void onReceive(Context context, Intent intent) {
-            //            final boolean extra = intent.getBooleanExtra(DemandIntentReceiver.EXTRA_MESSAGE, false);
-            toggleFlash(false);
-        }
-    }
-
     @Override public void onProviderEnabled(String provider) {
         initLocationManager();
     }
@@ -651,4 +598,10 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
 
     //NOT implemented
     @Override public void onLocationChanged(Location location) {}
+
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override public void onReceive(Context context, Intent intent) {
+            toggleFlash(false);
+        }
+    }
 }

@@ -23,7 +23,6 @@ import io.relayr.iotsmartphone.Storage;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
 import io.relayr.java.model.models.DeviceModel;
-import io.relayr.java.model.models.error.DeviceModelsException;
 import rx.Observer;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
