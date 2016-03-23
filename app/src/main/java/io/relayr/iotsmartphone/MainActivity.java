@@ -3,12 +3,15 @@ package io.relayr.iotsmartphone;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -176,6 +179,27 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
 
     @Override public void startSettings() {
         switchView(2);
+    }
+
+    @Override public void openDashboard() {
+        String packageName = "io.relayr.wunderbar";
+        PackageManager manager = getPackageManager();
+        Intent startApp = manager.getLaunchIntentForPackage(packageName);
+        if (startApp != null) {
+            startApp.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startApp.addCategory(Intent.CATEGORY_LAUNCHER);
+
+            startActivity(startApp);
+            return;
+        }
+
+        try {
+            Uri storeUri = Uri.parse("market://details?id=" + packageName);
+            startStoreActivity(this, storeUri);
+        } catch (ActivityNotFoundException anfe) {
+            Uri webUri = Uri.parse("http://play.google.com/store/apps/details?id=" + packageName);
+            startStoreActivity(this, webUri);
+        }
     }
 
     @Override public void activateWearable(boolean active) {
@@ -355,7 +379,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                     DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
                     int val = dataMapItem.getDataMap().getInt(SENSOR);
                     final long timeMillis = System.currentTimeMillis();
-                    publishReading(new Reading(timeMillis, timeMillis, "message", "/", val + " lux"));
+                    publishReading(new Reading(timeMillis, timeMillis, "luminosity", "/", val));
                 }
             }
         }
@@ -366,5 +390,11 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         putDataMapRequest.getDataMap().putBoolean(ACTIVATE, active);
         PutDataRequest request = putDataMapRequest.asPutDataRequest();
         Wearable.DataApi.putDataItem(mGoogleApiClient, request);
+    }
+
+    private void startStoreActivity(Context context, Uri uri) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
     }
 }

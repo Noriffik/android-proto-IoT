@@ -239,6 +239,12 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         mListener.startSettings();
     }
 
+    @SuppressWarnings("unused")
+    @OnClick(R.id.dashboard_data)
+    public void onDashboardClicked() {
+        mListener.openDashboard();
+    }
+
     public void refreshData() {
         mNow = System.currentTimeMillis();
         monitorWiFi();

@@ -8,6 +8,8 @@ public interface ControlListener {
 
     void startSettings();
 
+    void openDashboard();
+
     void activateWearable(boolean active);
 
     void publishReading(Reading reading);

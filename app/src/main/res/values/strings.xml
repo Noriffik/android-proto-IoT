@@ -46,23 +46,30 @@
     <string name="sv_err_using_flash">Error when using flash</string>
     <string name="sv_flashlight_not_available">Flashlight not available.</string>
     <string name="sv_publish_title">Publish settings</string>
-    <string name="sv_publish_info">Turn ON the switches for the data you would like to be published to the cloud and visible on the dashboard.</string>
+    <string name="sv_publish_info">Activate a switch to start publishing data to the cloud.</string>
     <string name="sv_publish_wifi">WiFi</string>
     <string name="sv_publish_battery">Battery</string>
     <string name="sv_publish_location">Location</string>
     <string name="sv_publish_acceleration">Acceleration</string>
     <string name="sv_publish_message_hint">Send something</string>
     <string name="sv_subscribe_title">Subscribe settings</string>
-    <string name="sv_subscribe_info">Turn ON the switches for features to be controlled from the dashboard.</string>
+    <string name="sv_subscribe_info">Activate a switch to control a feature from the dashboard.</string>
     <string name="sv_subscribe_flash">Flashlight</string>
-    <string name="sv_subscribe_sound">Sounds</string>
+    <string name="sv_subscribe_sound">Alarm</string>
     <string name="sv_warning_dialog_title">Mobile data warning</string>
     <string name="sv_warning_dialog_text">Be aware that sending accelerometer readings is using a lot of Internet data.</string>
     <string name="sv_warning_toast">Accelerometer readings are using a lot of Internet data.</string>
     <string name="sv_location_off_title">Location is OFF</string>
     <string name="sv_location_off_message">Would you like to turn it on?</string>
-    <string name="sv_sending_in_bck">IoTSmartphone is still sending data in the background</string>
+    <string name="sv_sending_in_bck">IoTSmartphone is still sending data in the background.</string>
     <string name="menu_send_receive">Send/receive</string>
+    <string name="srv_flash_status">Flashlight turned %s</string>
+    <string name="srv_turn_off_flash">Turn off flash</string>
+    <string name="sv_wearable_title">Wearable settings</string>
+    <string name="sv_wearable_info">Activate to publish data from your wearable.</string>
+    <string name="sv_wearable_data">Wearable data</string>
+    <string name="srv_no_wearable">It seems you don\'t have a wearable connected.</string>
+    <string name="srv_open_dashboard">Check incoming data</string>
 
     <!--SettingsView-->
     <string name="stv_publish_timing">Select the delay between publishing WiFi, battery and location readings.</string>
@@ -71,13 +78,7 @@
     <string name="stv_normal">Normal</string>
     <string name="stv_high">High</string>
     <string name="stv_very_high">Very high</string>
-    <string name="stv_acceleration_intensity">Select intensity of publishing acceleration readings.</string>
+    <string name="stv_acceleration_intensity">Select the intensity of publishing acceleration readings.</string>
     <string name="stv_delay">%s sec</string>
-    <string name="srv_flash_status">Flashlight turned %s</string>
-    <string name="srv_turn_off_flash">Turn off flash</string>
-    <string name="sv_wearable_title">Wearable settings</string>
-    <string name="sv_wearable_info">Turn ON to send data from your wearable</string>
-    <string name="sv_wearable_data">Wearable data</string>
-    <string name="srv_no_wearable">It seems you don\'t have any wearable connected.</string>
 
 </resources>

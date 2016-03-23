@@ -76,6 +76,15 @@
     </RelativeLayout>
 
     <TextView
+        android:id="@+id/dashboard_data"
+        style="@style/NormalText"
+        android:drawablePadding="@dimen/default_padding"
+        android:drawableRight="@drawable/ic_cloud"
+        android:gravity="center_vertical"
+        android:singleLine="true"
+        android:text="@string/srv_open_dashboard"/>
+
+    <TextView
         style="@style/TitleText"
         android:paddingBottom="@dimen/default_padding"
         android:text="@string/sv_subscribe_title"/>
