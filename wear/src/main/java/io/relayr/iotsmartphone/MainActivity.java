@@ -16,7 +16,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
@@ -30,7 +29,7 @@ import com.google.android.gms.wearable.Wearable;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
 
 public class MainActivity extends Activity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener, SensorEventListener,
+        DataApi.DataListener, SensorEventListener,
         DelayedConfirmationView.DelayedConfirmationListener {
 
     private static final String TAG = "MainActivity";
@@ -53,7 +52,6 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
         mGoogleApiClient = new GoogleApiClient.Builder(this).addApi(Wearable.API)
                 .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
                 .build();
 
         mSendingData = getIntent().getBooleanExtra(ListenerService.ACTIVATE, false);
@@ -117,23 +115,13 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        Log.i(TAG, "Google API client - onConnected()");
         Wearable.DataApi.addListener(mGoogleApiClient, this);
     }
 
-    @Override
-    public void onConnectionSuspended(int cause) {
-        Log.w(TAG, "onConnectionSuspended()");
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult result) {
-        Log.e(TAG, "onConnectionFailed(): " + result);
-    }
+    @Override public void onConnectionSuspended(int i) {}
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
-        Log.d(TAG, "onDataChanged(): " + dataEvents);
         for (DataEvent event : dataEvents) {
             if (event.getType() == DataEvent.TYPE_CHANGED) {
                 String path = event.getDataItem().getUri().getPath();
@@ -141,20 +129,13 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
                     DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
                     mSendingData = dataMapItem.getDataMap().getBoolean(ListenerService.ACTIVATE);
                     showInfo();
-                } else {
-                    Log.d(TAG, "Unrecognized path: " + path);
                 }
-            } else if (event.getType() == DataEvent.TYPE_DELETED) {
-                Log.d(TAG, "Unrecognized DataItem Deleted");
-            } else {
-                Log.d(TAG, "Unknown data event " + event.getType());
             }
         }
     }
 
     @Override
     public void onTimerFinished(View view) {
-        Log.d(TAG, "onTimerFinished");
         animation = false;
         mSendingData = !mSendingData;
         Intent intent = new Intent(MainActivity.this, ConfirmationActivity.class);
@@ -166,14 +147,11 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
 
     @Override
     public void onTimerSelected(View view) {
-        Log.d(TAG, "onTimerSelected");
         if (!animation) {
-            Log.d(TAG, "onTimerSelected Start");
             mBtn.setImageResource(R.drawable.ic_cancel);
             mBtn.start();
             animation = true;
         } else {
-            Log.d(TAG, "onTimerSelected Cancel");
             ((DelayedConfirmationView) view).reset();
             showInfo();
             animation = false;

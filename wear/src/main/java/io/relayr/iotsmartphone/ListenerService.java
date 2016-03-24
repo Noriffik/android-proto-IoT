@@ -38,7 +38,6 @@ public class ListenerService extends WearableListenerService {
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
-        Log.e(TAG, "onDataChanged: " + dataEvents);
         if (!mGoogleApiClient.isConnected() || !mGoogleApiClient.isConnecting()) {
             ConnectionResult connectionResult = mGoogleApiClient.blockingConnect(30, SECONDS);
             if (!connectionResult.isSuccess()) {
