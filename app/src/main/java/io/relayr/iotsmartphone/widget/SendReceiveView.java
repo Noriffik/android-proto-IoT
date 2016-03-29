@@ -389,7 +389,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
     }
 
     private void monitorWiFi() {
-        if (!mSettings[0]) return;
+        if (!mSettings[0] || mConnectivityManager == null || mWifiManager == null) return;
 
         if (!checkWifi(mConnectivityManager))
             Toast.makeText(getContext(), R.string.sv_no_wifi, LENGTH_SHORT).show();
@@ -454,7 +454,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
     }
 
     private void monitorLocation() {
-        if (!mSettings[2]) return;
+        if (!mSettings[2] || mLocationManager == null) return;
         new Handler().post(new Runnable() {
             @Override public void run() {
                 if (checkSelfPermission(getContext(), ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&

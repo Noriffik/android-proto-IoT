@@ -70,6 +70,7 @@ public class Storage {
 
     public void clear() {
         PREFS.edit().clear().apply();
+        sDevice = null;
     }
 
     public void saveUser(User user) {
