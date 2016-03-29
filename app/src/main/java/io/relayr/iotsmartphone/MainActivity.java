@@ -208,7 +208,6 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
             mActivateWearable = active;
             if (mGoogleApiClient.isConnected()) sendToWearable(active);
         } catch (PackageManager.NameNotFoundException e) {
-            //android wear app is not installed
             final View view = findViewById(android.R.id.content);
             if (view == null || !active) return;
             Snackbar.make(view, getString(R.string.srv_no_wearable), LENGTH_LONG).show();
@@ -217,7 +216,6 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
 
     @Override public void publishReading(Reading reading) {
         if (reading == null || reading.meaning == null) return;
-
         RelayrSdk.getWebSocketClient()
                 .publish(Storage.instance().getDevice().getId(), reading)
                 .subscribeOn(Schedulers.io())
@@ -273,7 +271,6 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                 })
                 .setPositiveButton(getString(R.string.ma_log_out_dialog_positive), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
-                        Crashlytics.log(Log.INFO, "MA", "User logged out.");
                         RelayrSdk.logOut();
                         Storage.instance().clear();
                         dialog.dismiss();

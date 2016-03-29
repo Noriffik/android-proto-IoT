@@ -103,14 +103,13 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
 
     @InjectView(R.id.wearable_switch) SwitchCompat mWearableSwitch;
 
+    private int mRotation;
     private FlashHelper mFlash;
     private SoundHelper mSound;
     private WifiManager mWifiManager;
     private SensorManager mSensorManager;
     private LocationManager mLocationManager;
     private ConnectivityManager mConnectivityManager;
-
-    private long mNow = System.currentTimeMillis();
 
     // wifi, battery, location, acceleration, flash, sound
     private boolean[] mSettings = new boolean[]{false, false, false, false, false, false, false};
@@ -134,7 +133,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         super(context, attrs, defStyleAttr);
     }
 
-    @Override protected void onAttachedToWindow() {
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1) @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         ButterKnife.inject(this);
 
@@ -143,7 +142,11 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         Crashlytics.log(Log.INFO, "SRV", "Delay " + publishDelay + " intensity " + mAccIntensity);
 
         mSettings = Storage.instance().loadSettings(mSettings.length);
-        setUpSwitches();
+        new Handler().postDelayed(new Runnable() {
+            @Override public void run() {
+                setUpSwitches();
+            }
+        }, 500);
 
         mMessage.addTextChangedListener(new TextWatcher() {
             @Override
@@ -180,6 +183,11 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(messageReceiver, messageFilter);
+
+        if (SDK_INT >= JELLY_BEAN_MR1)
+            mRotation = getDisplay().getRotation();
+        else  //noinspection deprecation
+            mRotation = getDisplay().getOrientation();
     }
 
     @Override protected void onDetachedFromWindow() {
@@ -211,13 +219,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         if (e.sensor.getType() != TYPE_ACCELEROMETER) return;
         if (mSensorChange++ % mAccIntensity != 0) return;
 
-        int rotation;
-        if (SDK_INT >= JELLY_BEAN_MR1)
-            rotation = getDisplay().getRotation();
-        else  //noinspection deprecation
-            rotation = getDisplay().getOrientation();
-
-        publishAcceleration(e, rotation);
+        publishAcceleration(e);
     }
 
     @SuppressWarnings("unused")
@@ -230,7 +232,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
 
         mMessage.setText("");
         mIconSend.setImageResource(R.drawable.action_send_inactive);
-        mListener.publishReading(new Reading(mNow, mNow, "message", "/", message));
+        mListener.publishReading(new Reading(0, System.currentTimeMillis(), "message", "/", message));
     }
 
     @SuppressWarnings("unused")
@@ -246,87 +248,121 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
     }
 
     public void refreshData() {
-        mNow = System.currentTimeMillis();
         monitorWiFi();
         monitorBattery();
         monitorLocation();
     }
 
     private void setUpSwitches() {
+        switchWifi(mSettings[0]);
+        mWiFiSwitch.setChecked(mSettings[0]);
         mWiFiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSettings[0] = isChecked;
-                Storage.instance().saveSettings(mSettings);
-                if (isChecked) {
-                    initWifiManager();
-                    monitorWiFi();
-                }
+                switchWifi(isChecked);
             }
         });
-        mWiFiSwitch.setChecked(mSettings[0]);
 
+        switchBattery(mSettings[1]);
+        mBatterySwitch.setChecked(mSettings[1]);
         mBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSettings[1] = isChecked;
-                Storage.instance().saveSettings(mSettings);
-                monitorBattery();
+                switchBattery(isChecked);
             }
         });
-        mBatterySwitch.setChecked(mSettings[1]);
 
+        switchLocation(mSettings[2]);
+        mLocSwitch.setChecked(mSettings[2]);
         mLocSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSettings[2] = isChecked;
-                Storage.instance().saveSettings(mSettings);
-                if (isChecked) initLocationManager();
-                else turnOffLocation();
+                switchLocation(isChecked);
             }
         });
-        mLocSwitch.setChecked(mSettings[2]);
 
+        switchAcceleration(mSettings[3]);
+        mAccelSwitch.setChecked(mSettings[3]);
         mAccelSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSettings[3] = isChecked;
-                Storage.instance().saveSettings(mSettings);
-                if (isChecked) initSensorManager();
-                if (isChecked) showAccelerometerWarning();
-                else turnSensorOff();
+                switchAcceleration(isChecked);
             }
         });
-        mAccelSwitch.setChecked(mSettings[3]);
 
+        switchFlash(mSettings[4]);
+        mFlashSwitch.setChecked(mSettings[4]);
         mFlashSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSettings[4] = isChecked;
-                Storage.instance().saveSettings(mSettings);
-                if (isChecked) {
-                    createFlashHelper();
-                    subscribeToCommands();
-                }
+                switchFlash(isChecked);
             }
         });
-        mFlashSwitch.setChecked(mSettings[4]);
 
+        switchSound(mSettings[5]);
+        mSoundSwitch.setChecked(mSettings[5]);
         mSoundSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSettings[5] = isChecked;
-                Storage.instance().saveSettings(mSettings);
-                if (isChecked) {
-                    createSoundHelper();
-                    subscribeToCommands();
-                }
+                switchSound(isChecked);
             }
         });
-        mSoundSwitch.setChecked(mSettings[5]);
 
+        switchWearable(mSettings[6]);
+        mWearableSwitch.setChecked(mSettings[6]);
         mWearableSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mSettings[6] = isChecked;
-                Storage.instance().saveSettings(mSettings);
-                mListener.activateWearable(isChecked);
+                switchWearable(isChecked);
             }
         });
-        mWearableSwitch.setChecked(mSettings[6]);
+    }
+
+    private void switchWearable(boolean isChecked) {
+        mSettings[6] = isChecked;
+        Storage.instance().saveSettings(mSettings);
+        mListener.activateWearable(isChecked);
+    }
+
+    private void switchSound(boolean isChecked) {
+        mSettings[5] = isChecked;
+        Storage.instance().saveSettings(mSettings);
+        if (isChecked) {
+            createSoundHelper();
+            subscribeToCommands();
+        }
+    }
+
+    private void switchFlash(boolean isChecked) {
+        mSettings[4] = isChecked;
+        Storage.instance().saveSettings(mSettings);
+        if (isChecked) {
+            createFlashHelper();
+            subscribeToCommands();
+        }
+    }
+
+    private void switchAcceleration(boolean isChecked) {
+        mSettings[3] = isChecked;
+        Storage.instance().saveSettings(mSettings);
+        if (isChecked) initSensorManager();
+        if (isChecked) showAccelerometerWarning();
+        else turnSensorOff();
+    }
+
+    private void switchLocation(boolean isChecked) {
+        mSettings[2] = isChecked;
+        Storage.instance().saveSettings(mSettings);
+        if (isChecked) initLocationManager();
+        else turnOffLocation();
+    }
+
+    private void switchWifi(boolean isChecked) {
+        mSettings[0] = isChecked;
+        Storage.instance().saveSettings(mSettings);
+        if (isChecked) {
+            initWifiManager();
+            monitorWiFi();
+        }
+    }
+
+    private void switchBattery(boolean isChecked) {
+        mSettings[1] = isChecked;
+        Storage.instance().saveSettings(mSettings);
+        monitorBattery();
     }
 
     private void initSensorManager() {
@@ -340,22 +376,20 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             mSensorManager.unregisterListener(SendReceiveView.this);
     }
 
-    private void publishAcceleration(SensorEvent e, int rotation) {
-        Reading reading = null;
-        switch (rotation) {
+    private void publishAcceleration(SensorEvent e) {
+        switch (mRotation) {
             case Surface.ROTATION_0:
-                reading = createAccelReading(e.values[0], e.values[1], e.values[2]);
+                mListener.publishReading(createAccelReading(e.values[0], e.values[1], e.values[2]));
                 break;
             case Surface.ROTATION_90:
-                reading = createAccelReading(-e.values[1], e.values[0], e.values[2]);
+                mListener.publishReading(createAccelReading(-e.values[1], e.values[0], e.values[2]));
                 break;
             case Surface.ROTATION_180:
-                reading = createAccelReading(-e.values[0], -e.values[1], e.values[2]);
+                mListener.publishReading(createAccelReading(-e.values[0], -e.values[1], e.values[2]));
                 break;
             case Surface.ROTATION_270:
-                reading = createAccelReading(e.values[1], -e.values[0], e.values[2]);
+                mListener.publishReading(createAccelReading(e.values[1], -e.values[0], e.values[2]));
         }
-        mListener.publishReading(reading);
     }
 
     private Reading createAccelReading(float x, float y, float z) {
@@ -363,8 +397,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         acceleration.x = x;
         acceleration.y = y;
         acceleration.z = z;
-        mNow = System.currentTimeMillis();
-        return new Reading(mNow, mNow, "acceleration", "/", acceleration);
+        return new Reading(0, System.currentTimeMillis(), "acceleration", "/", acceleration);
     }
 
     private void showAccelerometerWarning() {
@@ -396,7 +429,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
-            mListener.publishReading(new Reading(mNow, mNow, "rssi", "wifi", wifiInfo.getRssi()));
+            mListener.publishReading(new Reading(0, System.currentTimeMillis(), "rssi", "wifi", wifiInfo.getRssi()));
     }
 
     private boolean checkWifi(ConnectivityManager cm) {
@@ -425,7 +458,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         if (level == -1 || scale == -1) bat = 50.0f;
         else bat = ((float) level / (float) scale) * 100.0f;
 
-        mListener.publishReading(new Reading(mNow, mNow, "batteryLevel", "/", bat));
+        mListener.publishReading(new Reading(0, System.currentTimeMillis(), "batteryLevel", "/", bat));
     }
 
     private void initLocationManager() {
@@ -483,7 +516,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             address += obj.getAddressLine(1) + ", ";
             address += obj.getAddressLine(0);
 
-            mListener.publishReading(new Reading(mNow, mNow, "location", "/", address));
+            mListener.publishReading(new Reading(0, System.currentTimeMillis(), "location", "/", address));
         } catch (IOException e) {
             Toast.makeText(getContext(), R.string.sv_location_resolve_err, Toast.LENGTH_SHORT).show();
             e.printStackTrace();
@@ -549,12 +582,12 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
 
                         @Override public void onError(Throwable e) {
                             Crashlytics.log(Log.ERROR, "SettingsView", "subscribeToCommands - error");
-                            e.printStackTrace();
+                            Crashlytics.logException(e);
                         }
 
                         @Override public void onNext(Command action) {
                             final String cmd = action.getName();
-                            Crashlytics.log(Log.INFO, "SettingsView", "CMD - " + cmd);
+                            Crashlytics.log(Log.DEBUG, "SettingsView", "CMD - " + cmd);
                             if (cmd.equals("flashlight"))
                                 toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
                             if (cmd.equals("playSound")) playMusic((String) action.getValue());
