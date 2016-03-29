@@ -52,6 +52,17 @@
         <item name="android:width">@dimen/settings_switch_width</item>
     </style>
 
+    <style name="CardViewReading" parent="MatchWrap">
+        <item name="cardCornerRadius">5dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardBackgroundColor">#FFFFFF</item>
+        <item name="android:height">150dp</item>
+        <item name="android:layout_height">150dp</item>
+        <item name="android:maxHeight">150dp</item>
+        <item name="android:minHeight">150dp</item>
+    </style>
+
+
     <!--WIDGET-->
     <style name="MatchMatch" parent="@android:style/Widget">
         <item name="android:layout_width">match_parent</item>

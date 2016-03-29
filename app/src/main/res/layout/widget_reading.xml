@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.relayr.iotsmartphone.tabs.ReadingWidget
+    style="@style/MatchWrap"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <android.support.v7.widget.CardView
+        style="@style/CardViewReading">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/default_padding">
+
+            <LinearLayout
+                style="@style/MatchWrapHor">
+
+                <RelativeLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="3">
+
+                    <TextView
+                        android:id="@+id/reading_meaning"
+                        style="@style/NormalText"
+                        android:text="Meaning"/>
+
+                    <TextView
+                        android:id="@+id/reading_path"
+                        style="@style/NormalText"
+                        android:text="Path"/>
+
+                </RelativeLayout>
+
+                <Switch
+                    android:id="@+id/reading_switch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Upload"/>
+            </LinearLayout>
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
+</io.relayr.iotsmartphone.tabs.ReadingWidget>

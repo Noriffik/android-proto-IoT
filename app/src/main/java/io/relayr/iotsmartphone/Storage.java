@@ -3,8 +3,12 @@ package io.relayr.iotsmartphone;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
+import io.relayr.java.model.models.transport.DeviceReading;
 
 public class Storage {
 
@@ -23,12 +27,17 @@ public class Storage {
     private final static Storage singleton = new Storage();
     private static Device sDevice;
     private final SharedPreferences PREFS;
+    private static List<DeviceReading> phoneReadings = new ArrayList<>();
 
     private Storage() {
         PREFS = IotApplication.context().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     public static Storage instance() {return singleton;}
+
+    public List<DeviceReading> getPhoneReadings() {
+        return phoneReadings;
+    }
 
     public Device getDevice() {return sDevice;}
 
@@ -104,5 +113,9 @@ public class Storage {
 
     public int loadIntensity() {
         return PREFS.getInt(PREFS_INTENSITY, 1);
+    }
+
+    public void setPhoneReadings(List<DeviceReading> readings) {
+        phoneReadings.addAll(readings);
     }
 }

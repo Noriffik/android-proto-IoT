@@ -14,5 +14,6 @@
     <dimen name="device_name_text">16sp</dimen>
     <dimen name="settings_switch_width">250dp</dimen>
     <dimen name="settings_padding">30dp</dimen>
+    <dimen name="toolbar_height">60dp</dimen>
 
 </resources>

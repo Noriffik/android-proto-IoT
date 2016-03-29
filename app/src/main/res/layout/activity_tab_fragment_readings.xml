@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    style="@style/MatchMatch"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/default_padding"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+    <LinearLayout
+        style="@style/MatchWrapHor">
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/phone_graphic"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_cloud"/>
+
+            <TextView
+                android:id="@+id/phone_name"
+                style="@style/NormalText"
+                android:layout_toRightOf="@id/phone_graphic"
+                android:text="name placeholder"/>
+
+            <TextView
+                android:id="@+id/phone_type"
+                style="@style/NormalText"
+                android:layout_below="@id/phone_name"
+                android:layout_toRightOf="@id/phone_graphic"
+                android:text="Type placeholder"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/wearable_graphic"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_cloud"/>
+
+            <TextView
+                android:id="@+id/wearable_name"
+                style="@style/NormalText"
+                android:layout_toRightOf="@id/wearable_graphic"
+                android:text="name placeholder"/>
+
+            <TextView
+                android:id="@+id/wearable_type"
+                style="@style/NormalText"
+                android:layout_below="@id/wearable_name"
+                android:layout_toRightOf="@id/wearable_graphic"
+                android:text="Type placeholder"/>
+        </RelativeLayout>
+    </LinearLayout>
+
+    <GridView
+        android:id="@+id/grid"
+        style="@style/MatchWrap"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:horizontalSpacing="@dimen/default_padding"
+        android:numColumns="auto_fit"
+        android:verticalSpacing="@dimen/default_padding"/>
+</LinearLayout>
