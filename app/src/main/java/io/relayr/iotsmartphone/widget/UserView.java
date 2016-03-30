@@ -20,11 +20,11 @@ import butterknife.InjectView;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
+import io.relayr.java.helper.observer.SimpleObserver;
+import io.relayr.java.helper.observer.SuccessObserver;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
 import io.relayr.java.model.models.DeviceModel;
-import rx.Observer;
-import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 
 import static android.view.View.MeasureSpec.UNSPECIFIED;
@@ -70,15 +70,13 @@ public class UserView extends BasicView {
         RelayrSdk.getUser()
                 .timeout(3, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<User>() {
-                    @Override public void onCompleted() {}
-
-                    @Override public void onError(Throwable e) {
+                .subscribe(new SimpleObserver<User>() {
+                    @Override public void error(Throwable e) {
                         Toast.makeText(getContext(), R.string.something_went_wrong, LENGTH_LONG).show();
                         e.printStackTrace();
                     }
 
-                    @Override public void onNext(User user) {
+                    @Override public void success(User user) {
                         mUsername.setText(user.getName());
                         mEmail.setText(user.getEmail());
                         mUserId.setText(user.getId());
@@ -91,15 +89,13 @@ public class UserView extends BasicView {
         user.getDevices()
                 .timeout(10, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<List<Device>>() {
-                    @Override public void onCompleted() {}
-
-                    @Override public void onError(Throwable e) {
+                .subscribe(new SimpleObserver<List<Device>>() {
+                    @Override public void error(Throwable e) {
                         Toast.makeText(getContext(), R.string.something_went_wrong, LENGTH_LONG).show();
                         e.printStackTrace();
                     }
 
-                    @Override public void onNext(List<Device> devices) {
+                    @Override public void success(List<Device> devices) {
                         mDevices.addAll(devices);
                         mDeviceAdapter.notifyDataSetChanged();
                         setHeightBasedOnChildren(mDevicesList);
@@ -171,14 +167,8 @@ public class UserView extends BasicView {
                 name.setText(device.getName());
                 device.getDeviceModel()
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Observer<DeviceModel>() {
-                            @Override public void onCompleted() {}
-
-                            @Override public void onError(Throwable e) {
-                                e.printStackTrace();
-                            }
-
-                            @Override public void onNext(DeviceModel deviceModel) {
+                        .subscribe(new SuccessObserver<DeviceModel>() {
+                            @Override public void success(DeviceModel deviceModel) {
                                 if (deviceModel != null)
                                     model.setText(deviceModel.getName());
                             }

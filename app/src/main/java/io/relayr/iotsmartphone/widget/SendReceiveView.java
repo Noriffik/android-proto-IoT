@@ -146,7 +146,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             @Override public void run() {
                 setUpSwitches();
             }
-        }, 500);
+        }, 300);
 
         mMessage.addTextChangedListener(new TextWatcher() {
             @Override
@@ -254,6 +254,7 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
     }
 
     private void setUpSwitches() {
+        if(mWiFiSwitch==null)return;
         switchWifi(mSettings[0]);
         mWiFiSwitch.setChecked(mSettings[0]);
         mWiFiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -350,6 +351,12 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         else turnOffLocation();
     }
 
+    private void switchBattery(boolean isChecked) {
+        mSettings[1] = isChecked;
+        Storage.instance().saveSettings(mSettings);
+        monitorBattery();
+    }
+
     private void switchWifi(boolean isChecked) {
         mSettings[0] = isChecked;
         Storage.instance().saveSettings(mSettings);
@@ -357,12 +364,6 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
             initWifiManager();
             monitorWiFi();
         }
-    }
-
-    private void switchBattery(boolean isChecked) {
-        mSettings[1] = isChecked;
-        Storage.instance().saveSettings(mSettings);
-        monitorBattery();
     }
 
     private void initSensorManager() {
@@ -565,9 +566,28 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
         }
     }
 
+    private void toggleFlash(boolean on) {
+        if (!mSettings[4]) return;
+        if (mFlash != null && !mFlash.hasFlash(getContext())) {
+            Toast.makeText(getContext(), R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
+        } else {
+            mListener.showNotification(on, mSettings[6]);
+            if (mFlash == null) return;
+            if (on) mFlash.on();
+            else mFlash.off();
+        }
+    }
+
     private void createSoundHelper() {
         if (mSettings[5] && mSound != null) return;
         if (mSound == null) mSound = new SoundHelper();
+    }
+
+    private void playMusic(String value) {
+        if (value == null) return;
+        if (mSound == null) createSoundHelper();
+
+        mSound.playMusic(getContext(), value);
     }
 
     private void subscribeToCommands() {
@@ -593,25 +613,6 @@ public class SendReceiveView extends BasicView implements SensorEventListener, L
                             if (cmd.equals("playSound")) playMusic((String) action.getValue());
                         }
                     });
-    }
-
-    private void toggleFlash(boolean on) {
-        if (!mSettings[4]) return;
-        if (mFlash != null && !mFlash.hasFlash(getContext())) {
-            Toast.makeText(getContext(), R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
-        } else {
-            mListener.showNotification(on, mSettings[6]);
-            if (mFlash == null) return;
-            if (on) mFlash.on();
-            else mFlash.off();
-        }
-    }
-
-    private void playMusic(String value) {
-        if (value == null) return;
-        if (mSound == null) createSoundHelper();
-
-        mSound.playMusic(getContext(), value);
     }
 
     private void hideKeyboard() {

@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.android.RelayrSdk;
+import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.User;
 import rx.Observer;
 import rx.Subscriber;
@@ -98,10 +99,8 @@ public class IntroActivity extends AppCompatActivity {
     private void logIn() {
         RelayrSdk.logIn(this)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<User>() {
-                    @Override public void onCompleted() {}
-
-                    @Override public void onError(Throwable e) {
+                .subscribe(new SimpleObserver<User>() {
+                    @Override public void error(Throwable e) {
                         Crashlytics.log(Log.ERROR, "IA", "Login failed.");
                         e.printStackTrace();
 
@@ -111,7 +110,7 @@ public class IntroActivity extends AppCompatActivity {
                         else finish();
                     }
 
-                    @Override public void onNext(User user) {
+                    @Override public void success(User user) {
                         loadUserInfo();
                     }
                 });
@@ -121,10 +120,8 @@ public class IntroActivity extends AppCompatActivity {
         mUserInfoSubscription = RelayrSdk.getUser()
                 .timeout(7, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<User>() {
-                    @Override public void onCompleted() {}
-
-                    @Override public void onError(Throwable e) {
+                .subscribe(new SimpleObserver<User>() {
+                    @Override public void error(Throwable e) {
                         Crashlytics.log(Log.ERROR, "IA", "Failed to load user info.");
                         e.printStackTrace();
 
@@ -134,7 +131,7 @@ public class IntroActivity extends AppCompatActivity {
                         else finish();
                     }
 
-                    @Override public void onNext(User user) {
+                    @Override public void success(User user) {
                         Storage.instance().saveUser(user);
 
                         showToast(getString(R.string.ia_hello, user.getName()));

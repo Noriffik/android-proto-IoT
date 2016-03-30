@@ -19,9 +19,9 @@ import io.relayr.android.RelayrSdk;
 import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
+import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.CreateDevice;
 import io.relayr.java.model.Device;
-import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
@@ -65,10 +65,8 @@ public class DeviceView extends BasicView {
                 .createDevice(device)
                 .timeout(5, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Device>() {
-                    @Override public void onCompleted() {}
-
-                    @Override public void onError(Throwable e) {
+                .subscribe(new SimpleObserver<Device>() {
+                    @Override public void error(Throwable e) {
                         Crashlytics.log(Log.ERROR, "DV", "Failed to create device.");
                         e.printStackTrace();
 
@@ -76,7 +74,7 @@ public class DeviceView extends BasicView {
                         Toast.makeText(getContext(), R.string.something_went_wrong, LENGTH_LONG).show();
                     }
 
-                    @Override public void onNext(Device device) {
+                    @Override public void success(Device device) {
                         if (mCreateProgress != null) mCreateProgress.dismiss();
 
                         Storage.instance().saveDevice(device);

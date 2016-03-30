@@ -20,7 +20,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -31,7 +30,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
@@ -53,6 +51,7 @@ import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.helper.ControlListener;
 import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.widget.BasicView;
+import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
 import io.relayr.java.model.action.Reading;
@@ -219,15 +218,13 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
         RelayrSdk.getWebSocketClient()
                 .publish(Storage.instance().getDevice().getId(), reading)
                 .subscribeOn(Schedulers.io())
-                .subscribe(new Subscriber<Void>() {
-                    @Override public void onCompleted() {}
-
-                    @Override public void onError(Throwable e) {
+                .subscribe(new SimpleObserver<Void>() {
+                    @Override public void error(Throwable e) {
                         Crashlytics.log(Log.ERROR, "SettingsView", "publishReading - error");
                         e.printStackTrace();
                     }
 
-                    @Override public void onNext(Void aVoid) {}
+                    @Override public void success(Void v) {}
                 });
     }
 
@@ -293,17 +290,15 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                         }
                     })
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Subscriber<List<Device>>() {
-                        @Override public void onCompleted() {}
-
-                        @Override public void onError(Throwable e) {
+                    .subscribe(new SimpleObserver<List<Device>>() {
+                        @Override public void error(Throwable e) {
                             Crashlytics.log(Log.ERROR, "MA", "Loading devices failed.");
                             e.printStackTrace();
                             if (mLoadingProgress != null) mLoadingProgress.dismiss();
                             checkForDevice();
                         }
 
-                        @Override public void onNext(List<Device> devices) {
+                        @Override public void success(List<Device> devices) {
                             if (mLoadingProgress != null) mLoadingProgress.dismiss();
                             for (Device device : devices)
                                 if (device.getModelId() != null && device.getModelId().equals(Storage.MODEL_ID))
