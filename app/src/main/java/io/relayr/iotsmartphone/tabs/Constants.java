@@ -1,5 +1,7 @@
 package io.relayr.iotsmartphone.tabs;
 
+import io.relayr.java.model.action.Reading;
+
 public class Constants {
 
     public static class DeviceModelEvent {
@@ -24,4 +26,15 @@ public class Constants {
         }
     }
 
+    public static class ReadingEvent {
+        private Reading reading;
+
+        public ReadingEvent(Reading reading) {
+            this.reading = reading;
+        }
+
+        public Reading getReading() {
+            return reading;
+        }
+    }
 }

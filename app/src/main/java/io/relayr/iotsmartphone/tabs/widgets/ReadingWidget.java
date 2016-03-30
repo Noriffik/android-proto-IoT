@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs;
+package io.relayr.iotsmartphone.tabs.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -7,12 +7,14 @@ import android.widget.TextView;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.tabs.Constants;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.IntegerSchema;
 import io.relayr.java.model.models.schema.ValueSchema;
 
-public class ReadingWidget extends LinearLayout {
+public abstract class ReadingWidget extends LinearLayout {
 
     @InjectView(R.id.reading_path) TextView mPathTv;
     @InjectView(R.id.reading_meaning) TextView mMeaningTv;
@@ -32,22 +34,29 @@ public class ReadingWidget extends LinearLayout {
     protected String mPath;
     protected String mMeaning;
     protected ValueSchema mSchema;
+    protected LimitedQueue<Reading> mReadings = new LimitedQueue<>(20);
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         ButterKnife.inject(this, this);
-
+        EventBus.getDefault().register(this);
         mMeaningTv.setText(mMeaning);
         mPathTv.setText(mPath == null ? "/" : mPath);
-
-        final IntegerSchema schema = mSchema.asInteger();
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        EventBus.getDefault().unregister(this);
         ButterKnife.reset(this);
+    }
+
+    @SuppressWarnings("unused")
+    public void onEvent(final Constants.ReadingEvent event) {
+        if (!event.getReading().meaning.equals(mMeaning)) return;
+        mReadings.add(event.getReading());
+        refresh();
     }
 
     public void setPath(String mPath) {
@@ -62,8 +71,5 @@ public class ReadingWidget extends LinearLayout {
         this.mSchema = mSchema;
     }
 
-    public void updateReading(Reading reading) {
-        if (!isShown()) return;
-        if (!reading.meaning.equals(mMeaning)) return;
-    }
+    abstract void refresh();
 }

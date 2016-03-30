@@ -12,6 +12,7 @@ apply plugin: 'io.fabric'
 
 repositories {
     maven { url 'https://maven.fabric.io/public' }
+    maven { url "https://jitpack.io" }
 }
 
 android {
@@ -43,6 +44,7 @@ dependencies {
 
     compile 'de.greenrobot:eventbus:2.4.0'
     compile 'com.jakewharton:butterknife:6.1.0'
+    compile 'com.github.PhilJay:MPAndroidChart:v2.2.2'
 
     compile 'com.android.support:design:23.2.1'
     compile "com.android.support:support-v4:23.2.1"

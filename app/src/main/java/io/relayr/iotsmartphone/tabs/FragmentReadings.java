@@ -13,8 +13,10 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
+import io.relayr.iotsmartphone.tabs.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 public class FragmentReadings extends Fragment {
@@ -23,6 +25,16 @@ public class FragmentReadings extends Fragment {
     private ReadingsAdapter mGridAdapter;
 
     public FragmentReadings() {}
+
+    @Override public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EventBus.getDefault().register(this);
+    }
+
+    @Override public void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle saved) {
@@ -36,7 +48,11 @@ public class FragmentReadings extends Fragment {
 
     @SuppressWarnings("unused")
     public void onEvent(final Constants.DeviceModelEvent event) {
-        if (mGridAdapter != null) mGridAdapter.notifyDataSetChanged();
+        getActivity().runOnUiThread(new Runnable() {
+            @Override public void run() {
+                if (mGridAdapter != null) mGridAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     class ReadingsAdapter extends BaseAdapter {
@@ -71,12 +87,12 @@ public class FragmentReadings extends Fragment {
             final ViewHolder holder;
             if (view == null) {
                 LayoutInflater inflater = LayoutInflater.from(mContext);
-
-                final int layout = mContext.getResources().getIdentifier("widget_reading_" + reading.getMeaning().toLowerCase(),
-                        "layout", mContext.getPackageName());
-                if (layout >= 0) view = inflater.inflate(layout, parent, false);
-                else view = inflater.inflate(R.layout.widget_reading, parent, false);
-
+                final int layout = reading.getMeaning().equals("rssi") ||
+                        reading.getMeaning().equals("batteryLevel") ||
+                        reading.getMeaning().equals("acceleration") ||
+                        reading.getMeaning().equals("luminosity") ? R.layout.widget_reading_graph :
+                        R.layout.widget_reading_default;
+                view = inflater.inflate(layout, parent, false);
                 holder = new ViewHolder((ReadingWidget) view, reading);
                 view.setTag(holder);
             } else {
