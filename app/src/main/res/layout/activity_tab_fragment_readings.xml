@@ -19,7 +19,7 @@
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
                 android:scaleType="centerInside"
-                android:src="@drawable/ic_cloud"/>
+                android:src="@drawable/ic_graphic_phone"/>
 
             <TextView
                 android:id="@+id/phone_name"
@@ -45,7 +45,7 @@
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
                 android:scaleType="centerInside"
-                android:src="@drawable/ic_cloud"/>
+                android:src="@drawable/ic_graphic_watch"/>
 
             <TextView
                 android:id="@+id/wearable_name"
@@ -65,5 +65,6 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/grid"
         style="@style/MatchWrap"
+        android:isScrollContainer="false"
         android:padding="@dimen/default_padding_half"/>
 </LinearLayout>

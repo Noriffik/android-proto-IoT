@@ -1,19 +1,15 @@
-package io.relayr.iotsmartphone.tabs.widgets;
+package io.relayr.iotsmartphone.tabs.readings.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.Constants;
-import io.relayr.java.model.action.Reading;
-import io.relayr.java.model.models.schema.IntegerSchema;
-import io.relayr.java.model.models.schema.ValueSchema;
 
 public class ReadingWidgetDefault extends ReadingWidget {
+
+    @InjectView(R.id.reading_data) TextView mData;
 
     public ReadingWidgetDefault(Context context) {
         this(context, null);
@@ -39,5 +35,11 @@ public class ReadingWidgetDefault extends ReadingWidget {
 
     @Override void update() {}
 
-    @Override void refresh() {}
+    @Override void refresh() {
+        if (mReadings.isEmpty()) return;
+        if (mReadings.getLast().value == null) return;
+        if (!(mReadings.getLast().value instanceof String)) return;
+
+        mData.setText((String) mReadings.getLast().value);
+    }
 }

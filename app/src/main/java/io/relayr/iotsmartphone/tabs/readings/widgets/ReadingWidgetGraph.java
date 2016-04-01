@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.widgets;
+package io.relayr.iotsmartphone.tabs.readings.widgets;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.java.model.AccelGyroscope;
@@ -48,13 +47,14 @@ public class ReadingWidgetGraph extends ReadingWidget {
         super(context, attrs, defStyle);
     }
 
-    private int mMaxPoints = 20;
-    private long mFirstPoint;
     private long mDiff;
+    private long mFirstPoint;
+    private int mMaxPoints = 20;
 
     private Gson mGson = new Gson();
     private Map<String, List<Entry>> mAxisYKeys = new HashMap<>();
-    private int[] mColors = new int[]{R.color.red, R.color.green, R.color.blue};
+    private int[] mColors = new int[]{R.color.colorPrimary, R.color.red, R.color.green, R.color.blue};
+    private int mColor = mColors[new Random().nextInt(2)];
 
     @Override
     protected void onAttachedToWindow() {
@@ -65,7 +65,6 @@ public class ReadingWidgetGraph extends ReadingWidget {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        ButterKnife.reset(this);
     }
 
     @Override void update() {
@@ -78,7 +77,6 @@ public class ReadingWidgetGraph extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setGraphParameters() {
-        Log.e("set graph", mMeaning);
         if (mSchema.isIntegerSchema() || mSchema.isNumberSchema()) {
             mAxisYKeys.put(mMeaning, new ArrayList<Entry>());
             extractParameters(mSchema);
@@ -127,12 +125,14 @@ public class ReadingWidgetGraph extends ReadingWidget {
         leftAxis.setAxisMaxValue(max);
         leftAxis.setAxisMinValue(min);
         leftAxis.setStartAtZero(min == 0);
+
+        refresh();
     }
 
     @SuppressWarnings("unchecked")
     private void setData(List<Reading> points) {
         clearOldData();
-        mFirstPoint = points.get(0).ts;
+        mFirstPoint = points.isEmpty() ? System.currentTimeMillis() : points.get(0).ts;
         mDiff = (System.currentTimeMillis() - mFirstPoint) / mMaxPoints;
 
         List<String> axisX = setUpXaxis();
@@ -161,8 +161,7 @@ public class ReadingWidgetGraph extends ReadingWidget {
 
         LineData data;
         if (mAxisYKeys.size() == 1) {
-            int color = mColors[new Random().nextInt(2)];
-            data = new LineData(axisX, createDataSet(mMeaning, mAxisYKeys.get(mMeaning), color, color));
+            data = new LineData(axisX, createDataSet(mMeaning, mAxisYKeys.get(mMeaning), mColor, mColor));
         } else {
             List<ILineDataSet> dataSets = new ArrayList<>();
             int color = 0;

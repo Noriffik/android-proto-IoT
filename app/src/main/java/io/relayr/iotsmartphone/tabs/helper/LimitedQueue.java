@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.widgets;
+package io.relayr.iotsmartphone.tabs.helper;
 
 import java.util.LinkedList;
 

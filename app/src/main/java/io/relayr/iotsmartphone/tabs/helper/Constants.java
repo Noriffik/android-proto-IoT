@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs;
+package io.relayr.iotsmartphone.tabs.helper;
 
 import io.relayr.java.model.action.Reading;
 

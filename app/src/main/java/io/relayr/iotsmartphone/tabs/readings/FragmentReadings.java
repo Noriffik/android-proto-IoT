@@ -1,12 +1,15 @@
-package io.relayr.iotsmartphone.tabs;
+package io.relayr.iotsmartphone.tabs.readings;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,15 +19,21 @@ import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.Storage;
-import io.relayr.iotsmartphone.tabs.widgets.ReadingWidget;
+import io.relayr.iotsmartphone.tabs.helper.Constants;
+import io.relayr.iotsmartphone.tabs.readings.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
+
+import static android.os.Build.MANUFACTURER;
+import static android.os.Build.MODEL;
+import static android.os.Build.VERSION.SDK_INT;
 
 public class FragmentReadings extends Fragment {
 
     @InjectView(R.id.grid) protected RecyclerView mGridView;
-    private ReadingsAdapter mGridAdapter;
+    @InjectView(R.id.phone_name) protected TextView mPhoneName;
+    @InjectView(R.id.phone_type) protected TextView mPhoneType;
 
-    private StaggeredGridLayoutManager gridLayoutManager;
+    private ReadingsAdapter mGridAdapter;
 
     public FragmentReadings() {}
 
@@ -43,12 +52,25 @@ public class FragmentReadings extends Fragment {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_readings, container, false);
         ButterKnife.inject(this, view);
 
-        gridLayoutManager = new StaggeredGridLayoutManager(getResources().getInteger(R.integer.num_columns), StaggeredGridLayoutManager.VERTICAL);
+        StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(getResources().getInteger(R.integer.num_columns), StaggeredGridLayoutManager.VERTICAL);
         mGridView.setLayoutManager(gridLayoutManager);
 
         mGridAdapter = new ReadingsAdapter(Storage.instance().getPhoneReadings());
         mGridView.setAdapter(mGridAdapter);
+
+        setUpDeviceData();
         return view;
+    }
+
+    private void setUpDeviceData() {
+        Log.e("BRAND", Build.BRAND);
+        Log.e("DEVICE", Build.DEVICE);
+        Log.e("DISPLAY", Build.DISPLAY);
+        Log.e("PRODUCT", Build.PRODUCT);
+
+        mPhoneName.setText(MANUFACTURER + " " + MODEL);
+        mPhoneType.setText("Android OS v " + SDK_INT);
+
     }
 
     @SuppressWarnings("unused")
