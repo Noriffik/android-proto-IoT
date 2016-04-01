@@ -93,7 +93,7 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     @InjectView(R.id.toolbar) Toolbar mToolbar;
     @InjectView(R.id.drawer_layout) DrawerLayout mDrawer;
     @InjectView(R.id.nav_view) NavigationView mNavView;
-    @InjectView(R.id.fab) FloatingActionButton mFab;
+    //    @InjectView(R.id.fab) FloatingActionButton mFab;
     @InjectView(R.id.viewpager) ViewPager mViewPager;
     @InjectView(R.id.tabs) TabLayout mTabView;
 
@@ -155,13 +155,15 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
-        //
+
         //        if (SDK_INT >= JELLY_BEAN_MR1)
         //            mRotation = getDisplay().getRotation();
         //        else  //noinspection deprecation
         //            mRotation = getDisplay().getOrientation();
 
+        switchWifi(true);
         switchBattery(true);
+        switchAcceleration(true);
     }
 
     @Override

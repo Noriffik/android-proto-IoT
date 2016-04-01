@@ -1,14 +1,14 @@
 package io.relayr.iotsmartphone.tabs;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.GridView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -21,8 +21,10 @@ import io.relayr.java.model.models.transport.DeviceReading;
 
 public class FragmentReadings extends Fragment {
 
-    @InjectView(R.id.grid) protected GridView mGridView;
+    @InjectView(R.id.grid) protected RecyclerView mGridView;
     private ReadingsAdapter mGridAdapter;
+
+    private StaggeredGridLayoutManager gridLayoutManager;
 
     public FragmentReadings() {}
 
@@ -41,7 +43,10 @@ public class FragmentReadings extends Fragment {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_readings, container, false);
         ButterKnife.inject(this, view);
 
-        mGridAdapter = new ReadingsAdapter(getContext(), Storage.instance().getPhoneReadings());
+        gridLayoutManager = new StaggeredGridLayoutManager(getResources().getInteger(R.integer.num_columns), StaggeredGridLayoutManager.VERTICAL);
+        mGridView.setLayoutManager(gridLayoutManager);
+
+        mGridAdapter = new ReadingsAdapter(Storage.instance().getPhoneReadings());
         mGridView.setAdapter(mGridAdapter);
         return view;
     }
@@ -55,66 +60,39 @@ public class FragmentReadings extends Fragment {
         });
     }
 
-    class ReadingsAdapter extends BaseAdapter {
+    static class ReadingsAdapter extends RecyclerView.Adapter<ReadingViewHolder> {
 
-        private final Context mContext;
-        private final List<DeviceReading> mReadings;
+        private List<DeviceReading> mReadings = new ArrayList<>();
 
-        public ReadingsAdapter(Context context, List<DeviceReading> readings) {
-            mContext = context;
-            mReadings = readings;
+        public ReadingsAdapter(List<DeviceReading> items) {
+            this.mReadings = items;
         }
 
         @Override
-        public int getCount() {
-            return mReadings.size();
+        public ReadingViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View layoutView = LayoutInflater.from(parent.getContext()).inflate(viewType, null);
+            ReadingViewHolder holder = new ReadingViewHolder((ReadingWidget) layoutView);
+            return holder;
         }
 
-        @Override
-        public DeviceReading getItem(int position) {
-            return mReadings.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(final int position, View view, ViewGroup parent) {
+        @Override public int getItemViewType(int position) {
             final DeviceReading reading = mReadings.get(position);
-
-            final ViewHolder holder;
-            if (view == null) {
-                LayoutInflater inflater = LayoutInflater.from(mContext);
-                final int layout = reading.getMeaning().equals("rssi") ||
-                        reading.getMeaning().equals("batteryLevel") ||
-                        reading.getMeaning().equals("acceleration") ||
-                        reading.getMeaning().equals("luminosity") ? R.layout.widget_reading_graph :
-                        R.layout.widget_reading_default;
-                view = inflater.inflate(layout, parent, false);
-                holder = new ViewHolder((ReadingWidget) view, reading);
-                view.setTag(holder);
-            } else {
-                holder = (ViewHolder) view.getTag();
-            }
-
-            holder.refresh((ReadingWidget) view, reading);
-
-            return view;
+            int layout = reading.getMeaning().equals("rssi") ||
+                    reading.getMeaning().equals("batteryLevel") ||
+                    reading.getMeaning().equals("acceleration") ||
+                    reading.getMeaning().equals("luminosity") ? R.layout.widget_reading_graph :
+                    R.layout.widget_reading_default;
+            return layout;
         }
 
-        class ViewHolder {
+        @Override
+        public void onBindViewHolder(ReadingViewHolder holder, int position) {
+            holder.refresh(mReadings.get(position));
+        }
 
-            public ViewHolder(ReadingWidget widget, DeviceReading reading) {
-                refresh(widget, reading);
-            }
-
-            public void refresh(ReadingWidget widget, DeviceReading reading) {
-                widget.setPath(reading.getPath());
-                widget.setMeaning(reading.getMeaning());
-                widget.setSchema(reading.getValueSchema());
-            }
+        @Override
+        public int getItemCount() {
+            return this.mReadings.size();
         }
     }
 }

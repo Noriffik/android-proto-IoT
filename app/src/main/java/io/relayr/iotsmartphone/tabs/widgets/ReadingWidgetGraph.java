@@ -17,15 +17,16 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
+import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
 import io.relayr.java.model.models.schema.ObjectSchema;
@@ -50,18 +51,15 @@ public class ReadingWidgetGraph extends ReadingWidget {
     private int mMaxPoints = 20;
     private long mFirstPoint;
     private long mDiff;
-    private SimpleDateFormat mDateFormat;
 
     private Gson mGson = new Gson();
     private Map<String, List<Entry>> mAxisYKeys = new HashMap<>();
-    private int[] mAxisYColors = new int[]{R.color.colorPrimaryDark, R.color.colorPrimary, R.color.colorAccent};
+    private int[] mColors = new int[]{R.color.red, R.color.green, R.color.blue};
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        mDateFormat = new SimpleDateFormat("dd.MM HH:mm:ss",
-                getResources().getConfiguration().locale);
-        setGraphParameters();
+        update();
     }
 
     @Override
@@ -70,12 +68,17 @@ public class ReadingWidgetGraph extends ReadingWidget {
         ButterKnife.reset(this);
     }
 
+    @Override void update() {
+        setGraphParameters();
+    }
+
     @Override void refresh() {
         if (mChart != null) setData(mReadings);
     }
 
     @SuppressWarnings("unchecked")
     private void setGraphParameters() {
+        Log.e("set graph", mMeaning);
         if (mSchema.isIntegerSchema() || mSchema.isNumberSchema()) {
             mAxisYKeys.put(mMeaning, new ArrayList<Entry>());
             extractParameters(mSchema);
@@ -110,18 +113,13 @@ public class ReadingWidgetGraph extends ReadingWidget {
     }
 
     private void initGraph(int min, int max) {
-//        mChart.setDescription("");
-//        mChart.setNoDataTextDescription("Desc");
-//        mChart.setDescriptionColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
-//        mChart.setDescriptionTextSize(getResources().getDimensionPixelSize(R.dimen.tiny_text));
-
+        mChart.setDescription("");
         mChart.setTouchEnabled(false);
         mChart.setDragEnabled(false);
         mChart.setScaleEnabled(false);
         mChart.setPinchZoom(false);
 
         mChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-//        mChart.getXAxis().setLabelRotationAngle(10);
         mChart.getXAxis().setDrawLabels(false);
         mChart.getAxisRight().setEnabled(false);
 
@@ -145,7 +143,7 @@ public class ReadingWidgetGraph extends ReadingWidget {
                 final int index = i == 0 ? 0 : (int) ((reading.recorded - mFirstPoint) / mDiff);
                 if (index >= axisX.size()) break;
 
-                final int value = ((Float) reading.value).intValue();
+                final int value = ((Number) reading.value).intValue();
                 mAxisYKeys.get(mMeaning).add(new Entry(value, index));
             }
         } else {
@@ -154,21 +152,22 @@ public class ReadingWidgetGraph extends ReadingWidget {
                 final int index = i == 0 ? 0 : (int) ((reading.recorded - mFirstPoint) / mDiff);
                 if (index >= axisX.size()) break;
 
-                final LinkedTreeMap<String, Double> value = (LinkedTreeMap<String, Double>) reading.value;
-                for (String key : value.keySet())
-                    mAxisYKeys.get(key).add(new Entry(value.get(key).floatValue(), index));
+                AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) reading.value;
+                mAxisYKeys.get("x").add(new Entry(accel.x, index));
+                mAxisYKeys.get("y").add(new Entry(accel.y, index));
+                mAxisYKeys.get("z").add(new Entry(accel.z, index));
             }
         }
 
         LineData data;
         if (mAxisYKeys.size() == 1) {
-            data = new LineData(axisX, createDataSet(mMeaning, mAxisYKeys.get(mMeaning),
-                    R.color.colorPrimaryDark, R.color.colorPrimary));
+            int color = mColors[new Random().nextInt(2)];
+            data = new LineData(axisX, createDataSet(mMeaning, mAxisYKeys.get(mMeaning), color, color));
         } else {
             List<ILineDataSet> dataSets = new ArrayList<>();
             int color = 0;
             for (Map.Entry<String, List<Entry>> entry : mAxisYKeys.entrySet()) {
-                final int axisColor = mAxisYColors[color++ % mAxisYColors.length];
+                final int axisColor = mColors[color++ % mColors.length];
                 dataSets.add(createDataSet(entry.getKey(), entry.getValue(), axisColor, axisColor));
             }
             data = new LineData(axisX, dataSets);
@@ -185,10 +184,8 @@ public class ReadingWidgetGraph extends ReadingWidget {
     }
 
     @NonNull private List<String> setUpXaxis() {
-        List<String> axisX = new ArrayList<>();
-        for (int i = 0; i < mMaxPoints; i++)
-            axisX.add("");
-//            axisX.add(mDateFormat.format(mFirstPoint + (mDiff * i)));
+        List<String> axisX = new ArrayList<>(mMaxPoints);
+        for (int i = 0; i < mMaxPoints; i++) axisX.add("");
         return axisX;
     }
 
@@ -196,10 +193,10 @@ public class ReadingWidgetGraph extends ReadingWidget {
         LineDataSet set = new LineDataSet(entrys, name);
         set.setColor(ContextCompat.getColor(getContext(), lineColor));
         set.setCircleColor(ContextCompat.getColor(getContext(), dotColor));
-        set.setLineWidth(0f);
+        set.setLineWidth(1f);
         set.setDrawCircleHole(false);
         set.setDrawValues(false);
-        set.setCircleRadius(10);
+        set.setCircleRadius(2);
         set.setFillColor(ContextCompat.getColor(getContext(), dotColor));
         return set;
     }

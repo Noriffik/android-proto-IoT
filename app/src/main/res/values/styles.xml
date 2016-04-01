@@ -53,15 +53,23 @@
     </style>
 
     <style name="CardViewReading" parent="MatchWrap">
+        <item name="cardPreventCornerOverlap">false</item>
+        <item name="cardUseCompatPadding">true</item>
         <item name="cardCornerRadius">5dp</item>
         <item name="cardElevation">2dp</item>
         <item name="cardBackgroundColor">#FFFFFF</item>
-        <item name="android:height">150dp</item>
-        <item name="android:layout_height">150dp</item>
-        <item name="android:maxHeight">150dp</item>
-        <item name="android:minHeight">150dp</item>
+        <item name="android:height">250dp</item>
+        <item name="android:layout_height">250dp</item>
+        <item name="android:maxHeight">250dp</item>
+        <item name="android:minHeight">250dp</item>
     </style>
 
+    <style name="CardViewReadingEmpty" parent="CardViewReading">
+        <item name="android:height">100dp</item>
+        <item name="android:layout_height">100dp</item>
+        <item name="android:maxHeight">100dp</item>
+        <item name="android:minHeight">100dp</item>
+    </style>
 
     <!--WIDGET-->
     <style name="MatchMatch" parent="@android:style/Widget">

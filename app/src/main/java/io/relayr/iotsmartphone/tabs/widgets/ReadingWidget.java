@@ -2,6 +2,7 @@ package io.relayr.iotsmartphone.tabs.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -15,9 +16,6 @@ import io.relayr.java.model.models.schema.IntegerSchema;
 import io.relayr.java.model.models.schema.ValueSchema;
 
 public abstract class ReadingWidget extends LinearLayout {
-
-    @InjectView(R.id.reading_path) TextView mPathTv;
-    @InjectView(R.id.reading_meaning) TextView mMeaningTv;
 
     public ReadingWidget(Context context) {
         this(context, null);
@@ -41,8 +39,7 @@ public abstract class ReadingWidget extends LinearLayout {
         super.onAttachedToWindow();
         ButterKnife.inject(this, this);
         EventBus.getDefault().register(this);
-        mMeaningTv.setText(mMeaning);
-        mPathTv.setText(mPath == null ? "/" : mPath);
+        update();
     }
 
     @Override
@@ -59,17 +56,14 @@ public abstract class ReadingWidget extends LinearLayout {
         refresh();
     }
 
-    public void setPath(String mPath) {
+    public void setUp(String mPath, String mMeaning, ValueSchema mSchema) {
         this.mPath = mPath;
-    }
-
-    public void setMeaning(String mMeaning) {
         this.mMeaning = mMeaning;
+        this.mSchema = mSchema;
+        if (isShown()) update();
     }
 
-    public void setSchema(ValueSchema mSchema) {
-        this.mSchema = mSchema;
-    }
+    abstract void update();
 
     abstract void refresh();
 }

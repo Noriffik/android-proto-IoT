@@ -116,6 +116,7 @@ public class Storage {
     }
 
     public void setPhoneReadings(List<DeviceReading> readings) {
+        phoneReadings.clear();
         phoneReadings.addAll(readings);
     }
 }

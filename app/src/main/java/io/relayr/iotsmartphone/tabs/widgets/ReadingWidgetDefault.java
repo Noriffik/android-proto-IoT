@@ -37,7 +37,7 @@ public class ReadingWidgetDefault extends ReadingWidget {
         super.onDetachedFromWindow();
     }
 
-    @Override void refresh() {
+    @Override void update() {}
 
-    }
+    @Override void refresh() {}
 }
