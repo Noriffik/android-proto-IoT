@@ -1,12 +1,15 @@
 <resources>
 
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorAccent">@color/colorAccent</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
@@ -21,7 +24,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">@dimen/title_text</item>
         <item name="android:gravity">left</item>
-        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textColor">@color/text_color</item>
         <item name="android:layout_marginTop">@dimen/default_padding</item>
     </style>
 
@@ -57,17 +60,12 @@
         <item name="cardUseCompatPadding">true</item>
         <item name="cardCornerRadius">@dimen/cardview_default_radius</item>
         <item name="cardElevation">@dimen/cardview_default_elevation</item>
-        <item name="cardBackgroundColor">#FFFFFF</item>
-        <item name="android:height">250dp</item>
-        <item name="android:layout_height">250dp</item>
-        <item name="android:maxHeight">250dp</item>
-        <item name="android:minHeight">250dp</item>
+        <item name="cardBackgroundColor">@color/background</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/default_padding</item>
     </style>
 
     <style name="CardViewReadingEmpty" parent="CardViewReading">
-        <item name="android:height">100dp</item>
-        <item name="android:layout_height">100dp</item>
-        <item name="android:maxHeight">100dp</item>
         <item name="android:minHeight">100dp</item>
     </style>
 

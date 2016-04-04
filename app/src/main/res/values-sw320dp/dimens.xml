@@ -17,4 +17,7 @@
     <dimen name="toolbar_height">60dp</dimen>
     <dimen name="default_padding_half">4dp</dimen>
 
+    <dimen name="cloud_icon_size">70dp</dimen>
+    <dimen name="cloud_icon_radius">35dp</dimen>
+    <dimen name="graph_height">150dp</dimen>
 </resources>

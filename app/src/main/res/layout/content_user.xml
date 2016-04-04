@@ -11,7 +11,7 @@
     <View
         style="@style/MatchWrap"
         android:layout_height="1dp"
-        android:background="@color/gray"
+        android:background="@color/background"
         android:paddingBottom="@dimen/default_padding"/>
 
     <LinearLayout style="@style/MatchWrapHor">
@@ -52,7 +52,7 @@
     <View
         style="@style/MatchWrap"
         android:layout_height="1dp"
-        android:background="@color/gray"
+        android:background="@color/background"
         android:paddingBottom="@dimen/default_padding"/>
 
     <LinearLayout style="@style/MatchWrapHor">
@@ -108,7 +108,7 @@
     <View
         style="@style/MatchWrap"
         android:layout_height="1dp"
-        android:background="@color/gray"
+        android:background="@color/background"
         android:paddingBottom="@dimen/default_padding"/>
 
     <ListView

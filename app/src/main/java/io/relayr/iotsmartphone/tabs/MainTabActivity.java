@@ -25,8 +25,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -34,15 +32,12 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.widget.Toast;
 
@@ -50,8 +45,10 @@ import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
@@ -59,10 +56,10 @@ import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.Storage;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
 import io.relayr.iotsmartphone.tabs.helper.Constants;
+import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
 import io.relayr.iotsmartphone.tabs.readings.FragmentReadings;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.AccelGyroscope;
@@ -82,7 +79,10 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.Intent.ACTION_BATTERY_CHANGED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
+import static android.hardware.Sensor.TYPE_LIGHT;
+import static android.hardware.Sensor.TYPE_LINEAR_ACCELERATION;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
+import static android.hardware.SensorManager.SENSOR_DELAY_UI;
 import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.os.BatteryManager.EXTRA_LEVEL;
 import static android.os.BatteryManager.EXTRA_SCALE;
@@ -91,11 +91,10 @@ import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.widget.Toast.LENGTH_LONG;
 import static android.widget.Toast.LENGTH_SHORT;
 
-public class MainTabActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener, LocationListener {
+public class MainTabActivity extends AppCompatActivity implements
+        SensorEventListener, LocationListener {
 
     @InjectView(R.id.toolbar) Toolbar mToolbar;
-    @InjectView(R.id.drawer_layout) DrawerLayout mDrawer;
-    @InjectView(R.id.nav_view) NavigationView mNavView;
     @InjectView(R.id.viewpager) ViewPager mViewPager;
     @InjectView(R.id.tabs) TabLayout mTabView;
 
@@ -106,19 +105,14 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     private LocationManager mLocationManager;
     private ConnectivityManager mConnectivityManager;
 
-    // wifi, battery, location, acceleration, flash, sound
-    private boolean[] mSettings = new boolean[]{false, false, false, false, false, false, false};
-
     private Subscription mCommandsSubscription = null;
     private int mSensorChange = 0;
-
-    private int mAccIntensity = 0;
 
     private Subscription mRefreshSubs;
     private int mRotation;
 
-    protected Snackbar mSnackBar;
     private final Fragment[] mFragments = new Fragment[3];
+    private Map<String, Boolean> mUploadActions = new HashMap<>();
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -128,42 +122,13 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
         getReadings();
 
         setSupportActionBar(mToolbar);
-
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, mDrawer, mToolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        mDrawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        mNavView.setNavigationItemSelectedListener(this);
         setupViewPager(state);
         setUpTabs();
-
-        int publishDelay = Storage.instance().loadDelay();
-        mAccIntensity = 15 / (Storage.instance().loadIntensity() + 1);
-        Crashlytics.log(Log.INFO, "SRV", "Delay " + publishDelay + " intensity " + mAccIntensity);
-
-        mSettings = Storage.instance().loadSettings(mSettings.length);
-
-        mRefreshSubs = Observable.interval(2, TimeUnit.SECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Long>() {
-                    @Override public void onCompleted() {}
-
-                    @Override public void onError(Throwable e) {}
-
-                    @Override public void onNext(Long aLong) {refreshData();}
-                });
 
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
 
-        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
-        } else {
-            initLocationManager();
-        }
         //        if (SDK_INT >= JELLY_BEAN_MR1)
         //            mRotation = getDisplay().getRotation();
         //        else  //noinspection deprecation
@@ -172,34 +137,59 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
         initReadings();
     }
 
+    @Override protected void onResume() {
+        super.onResume();
+        if (mRefreshSubs == null)
+            mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<Long>() {
+                        @Override public void onCompleted() {}
+
+                        @Override public void onError(Throwable e) {
+                            Log.e("MTA", "Failed while refreshing");
+                            e.printStackTrace();
+                        }
+
+                        @Override public void onNext(Long aLong) {
+                            refreshTouch();
+                            if (aLong % SettingsStorage.FREQS.get("batteryLevel") == 0)
+                                monitorBattery();
+                            if (aLong % SettingsStorage.FREQS.get("location") == 0)
+                                monitorLocation();
+                            if (aLong % SettingsStorage.FREQS.get("rssi") == 0) monitorWiFi();
+                        }
+                    });
+    }
+
+    @Override protected void onPause() {
+        super.onPause();
+        if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
+        mRefreshSubs = null;
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case 100: {
                 final boolean granted = grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED;
                 Crashlytics.log(Log.INFO, "MA", "User granted permission: " + granted);
-                Storage.instance().locationPermission(granted);
+                SettingsStorage.instance().locationPermission(granted);
                 initLocationManager();
             }
         }
     }
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (mDrawer.isDrawerOpen(GravityCompat.START)) mDrawer.closeDrawer(GravityCompat.START);
-        else super.onBackPressed();
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        //        if (ev.getAction() == MotionEvent.ACTION_DOWN)
+        //            publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", 80000));
+        //        if (ev.getAction() == MotionEvent.ACTION_UP)
+        //            publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", 0));
+        return super.dispatchTouchEvent(ev);
     }
 
     private void getReadings() {
-        RelayrSdk.getDeviceModelsApi().getDeviceModelById(Storage.MODEL_ID)
+        RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_ID)
                 .subscribe(new SimpleObserver<DeviceModel>() {
                     @Override public void error(Throwable e) {
                         Log.e("MODEL", "PROBLEM");
@@ -209,7 +199,7 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
                     @Override public void success(DeviceModel deviceModel) {
                         try {
                             final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                            Storage.instance().setPhoneReadings(transport.getReadings());
+                            SettingsStorage.instance().setPhoneReadings(transport.getReadings());
                             EventBus.getDefault().post(new Constants.DeviceModelEvent());
                         } catch (DeviceModelsException e) {
                             e.printStackTrace();
@@ -257,6 +247,14 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
 
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
+
+        setupTabIcons();
+    }
+
+    private void setupTabIcons() {
+        mTabView.getTabAt(0).setIcon(R.drawable.ic_tab_hardware);
+        mTabView.getTabAt(1).setIcon(R.drawable.ic_tab_cloud);
+        mTabView.getTabAt(2).setIcon(R.drawable.ic_tab_rule);
     }
 
     public class MessageReceiver extends BroadcastReceiver {
@@ -290,7 +288,8 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return mFragmentTitleList.get(position);
+            //            return mFragmentTitleList.get(position);
+            return null;
         }
     }
 
@@ -299,7 +298,7 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     }
 
     @Override public void onProviderDisabled(String provider) {
-//        if (mLocSwitch != null) mLocSwitch.setChecked(false);
+        //        if (mLocSwitch != null) mLocSwitch.setChecked(false);
     }
 
     //NOT implemented
@@ -314,27 +313,48 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void onSensorChanged(SensorEvent e) {
-        if (e.sensor.getType() != TYPE_ACCELEROMETER) return;
-        if (mSensorChange++ % mAccIntensity != 0) return;
-        publishAcceleration(e);
+        //        if (mSensorChange++ % SettingsStorage.FREQS.get("acceleration") != 0) return;
+        if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION) publishAcceleration(e);
+        if (e.sensor.getType() == TYPE_LIGHT) publishLight(e);
     }
 
+    private void initReadings() {
+        initSensorManager();
+        showAccelerometerWarning();
 
-    public void refreshData() {
+        initWifiManager();
         monitorWiFi();
+
         monitorBattery();
-        monitorLocation();
+
+        //        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED &&
+        //                ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
+        //            ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
+        //        } else {
+        //            initLocationManager();
+        //        }
+    }
+
+    private void refreshTouch() {
+        //        publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", 0));
     }
 
     private void initSensorManager() {
         if (mSensorManager == null)
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER), SENSOR_DELAY_NORMAL);
+
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_LINEAR_ACCELERATION), 10000000);
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT), SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     private void turnSensorOff() {
         if (mSensorManager != null)
             mSensorManager.unregisterListener(this);
+    }
+
+    private void publishLight(SensorEvent e) {
+        Log.e("LIGHT", "" + e.values[0]);
+        publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
     }
 
     private void publishAcceleration(SensorEvent e) {
@@ -362,7 +382,7 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     }
 
     private void showAccelerometerWarning() {
-        if (Storage.instance().isWarningShown())
+        if (SettingsStorage.instance().isWarningShown())
             Toast.makeText(MainTabActivity.this, MainTabActivity.this.getString(R.string.sv_warning_toast), LENGTH_LONG).show();
         else
             new AlertDialog.Builder(MainTabActivity.this).setTitle(MainTabActivity.this.getString(R.string.sv_warning_dialog_title))
@@ -370,7 +390,7 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
                     .setMessage(MainTabActivity.this.getString(R.string.sv_warning_dialog_text))
                     .setPositiveButton(MainTabActivity.this.getString(R.string.ok), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int i) {
-                            Storage.instance().warningShown();
+                            SettingsStorage.instance().warningShown();
                             dialog.dismiss();
                         }
                     }).show();
@@ -421,7 +441,7 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     }
 
     private void initLocationManager() {
-        if (Storage.instance().locationGranted()) {
+        if (SettingsStorage.instance().locationGranted()) {
             new Handler().postDelayed(new Runnable() {
                 @Override public void run() {
                     if (mLocationManager == null)
@@ -507,7 +527,7 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     }
 
     private void createFlashHelper() {
-        if (mSettings[4] && mFlash != null) return;
+        if (mFlash != null) return;
 
         mFlash = new FlashHelper();
         try {
@@ -523,16 +543,14 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     }
 
     private void createSoundHelper() {
-        if (mSettings[5] && mSound != null) return;
-        if (mSound == null) mSound = new SoundHelper();
+        if (mSound != null) return;
+        mSound = new SoundHelper();
     }
 
     private void subscribeToCommands() {
-        if (!mSettings[4] && !mSettings[5]) return;
-
         if (mCommandsSubscription == null)
             mCommandsSubscription = RelayrSdk.getWebSocketClient()
-                    .subscribeToCommands(Storage.instance().getDevice().getId())
+                    .subscribeToCommands(SettingsStorage.instance().getDevice().getId())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<Command>() {
                         @Override public void onCompleted() {}
@@ -553,7 +571,6 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
     }
 
     private void toggleFlash(boolean on) {
-        if (!mSettings[4]) return;
         if (mFlash != null && !mFlash.hasFlash(MainTabActivity.this)) {
             Toast.makeText(MainTabActivity.this, R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
         } else {
@@ -569,16 +586,6 @@ public class MainTabActivity extends AppCompatActivity implements NavigationView
         if (mSound == null) createSoundHelper();
 
         mSound.playMusic(MainTabActivity.this, value);
-    }
-
-    private void initReadings() {
-        initSensorManager();
-        showAccelerometerWarning();
-
-        monitorBattery();
-
-        initWifiManager();
-        monitorWiFi();
     }
 
     void publishReading(Reading reading) {

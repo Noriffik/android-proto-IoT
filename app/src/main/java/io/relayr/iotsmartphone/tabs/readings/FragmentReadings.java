@@ -1,39 +1,37 @@
 package io.relayr.iotsmartphone.tabs.readings;
 
-import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.Storage;
 import io.relayr.iotsmartphone.tabs.helper.Constants;
+import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
 import io.relayr.iotsmartphone.tabs.readings.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
 
-import static android.os.Build.MANUFACTURER;
-import static android.os.Build.MODEL;
-import static android.os.Build.VERSION.SDK_INT;
+import static android.support.v7.widget.StaggeredGridLayoutManager.VERTICAL;
 
 public class FragmentReadings extends Fragment {
 
-    @InjectView(R.id.grid) protected RecyclerView mGridView;
-    @InjectView(R.id.phone_name) protected TextView mPhoneName;
-    @InjectView(R.id.phone_type) protected TextView mPhoneType;
+    @InjectView(R.id.phone_grid) protected RecyclerView mPhoneGrid;
+    @InjectView(R.id.wearable_grid) protected RecyclerView mWatchGrid;
+    @InjectView(R.id.fab) protected FloatingActionButton mFab;
 
-    private ReadingsAdapter mGridAdapter;
+    private ReadingsAdapter mPhoneAdapter;
+    private ReadingsAdapter mWatchAdapter;
 
     public FragmentReadings() {}
 
@@ -52,32 +50,58 @@ public class FragmentReadings extends Fragment {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_readings, container, false);
         ButterKnife.inject(this, view);
 
-        StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(getResources().getInteger(R.integer.num_columns), StaggeredGridLayoutManager.VERTICAL);
-        mGridView.setLayoutManager(gridLayoutManager);
-
-        mGridAdapter = new ReadingsAdapter(Storage.instance().getPhoneReadings());
-        mGridView.setAdapter(mGridAdapter);
+        final int columns = getResources().getInteger(R.integer.num_columns);
+        mPhoneGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
+        mWatchGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
 
         setUpDeviceData();
+        onPhoneClicked();
+
         return view;
     }
 
     private void setUpDeviceData() {
-        Log.e("BRAND", Build.BRAND);
-        Log.e("DEVICE", Build.DEVICE);
-        Log.e("DISPLAY", Build.DISPLAY);
-        Log.e("PRODUCT", Build.PRODUCT);
+        //        mPhoneName.setText(MANUFACTURER + " " + MODEL);
+        //        mPhoneType.setText("Android OS v " + SDK_INT);
+    }
 
-        mPhoneName.setText(MANUFACTURER + " " + MODEL);
-        mPhoneType.setText("Android OS v " + SDK_INT);
+    @OnClick(R.id.fab)
+    public void onFabClicked() {
+        if (mPhoneGrid.getVisibility() == View.VISIBLE) onWatchClicked();
+        else onPhoneClicked();
+    }
 
+    private void onPhoneClicked() {
+        mWatchGrid.setVisibility(View.GONE);
+        mPhoneGrid.setVisibility(View.VISIBLE);
+        mFab.setImageResource(R.drawable.ic_graphic_watch);
+
+        //        if (mPhoneAdapter != null) {
+        //            mPhoneAdapter.notifyDataSetChanged();
+        //            return;
+        //        }
+        mPhoneAdapter = new ReadingsAdapter(SettingsStorage.instance().getPhoneReadings());
+        mPhoneGrid.setAdapter(mPhoneAdapter);
+    }
+
+    private void onWatchClicked() {
+        mWatchGrid.setVisibility(View.VISIBLE);
+        mPhoneGrid.setVisibility(View.GONE);
+        mFab.setImageResource(R.drawable.ic_graphic_phone);
+
+        //        if (mWatchAdapter != null) {
+        //            mWatchAdapter.notifyDataSetChanged();
+        //            return;
+        //        }
+        mWatchAdapter = new ReadingsAdapter(new ArrayList<DeviceReading>());
+        mWatchGrid.setAdapter(mWatchAdapter);
     }
 
     @SuppressWarnings("unused")
     public void onEvent(final Constants.DeviceModelEvent event) {
         getActivity().runOnUiThread(new Runnable() {
             @Override public void run() {
-                if (mGridAdapter != null) mGridAdapter.notifyDataSetChanged();
+                if (mPhoneAdapter != null) mPhoneAdapter.notifyDataSetChanged();
             }
         });
     }
@@ -101,9 +125,9 @@ public class FragmentReadings extends Fragment {
             final DeviceReading reading = mReadings.get(position);
             int layout = reading.getMeaning().equals("rssi") ||
                     reading.getMeaning().equals("batteryLevel") ||
-                    reading.getMeaning().equals("acceleration") ||
-                    reading.getMeaning().equals("luminosity") ? R.layout.widget_reading_graph :
-                    R.layout.widget_reading_default;
+                    reading.getMeaning().equals("acceleration") ? R.layout.widget_reading_graph :
+                    reading.getMeaning().equals("luminosity") ? R.layout.widget_reading_graph_bar :
+                            R.layout.widget_reading_default;
             return layout;
         }
 

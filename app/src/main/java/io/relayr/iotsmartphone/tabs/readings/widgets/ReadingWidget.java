@@ -1,8 +1,12 @@
 package io.relayr.iotsmartphone.tabs.readings.widgets;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
@@ -12,6 +16,9 @@ import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.ValueSchema;
 
 public abstract class ReadingWidget extends LinearLayout {
+
+    protected final int DELAY_SIMPLE = 30 * 1000;
+    protected final int DELAY_COMPLEX = 10 * 1000;
 
     public ReadingWidget(Context context) {
         this(context, null);
@@ -28,13 +35,20 @@ public abstract class ReadingWidget extends LinearLayout {
     protected String mPath;
     protected String mMeaning;
     protected ValueSchema mSchema;
-    protected LimitedQueue<Reading> mReadings = new LimitedQueue<>(20);
+    protected LimitedQueue<Reading> mReadings = new LimitedQueue<>(100);
+    protected int mMaxPoints = 500;
+    protected List<String> axisX = new ArrayList<>();
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         ButterKnife.inject(this, this);
         EventBus.getDefault().register(this);
+
+        axisX = new ArrayList<>(
+
+        );
+        for (int i = 0; i < mMaxPoints; i++) axisX.add("");
         update();
     }
 

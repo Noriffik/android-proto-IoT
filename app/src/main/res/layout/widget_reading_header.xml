@@ -5,16 +5,16 @@
 
     <TextView
         android:id="@+id/reading_meaning"
-        style="@style/NormalText"
+        style="@style/TitleText"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:text="Meaning"/>
+        android:layout_alignParentTop="true"/>
 
-    <Switch
+    <ImageView
         android:id="@+id/reading_switch"
         style="@style/WrapWrap"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:drawableLeft="@drawable/ic_cloud_upload"
-        android:drawablePadding="@dimen/default_padding"/>
+        android:drawablePadding="@dimen/default_padding"
+        android:src="@drawable/ic_settings"/>
+
 </RelativeLayout>

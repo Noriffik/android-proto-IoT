@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/colorPrimaryDark"/>
+    <stroke
+        android:width="@dimen/default_padding_half"
+        android:color="@color/colorPrimaryDark"/>
+    <corners android:radius="@dimen/cloud_icon_radius"/>
+    <padding
+        android:bottom="@dimen/default_padding_half"
+        android:left="@dimen/default_padding_half"
+        android:right="@dimen/default_padding_half"
+        android:top="@dimen/default_padding_half"/>
+</shape>

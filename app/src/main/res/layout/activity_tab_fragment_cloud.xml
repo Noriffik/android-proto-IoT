@@ -2,16 +2,52 @@
 <LinearLayout
     style="@style/MatchMatch"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:padding="@dimen/default_padding"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    android:gravity="center_vertical"
+    android:padding="@dimen/default_padding">
 
-    <TextView
-        style="@style/NormalText"
-        android:layout_width="match_parent"
-        android:layout_marginBottom="@dimen/default_padding"
-        android:text="Cloud"
-        android:textSize="@dimen/small_text"/>
+    <ImageView
+        android:id="@+id/cloud"
+        android:layout_width="@dimen/cloud_icon_size"
+        android:layout_height="@dimen/cloud_icon_size"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/rounded_background"
+        android:padding="@dimen/default_padding"
+        android:src="@drawable/ic_cloud"/>
+
+    <View
+        android:id="@+id/cloud_connection"
+        android:layout_width="5dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="@dimen/default_padding_half"
+        android:layout_marginTop="@dimen/default_padding_half"
+        android:background="@color/colorPrimaryDark"/>
+
+    <ImageView
+        android:id="@+id/phone"
+        android:layout_width="@dimen/cloud_icon_size"
+        android:layout_height="@dimen/cloud_icon_size"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/rounded_background"
+        android:padding="@dimen/default_padding"
+        android:src="@drawable/ic_graphic_phone"/>
+
+    <View
+        android:id="@+id/watch_connection"
+        android:layout_width="5dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="@dimen/default_padding_half"
+        android:layout_marginTop="@dimen/default_padding_half"
+        android:background="@color/colorPrimaryDark"/>
+
+    <ImageView
+        android:id="@+id/watch"
+        android:layout_width="@dimen/cloud_icon_size"
+        android:layout_height="@dimen/cloud_icon_size"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/rounded_background"
+        android:padding="@dimen/default_padding"
+        android:src="@drawable/ic_graphic_watch"/>
 
 </LinearLayout>

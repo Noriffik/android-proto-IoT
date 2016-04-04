@@ -47,13 +47,9 @@ public class ReadingWidgetGraph extends ReadingWidget {
         super(context, attrs, defStyle);
     }
 
-    private long mDiff;
-    private long mFirstPoint;
-    private int mMaxPoints = 20;
-
     private Gson mGson = new Gson();
     private Map<String, List<Entry>> mAxisYKeys = new HashMap<>();
-    private int[] mColors = new int[]{R.color.colorPrimary, R.color.red, R.color.green, R.color.blue};
+    private int[] mColors = new int[]{R.color.graph_yellow, R.color.graph_red, R.color.graph_green};
     private int mColor = mColors[new Random().nextInt(2)];
 
     @Override
@@ -92,7 +88,7 @@ public class ReadingWidgetGraph extends ReadingWidget {
                         final NumberSchema fromJson = mGson.fromJson(obj.getValue().toString(), NumberSchema.class);
                         extractParameters(fromJson);
                     } catch (Exception e) {
-                        Crashlytics.log(Log.WARN, "RW", "Object not supported");
+                        Crashlytics.log(Log.WARN, "RWG", "Object not supported");
                     }
                 }
             }
@@ -117,40 +113,51 @@ public class ReadingWidgetGraph extends ReadingWidget {
         mChart.setScaleEnabled(false);
         mChart.setPinchZoom(false);
 
-        mChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-        mChart.getXAxis().setDrawLabels(false);
-        mChart.getAxisRight().setEnabled(false);
+        mChart.getLegend().setEnabled(false);
+        mChart.getAxisRight().setEnabled(true);
 
-        YAxis leftAxis = mChart.getAxisLeft();
-        leftAxis.setAxisMaxValue(max);
-        leftAxis.setAxisMinValue(min);
-        leftAxis.setStartAtZero(min == 0);
+        initAxis(mChart.getAxisLeft(), min, max);
+        initAxis(mChart.getAxisRight(), min, max);
 
         refresh();
     }
 
+    private void initAxis(YAxis axis, int min, int max) {
+        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.colorSecondary));
+        axis.setAxisMaxValue(max);
+        axis.setAxisMinValue(min);
+        axis.setStartAtZero(min == 0);
+    }
+
     @SuppressWarnings("unchecked")
     private void setData(List<Reading> points) {
-        clearOldData();
-        mFirstPoint = points.isEmpty() ? System.currentTimeMillis() : points.get(0).ts;
-        mDiff = (System.currentTimeMillis() - mFirstPoint) / mMaxPoints;
+        long mFirstPoint;
+        long mDiff;
 
-        List<String> axisX = setUpXaxis();
+        for (String key : mAxisYKeys.keySet()) mAxisYKeys.get(key).clear();
 
         if (mAxisYKeys.size() == 1) {
+            mFirstPoint = System.currentTimeMillis() - DELAY_SIMPLE;
+            mDiff = DELAY_SIMPLE / mMaxPoints;
+
             for (int i = 0; i < points.size(); i++) {
                 final Reading reading = points.get(i);
-                final int index = i == 0 ? 0 : (int) ((reading.recorded - mFirstPoint) / mDiff);
-                if (index >= axisX.size()) break;
+                final int index = (int) ((reading.recorded - mFirstPoint) / mDiff);
+                if (index < 0) continue;
+                if (index >= mMaxPoints) break;
 
                 final int value = ((Number) reading.value).intValue();
                 mAxisYKeys.get(mMeaning).add(new Entry(value, index));
             }
         } else {
+            mFirstPoint = System.currentTimeMillis() - DELAY_COMPLEX;
+            mDiff = DELAY_COMPLEX / mMaxPoints;
+
             for (int i = 0; i < points.size(); i++) {
                 final Reading reading = points.get(i);
-                final int index = i == 0 ? 0 : (int) ((reading.recorded - mFirstPoint) / mDiff);
-                if (index >= axisX.size()) break;
+                final int index = (int) ((reading.recorded - mFirstPoint) / mDiff);
+                if (index < 0) continue;
+                if (index >= mMaxPoints) break;
 
                 AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) reading.value;
                 mAxisYKeys.get("x").add(new Entry(accel.x, index));
@@ -176,18 +183,6 @@ public class ReadingWidgetGraph extends ReadingWidget {
         mChart.invalidate();
     }
 
-    private void clearOldData() {
-        mDiff = 0;
-        mFirstPoint = 0;
-        for (String key : mAxisYKeys.keySet()) mAxisYKeys.get(key).clear();
-    }
-
-    @NonNull private List<String> setUpXaxis() {
-        List<String> axisX = new ArrayList<>(mMaxPoints);
-        for (int i = 0; i < mMaxPoints; i++) axisX.add("");
-        return axisX;
-    }
-
     private LineDataSet createDataSet(String name, List<Entry> entrys, int dotColor, int lineColor) {
         LineDataSet set = new LineDataSet(entrys, name);
         set.setColor(ContextCompat.getColor(getContext(), lineColor));
@@ -196,6 +191,7 @@ public class ReadingWidgetGraph extends ReadingWidget {
         set.setDrawCircleHole(false);
         set.setDrawValues(false);
         set.setCircleRadius(2);
+        set.setValueTextColor(ContextCompat.getColor(getContext(), R.color.colorSecondary));
         set.setFillColor(ContextCompat.getColor(getContext(), dotColor));
         return set;
     }
