@@ -20,7 +20,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -31,7 +30,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.common.ConnectionResult;
@@ -250,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                 .setContentText(this.getString(R.string.srv_flash_status, "ON"));
 
         if (wearEnabled) {
-            Bitmap bg = BitmapFactory.decodeResource(getResources(), R.color.colorPrimary);
+            Bitmap bg = BitmapFactory.decodeResource(getResources(), R.color.primary);
             builder.extend(new NotificationCompat.WearableExtender().addAction(action).setBackground(bg));
         }
         builder.addAction(action);

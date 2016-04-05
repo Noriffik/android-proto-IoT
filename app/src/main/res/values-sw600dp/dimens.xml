@@ -15,10 +15,11 @@
     <dimen name="device_name_text">16sp</dimen>
     <dimen name="settings_switch_width">250dp</dimen>
     <dimen name="settings_padding">30dp</dimen>
+
     <dimen name="toolbar_height">60dp</dimen>
 
     <dimen name="cloud_icon_size">100dp</dimen>
     <dimen name="cloud_icon_radius">50dp</dimen>
-    <dimen name="graph_height">150dp</dimen>
+    <dimen name="graph_height">170dp</dimen>
 
 </resources>

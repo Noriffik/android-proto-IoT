@@ -1,8 +1,10 @@
 package io.relayr.iotsmartphone.tabs.readings;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
@@ -26,18 +28,21 @@ import static android.support.v7.widget.StaggeredGridLayoutManager.VERTICAL;
 
 public class FragmentReadings extends Fragment {
 
-    @InjectView(R.id.phone_grid) protected RecyclerView mPhoneGrid;
-    @InjectView(R.id.wearable_grid) protected RecyclerView mWatchGrid;
+    @InjectView(R.id.readings_grid) protected RecyclerView mGrid;
     @InjectView(R.id.fab) protected FloatingActionButton mFab;
 
     private ReadingsAdapter mPhoneAdapter;
     private ReadingsAdapter mWatchAdapter;
+    private String title;
 
     public FragmentReadings() {}
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EventBus.getDefault().register(this);
+
+        if (SettingsStorage.instance().getPhoneManufacturer() == null)
+            SettingsStorage.instance().savePhoneData(Build.MANUFACTURER, Build.MODEL, Build.VERSION.SDK_INT);
     }
 
     @Override public void onDestroy() {
@@ -51,50 +56,33 @@ public class FragmentReadings extends Fragment {
         ButterKnife.inject(this, view);
 
         final int columns = getResources().getInteger(R.integer.num_columns);
-        mPhoneGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
-        mWatchGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
+        mGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
 
-        setUpDeviceData();
         onPhoneClicked();
 
         return view;
     }
 
-    private void setUpDeviceData() {
-        //        mPhoneName.setText(MANUFACTURER + " " + MODEL);
-        //        mPhoneType.setText("Android OS v " + SDK_INT);
-    }
-
-    @OnClick(R.id.fab)
+    @SuppressWarnings("unused") @OnClick(R.id.fab)
     public void onFabClicked() {
-        if (mPhoneGrid.getVisibility() == View.VISIBLE) onWatchClicked();
+        if (mGrid.getVisibility() == View.VISIBLE) onWatchClicked();
         else onPhoneClicked();
     }
 
     private void onPhoneClicked() {
-        mWatchGrid.setVisibility(View.GONE);
-        mPhoneGrid.setVisibility(View.VISIBLE);
         mFab.setImageResource(R.drawable.ic_graphic_watch);
 
-        //        if (mPhoneAdapter != null) {
-        //            mPhoneAdapter.notifyDataSetChanged();
-        //            return;
-        //        }
         mPhoneAdapter = new ReadingsAdapter(SettingsStorage.instance().getPhoneReadings());
-        mPhoneGrid.setAdapter(mPhoneAdapter);
+        mGrid.setAdapter(mPhoneAdapter);
+        setTitle("IoT smartphone");
     }
 
     private void onWatchClicked() {
-        mWatchGrid.setVisibility(View.VISIBLE);
-        mPhoneGrid.setVisibility(View.GONE);
         mFab.setImageResource(R.drawable.ic_graphic_phone);
 
-        //        if (mWatchAdapter != null) {
-        //            mWatchAdapter.notifyDataSetChanged();
-        //            return;
-        //        }
         mWatchAdapter = new ReadingsAdapter(new ArrayList<DeviceReading>());
-        mWatchGrid.setAdapter(mWatchAdapter);
+        mGrid.setAdapter(mWatchAdapter);
+        setTitle("IoT watch");
     }
 
     @SuppressWarnings("unused")
@@ -102,8 +90,15 @@ public class FragmentReadings extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override public void run() {
                 if (mPhoneAdapter != null) mPhoneAdapter.notifyDataSetChanged();
+                if (mWatchAdapter != null) mWatchAdapter.notifyDataSetChanged();
             }
         });
+    }
+
+    public void setTitle(String title) {
+        if (getActivity() == null) return;
+        if (((AppCompatActivity) getActivity()).getSupportActionBar() == null) return;
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(title);
     }
 
     static class ReadingsAdapter extends RecyclerView.Adapter<ReadingViewHolder> {
@@ -117,18 +112,16 @@ public class FragmentReadings extends Fragment {
         @Override
         public ReadingViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View layoutView = LayoutInflater.from(parent.getContext()).inflate(viewType, null);
-            ReadingViewHolder holder = new ReadingViewHolder((ReadingWidget) layoutView);
-            return holder;
+            return new ReadingViewHolder((ReadingWidget) layoutView, parent.getContext());
         }
 
         @Override public int getItemViewType(int position) {
             final DeviceReading reading = mReadings.get(position);
-            int layout = reading.getMeaning().equals("rssi") ||
+            return reading.getMeaning().equals("rssi") ||
                     reading.getMeaning().equals("batteryLevel") ||
                     reading.getMeaning().equals("acceleration") ? R.layout.widget_reading_graph :
                     reading.getMeaning().equals("luminosity") ? R.layout.widget_reading_graph_bar :
                             R.layout.widget_reading_default;
-            return layout;
         }
 
         @Override

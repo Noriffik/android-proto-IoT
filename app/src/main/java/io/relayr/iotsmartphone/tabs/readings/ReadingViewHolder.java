@@ -1,5 +1,9 @@
 package io.relayr.iotsmartphone.tabs.readings;
 
+import android.content.Context;
+import android.content.DialogInterface;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
@@ -7,28 +11,46 @@ import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.tabs.readings.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
 
-public class ReadingViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
-    private final ReadingWidget widget;
     @InjectView(R.id.reading_meaning) TextView mMeaningTv;
 
-    public ReadingViewHolder(ReadingWidget widget) {
+    private String mMeaning;
+    private final Context mContext;
+    private final ReadingWidget widget;
+
+    public ReadingViewHolder(ReadingWidget widget, Context context) {
         super(widget);
-        widget.setOnClickListener(this);
         ButterKnife.inject(this, widget);
+
         this.widget = widget;
+        this.mContext = context;
     }
 
-    @Override
-    public void onClick(View view) {
-        Toast.makeText(view.getContext(), "Clicked Position = " + getPosition(), Toast.LENGTH_SHORT).show();
+    @SuppressWarnings("unused") @OnClick(R.id.reading_settings)
+    public void onSettingsClick() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay);
+        final DialogView view = (DialogView) View.inflate(mContext, R.layout.dialog_content, null);
+        view.setMeaning(mMeaning, true);
+        dialogBuilder.setView(view);
+        dialogBuilder.setTitle(mMeaning + " settings");
+        dialogBuilder.setPositiveButton("Close", new DialogInterface.OnClickListener() {
+            @Override public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialogBuilder.create().show();
+
     }
 
     public void refresh(DeviceReading reading) {
+        this.mMeaning = reading.getMeaning();
+
         String path = "";
         final String readingPath = reading.getPath();
         if (readingPath != null && readingPath.length() > 1) path = readingPath + "/";

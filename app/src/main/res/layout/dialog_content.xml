@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.relayr.iotsmartphone.tabs.readings.DialogView
+    style="@style/MatchWrap"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_margin="@dimen/default_padding"
+    android:padding="@dimen/default_padding">
+
+    <android.support.v7.widget.SwitchCompat
+        android:id="@+id/cloud_upload"
+        style="@style/NormalText"
+        android:gravity="center_vertical"
+        android:text="Upload to the cloud"/>
+
+    <TextView
+        style="@style/NormalText"
+        android:layout_marginTop="@dimen/default_padding"
+        android:text="Readings frequency"/>
+
+    <SeekBar
+        android:id="@+id/frequency_seek"
+        style="@style/MatchWrap"
+        android:layout_marginTop="@dimen/default_padding"
+        android:max="60"/>
+
+    <TextView
+        android:id="@+id/frequency_info"
+        style="@style/SubtitleText"
+        android:layout_gravity="center_horizontal"/>
+
+</io.relayr.iotsmartphone.tabs.readings.DialogView>

@@ -10,6 +10,7 @@ import io.fabric.sdk.android.Fabric;
 public class IotApplication extends Application {
 
     private static Context mContext;
+    private static boolean sVisible = false;
 
     @Override
     public void onCreate() {
@@ -23,4 +24,8 @@ public class IotApplication extends Application {
     public static Context context() {
         return mContext;
     }
+
+    public static void activityVisible(boolean visible) {sVisible = visible;}
+
+    public static boolean issVisible() {return sVisible;}
 }

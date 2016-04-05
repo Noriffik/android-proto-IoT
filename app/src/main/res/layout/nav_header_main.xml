@@ -2,7 +2,7 @@
 <LinearLayout
     style="@style/MatchWrap"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@color/colorPrimary"
+    android:background="@color/primary"
     android:gravity="bottom"
     android:padding="@dimen/big_padding"
     android:theme="@style/ThemeOverlay.AppCompat.Dark">

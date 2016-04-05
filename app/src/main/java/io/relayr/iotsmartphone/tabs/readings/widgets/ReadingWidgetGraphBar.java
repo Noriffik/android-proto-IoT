@@ -38,7 +38,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
         super(context, attrs, defStyle);
     }
 
-    private int mColor = new int[]{R.color.graph_yellow, R.color.graph_red, R.color.graph_green}[new Random().nextInt(2)];
+    private int mColor = new int[]{R.color.graph_blue, R.color.graph_red, R.color.graph_green}[new Random().nextInt(2)];
 
     @Override
     protected void onAttachedToWindow() {
@@ -95,7 +95,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
     }
 
     private void initAxis(YAxis axis, int min, int max) {
-        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.colorSecondary));
+        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.secondary));
         axis.setAxisMaxValue(max);
         axis.setAxisMinValue(min);
         axis.setStartAtZero(min == 0);

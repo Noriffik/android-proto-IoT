@@ -55,6 +55,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
+import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
@@ -139,6 +140,7 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override protected void onResume() {
         super.onResume();
+        IotApplication.activityVisible(true);
         if (mRefreshSubs == null)
             mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
@@ -163,6 +165,7 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override protected void onPause() {
         super.onPause();
+        IotApplication.activityVisible(false);
         if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
         mRefreshSubs = null;
     }
@@ -228,9 +231,9 @@ public class MainTabActivity extends AppCompatActivity implements
 
         if (getSupportFragmentManager() == null) return;
         ViewPagerAdapter mViewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
-        mViewPagerAdapter.addFrag(mFragments[0], "Readings");
-        mViewPagerAdapter.addFrag(mFragments[1], "Cloud");
-        mViewPagerAdapter.addFrag(mFragments[2], "Rules");
+        mViewPagerAdapter.addFrag(mFragments[0]);
+        mViewPagerAdapter.addFrag(mFragments[1]);
+        mViewPagerAdapter.addFrag(mFragments[2]);
 
         mViewPager.setAdapter(mViewPagerAdapter);
     }
@@ -265,7 +268,6 @@ public class MainTabActivity extends AppCompatActivity implements
 
     class ViewPagerAdapter extends FragmentPagerAdapter {
         private final List<Fragment> mFragmentList = new ArrayList<>();
-        private final List<String> mFragmentTitleList = new ArrayList<>();
 
         public ViewPagerAdapter(FragmentManager manager) {
             super(manager);
@@ -281,14 +283,12 @@ public class MainTabActivity extends AppCompatActivity implements
             return mFragmentList.size();
         }
 
-        public void addFrag(Fragment fragment, String title) {
+        public void addFrag(Fragment fragment) {
             mFragmentList.add(fragment);
-            mFragmentTitleList.add(title);
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
-            //            return mFragmentTitleList.get(position);
             return null;
         }
     }
@@ -301,21 +301,20 @@ public class MainTabActivity extends AppCompatActivity implements
         //        if (mLocSwitch != null) mLocSwitch.setChecked(false);
     }
 
-    //NOT implemented
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
-    //NOT implemented
     @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
 
-    //NOT implemented
     @Override public void onLocationChanged(Location location) {}
 
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void onSensorChanged(SensorEvent e) {
-        //        if (mSensorChange++ % SettingsStorage.FREQS.get("acceleration") != 0) return;
-        if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION) publishAcceleration(e);
-        if (e.sensor.getType() == TYPE_LIGHT) publishLight(e);
+        if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION)
+            if (mSensorChange++ % SettingsStorage.FREQS.get("acceleration") == 0)
+                publishAcceleration(e);
+
+            else if (e.sensor.getType() == TYPE_LIGHT) publishLight(e);
     }
 
     private void initReadings() {
@@ -343,7 +342,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mSensorManager == null)
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_LINEAR_ACCELERATION), 10000000);
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_NORMAL);
         mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT), SensorManager.SENSOR_DELAY_NORMAL);
     }
 
@@ -353,7 +352,6 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void publishLight(SensorEvent e) {
-        Log.e("LIGHT", "" + e.values[0]);
         publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
     }
 
@@ -589,7 +587,8 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     void publishReading(Reading reading) {
-        EventBus.getDefault().post(new Constants.ReadingEvent(reading));
+        if (IotApplication.issVisible())
+            EventBus.getDefault().post(new Constants.ReadingEvent(reading));
         //        if (reading == null || reading.meaning == null) return;
         //        RelayrSdk.getWebSocketClient()
         //                .publish(Storage.instance().getDevice().getId(), reading)

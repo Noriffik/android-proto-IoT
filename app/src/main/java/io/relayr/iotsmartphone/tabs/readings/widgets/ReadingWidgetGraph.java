@@ -1,14 +1,12 @@
 package io.relayr.iotsmartphone.tabs.readings.widgets;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -49,8 +47,7 @@ public class ReadingWidgetGraph extends ReadingWidget {
 
     private Gson mGson = new Gson();
     private Map<String, List<Entry>> mAxisYKeys = new HashMap<>();
-    private int[] mColors = new int[]{R.color.graph_yellow, R.color.graph_red, R.color.graph_green};
-    private int mColor = mColors[new Random().nextInt(2)];
+    private int[] mColors = new int[]{R.color.graph_green, R.color.graph_blue, R.color.graph_red};
 
     @Override
     protected void onAttachedToWindow() {
@@ -123,7 +120,7 @@ public class ReadingWidgetGraph extends ReadingWidget {
     }
 
     private void initAxis(YAxis axis, int min, int max) {
-        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.colorSecondary));
+        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.secondary));
         axis.setAxisMaxValue(max);
         axis.setAxisMinValue(min);
         axis.setStartAtZero(min == 0);
@@ -168,12 +165,13 @@ public class ReadingWidgetGraph extends ReadingWidget {
 
         LineData data;
         if (mAxisYKeys.size() == 1) {
-            data = new LineData(axisX, createDataSet(mMeaning, mAxisYKeys.get(mMeaning), mColor, mColor));
+            data = new LineData(axisX, createDataSet(mMeaning, mAxisYKeys.get(mMeaning),
+                    R.color.graph_yellow, R.color.graph_yellow));
         } else {
             List<ILineDataSet> dataSets = new ArrayList<>();
             int color = 0;
             for (Map.Entry<String, List<Entry>> entry : mAxisYKeys.entrySet()) {
-                final int axisColor = mColors[color++ % mColors.length];
+                final int axisColor = mColors[color++];
                 dataSets.add(createDataSet(entry.getKey(), entry.getValue(), axisColor, axisColor));
             }
             data = new LineData(axisX, dataSets);
@@ -191,7 +189,7 @@ public class ReadingWidgetGraph extends ReadingWidget {
         set.setDrawCircleHole(false);
         set.setDrawValues(false);
         set.setCircleRadius(2);
-        set.setValueTextColor(ContextCompat.getColor(getContext(), R.color.colorSecondary));
+        set.setValueTextColor(ContextCompat.getColor(getContext(), R.color.secondary));
         set.setFillColor(ContextCompat.getColor(getContext(), dotColor));
         return set;
     }

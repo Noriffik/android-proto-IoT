@@ -3,13 +3,16 @@ package io.relayr.iotsmartphone.tabs.readings.widgets;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
+import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.tabs.helper.Constants;
 import io.relayr.iotsmartphone.tabs.helper.LimitedQueue;
 import io.relayr.java.model.action.Reading;
@@ -45,9 +48,7 @@ public abstract class ReadingWidget extends LinearLayout {
         ButterKnife.inject(this, this);
         EventBus.getDefault().register(this);
 
-        axisX = new ArrayList<>(
-
-        );
+        axisX = new ArrayList<>(mMaxPoints);
         for (int i = 0; i < mMaxPoints; i++) axisX.add("");
         update();
     }

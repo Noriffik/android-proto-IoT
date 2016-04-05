@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,10 @@ public class SettingsStorage {
     private static final String PREFS_ACTIVE_WATCH = "active_w";
     private static final String PREFS_FREQUENCY_PHONE = "freq_p";
     private static final String PREFS_FREQUENCY_WATCH = "freq_w";
+
+    private static final String PREFS_PHONE_MANUF = "phone_manuf";
+    private static final String PREFS_PHONE_MODEL = "phone_model";
+    private static final String PREFS_PHONE_SDK = "phone_sdk";
 
     private final static SettingsStorage singleton = new SettingsStorage();
     private static Device sDevice;
@@ -65,6 +71,7 @@ public class SettingsStorage {
     }
 
     public void saveFrequency(String meaning, boolean phone, int freq) {
+        FREQS.put(meaning, freq);
         PREFS.edit().putInt((phone ? PREFS_FREQUENCY_PHONE : PREFS_FREQUENCY_WATCH) + meaning, freq).apply();
     }
 
@@ -96,5 +103,22 @@ public class SettingsStorage {
     public void setPhoneReadings(List<DeviceReading> readings) {
         phoneReadings.clear();
         phoneReadings.addAll(readings);
+        Collections.sort(phoneReadings, new Comparator<DeviceReading>() {
+            @Override public int compare(DeviceReading lhs, DeviceReading rhs) {
+                return lhs.getMeaning().compareTo(rhs.getMeaning());
+            }
+        });
     }
+
+    public void savePhoneData(String manufacturer, String model, int sdk) {
+        PREFS.edit().putString(PREFS_PHONE_MANUF, manufacturer).apply();
+        PREFS.edit().putString(PREFS_PHONE_MODEL, model).apply();
+        PREFS.edit().putInt(PREFS_PHONE_SDK, sdk).apply();
+    }
+
+    public String getPhoneManufacturer() {return PREFS.getString(PREFS_PHONE_MANUF, null); }
+
+    public String getPhoneModel() {return PREFS.getString(PREFS_PHONE_MODEL, null); }
+
+    public int getPhoneSdk() {return PREFS.getInt(PREFS_PHONE_SDK, 0); }
 }
