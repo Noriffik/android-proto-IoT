@@ -3,6 +3,7 @@ package io.relayr.iotsmartphone.tabs.readings.widgets;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -57,7 +58,7 @@ public abstract class ReadingWidget extends LinearLayout {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         EventBus.getDefault().unregister(this);
-        ButterKnife.reset(this);
+        mReadings.clear();
     }
 
     @SuppressWarnings("unused")

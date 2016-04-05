@@ -4,6 +4,8 @@ import io.relayr.java.model.action.Reading;
 
 public class Constants {
 
+    public enum DeviceType {PHONE, WATCH}
+
     public static class DeviceModelEvent {
         public DeviceModelEvent() {}
     }

@@ -52,11 +52,12 @@ public class ReadingWidgetGraph extends ReadingWidget {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        mAxisYKeys.clear();
         update();
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
+    @Override protected void onDetachedFromWindow() {
+        mAxisYKeys.clear();
         super.onDetachedFromWindow();
     }
 
@@ -72,10 +73,10 @@ public class ReadingWidgetGraph extends ReadingWidget {
     private void setGraphParameters() {
         if (mSchema.isIntegerSchema() || mSchema.isNumberSchema()) {
             mAxisYKeys.put(mMeaning, new ArrayList<Entry>());
-            extractParameters(mSchema);
-        }
-
-        if (mSchema.isObjectSchema()) {
+            final NumberSchema schema = mSchema.asNumber();
+            initGraph(schema.getMin() != null ? schema.getMin().intValue() : 0,
+                    schema.getMax() != null ? schema.getMax().intValue() : 100);
+        } else if (mSchema.isObjectSchema()) {
             final ObjectSchema schema = mSchema.asObject();
             final LinkedTreeMap<String, Object> properties = (LinkedTreeMap<String, Object>) schema.getProperties();
             if (properties != null) {
@@ -83,24 +84,14 @@ public class ReadingWidgetGraph extends ReadingWidget {
                     mAxisYKeys.put(obj.getKey(), new ArrayList<Entry>());
                     try {
                         final NumberSchema fromJson = mGson.fromJson(obj.getValue().toString(), NumberSchema.class);
-                        extractParameters(fromJson);
+                        initGraph(fromJson.getMin() != null ? fromJson.getMin().intValue() : 0,
+                                fromJson.getMax() != null ? fromJson.getMax().intValue() : 100);
                     } catch (Exception e) {
                         Crashlytics.log(Log.WARN, "RWG", "Object not supported");
                     }
                 }
             }
         }
-    }
-
-    private void extractParameters(ValueSchema valueSchema) {
-        int min = 0;
-        int max = 100;
-        final NumberSchema schema = valueSchema.asNumber();
-        if (schema.getMin() != null)
-            min = (int) (schema.getMin().intValue() - (schema.getMax().intValue() * 0.1));
-        if (schema.getMax() != null)
-            max = (int) (schema.getMax().intValue() + (schema.getMax().intValue() * 0.1));
-        initGraph(min, max);
     }
 
     private void initGraph(int min, int max) {
@@ -128,8 +119,8 @@ public class ReadingWidgetGraph extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setData(List<Reading> points) {
-        long mFirstPoint;
         long mDiff;
+        long mFirstPoint;
 
         for (String key : mAxisYKeys.keySet()) mAxisYKeys.get(key).clear();
 
@@ -156,10 +147,17 @@ public class ReadingWidgetGraph extends ReadingWidget {
                 if (index < 0) continue;
                 if (index >= mMaxPoints) break;
 
-                AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) reading.value;
-                mAxisYKeys.get("x").add(new Entry(accel.x, index));
-                mAxisYKeys.get("y").add(new Entry(accel.y, index));
-                mAxisYKeys.get("z").add(new Entry(accel.z, index));
+                if (reading.value instanceof AccelGyroscope.Acceleration) {
+                    AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) reading.value;
+                    mAxisYKeys.get("x").add(new Entry(accel.x, index));
+                    mAxisYKeys.get("y").add(new Entry(accel.y, index));
+                    mAxisYKeys.get("z").add(new Entry(accel.z, index));
+                } else if (reading.value instanceof AccelGyroscope.AngularSpeed) {
+                    AccelGyroscope.AngularSpeed gyro = (AccelGyroscope.AngularSpeed) reading.value;
+                    mAxisYKeys.get("x").add(new Entry(gyro.x, index));
+                    mAxisYKeys.get("y").add(new Entry(gyro.y, index));
+                    mAxisYKeys.get("z").add(new Entry(gyro.z, index));
+                }
             }
         }
 
@@ -171,7 +169,7 @@ public class ReadingWidgetGraph extends ReadingWidget {
             List<ILineDataSet> dataSets = new ArrayList<>();
             int color = 0;
             for (Map.Entry<String, List<Entry>> entry : mAxisYKeys.entrySet()) {
-                final int axisColor = mColors[color++];
+                final int axisColor = mColors[color++ % 3];
                 dataSets.add(createDataSet(entry.getKey(), entry.getValue(), axisColor, axisColor));
             }
             data = new LineData(axisX, dataSets);

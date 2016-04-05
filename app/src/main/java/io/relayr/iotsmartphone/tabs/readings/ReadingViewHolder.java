@@ -34,17 +34,19 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
     @SuppressWarnings("unused") @OnClick(R.id.reading_settings)
     public void onSettingsClick() {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay);
         final DialogView view = (DialogView) View.inflate(mContext, R.layout.dialog_content, null);
         view.setMeaning(mMeaning, true);
-        dialogBuilder.setView(view);
-        dialogBuilder.setTitle(mMeaning + " settings");
-        dialogBuilder.setPositiveButton("Close", new DialogInterface.OnClickListener() {
-            @Override public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        dialogBuilder.create().show();
+
+        new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay)
+                .setView(view)
+                .setTitle(mMeaning + " settings")
+                .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .create()
+                .show();
 
     }
 

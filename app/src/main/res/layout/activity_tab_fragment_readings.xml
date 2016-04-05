@@ -9,10 +9,18 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/readings_grid"
+        android:id="@+id/readings_phone_grid"
         style="@style/MatchWrap"
         android:isScrollContainer="false"
         android:padding="@dimen/default_padding_half"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/readings_watch_grid"
+        style="@style/MatchWrap"
+        android:isScrollContainer="false"
+        android:padding="@dimen/default_padding_half"
+        android:visibility="gone"/>
+
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"

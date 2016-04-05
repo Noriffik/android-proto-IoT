@@ -38,17 +38,12 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
         super(context, attrs, defStyle);
     }
 
-    private int mColor = new int[]{R.color.graph_blue, R.color.graph_red, R.color.graph_green}[new Random().nextInt(2)];
+    private boolean isBoolean = false;
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         update();
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
     }
 
     @Override void update() {
@@ -61,21 +56,15 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setGraphParameters() {
-        if (mSchema.isIntegerSchema() || mSchema.isNumberSchema())
-            extractParameters(mSchema);
-        else
+        if (mSchema.isIntegerSchema() || mSchema.isNumberSchema()) {
+            final NumberSchema schema = mSchema.asNumber();
+            initGraph(schema.getMin() != null ? schema.getMin().intValue() : 0, schema.getMax() != null ? schema.getMax().intValue() : 100);
+            isBoolean = false;
+        } else if (mSchema.isBooleanSchema()) {
+            initGraph(0, 1);
+            isBoolean = true;
+        } else
             Crashlytics.log(Log.WARN, "RWGB", "Object not supported");
-    }
-
-    private void extractParameters(ValueSchema valueSchema) {
-        int min = 0;
-        int max = 100;
-        final NumberSchema schema = valueSchema.asNumber();
-        if (schema.getMin() != null)
-            min = (int) (schema.getMin().intValue() - (schema.getMax().intValue() * 0.1));
-        if (schema.getMax() != null)
-            max = (int) (schema.getMax().intValue() + (schema.getMax().intValue() * 0.1));
-        initGraph(min, max);
     }
 
     private void initGraph(int min, int max) {
@@ -113,12 +102,15 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
             if (index < 0) continue;
             if (index >= mMaxPoints) break;
 
-            final int value = ((Number) reading.value).intValue();
-            yValues.add(new BarEntry(value, index));
+            if (isBoolean)
+                yValues.add(new BarEntry(((Boolean) reading.value) ? 1 : 0, index));
+            else
+                yValues.add(new BarEntry(((Number) reading.value).intValue(), index));
         }
 
         BarDataSet barDataSet = new BarDataSet(yValues, mMeaning);
-        barDataSet.setColor(ContextCompat.getColor(getContext(), mColor));
+        barDataSet.setColor(ContextCompat.getColor(getContext(), R.color.graph_yellow));
+        barDataSet.setBarSpacePercent(2f);
 
         BarData data = new BarData(axisX, barDataSet);
         data.setDrawValues(false);

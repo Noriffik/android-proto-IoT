@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
+import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.tabs.helper.Constants;
 import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
@@ -25,15 +27,17 @@ import io.relayr.iotsmartphone.tabs.readings.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 import static android.support.v7.widget.StaggeredGridLayoutManager.VERTICAL;
+import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
 
 public class FragmentReadings extends Fragment {
 
-    @InjectView(R.id.readings_grid) protected RecyclerView mGrid;
+    @InjectView(R.id.readings_phone_grid) protected RecyclerView mPhoneGrid;
+    @InjectView(R.id.readings_watch_grid) protected RecyclerView mWatchGrid;
     @InjectView(R.id.fab) protected FloatingActionButton mFab;
 
     private ReadingsAdapter mPhoneAdapter;
     private ReadingsAdapter mWatchAdapter;
-    private String title;
 
     public FragmentReadings() {}
 
@@ -47,6 +51,7 @@ public class FragmentReadings extends Fragment {
 
     @Override public void onDestroy() {
         super.onDestroy();
+        IotApplication.visible(WATCH, false);
         EventBus.getDefault().unregister(this);
     }
 
@@ -56,32 +61,49 @@ public class FragmentReadings extends Fragment {
         ButterKnife.inject(this, view);
 
         final int columns = getResources().getInteger(R.integer.num_columns);
-        mGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
 
-        onPhoneClicked();
+        mPhoneAdapter = new ReadingsAdapter(SettingsStorage.instance().loadPhoneReadings());
+        mPhoneGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
+        mPhoneGrid.setAdapter(mPhoneAdapter);
+
+        mWatchAdapter = new ReadingsAdapter(SettingsStorage.instance().loadWatchReadings());
+        mWatchGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
+        mWatchGrid.setAdapter(mWatchAdapter);
+
+        onFabClicked();
 
         return view;
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.fab)
     public void onFabClicked() {
-        if (mGrid.getVisibility() == View.VISIBLE) onWatchClicked();
+        if (IotApplication.isVisible(PHONE)) onWatchClicked();
         else onPhoneClicked();
     }
 
     private void onPhoneClicked() {
+        IotApplication.visible(PHONE, true);
         mFab.setImageResource(R.drawable.ic_graphic_watch);
 
-        mPhoneAdapter = new ReadingsAdapter(SettingsStorage.instance().getPhoneReadings());
-        mGrid.setAdapter(mPhoneAdapter);
+        mPhoneGrid.setVisibility(View.VISIBLE);
+        mWatchGrid.setVisibility(View.GONE);
+
+        if (mPhoneAdapter != null)
+            mPhoneAdapter.update(SettingsStorage.instance().loadPhoneReadings());
+
         setTitle("IoT smartphone");
     }
 
     private void onWatchClicked() {
+        IotApplication.visible(WATCH, true);
         mFab.setImageResource(R.drawable.ic_graphic_phone);
 
-        mWatchAdapter = new ReadingsAdapter(new ArrayList<DeviceReading>());
-        mGrid.setAdapter(mWatchAdapter);
+        mPhoneGrid.setVisibility(View.GONE);
+        mWatchGrid.setVisibility(View.VISIBLE);
+
+        if (mWatchAdapter != null)
+            mWatchAdapter.update(SettingsStorage.instance().loadWatchReadings());
+
         setTitle("IoT watch");
     }
 
@@ -89,38 +111,41 @@ public class FragmentReadings extends Fragment {
     public void onEvent(final Constants.DeviceModelEvent event) {
         getActivity().runOnUiThread(new Runnable() {
             @Override public void run() {
-                if (mPhoneAdapter != null) mPhoneAdapter.notifyDataSetChanged();
-                if (mWatchAdapter != null) mWatchAdapter.notifyDataSetChanged();
+                if (mPhoneAdapter != null && IotApplication.isVisible(PHONE))
+                    mPhoneAdapter.update(SettingsStorage.instance().loadPhoneReadings());
+                if (mWatchAdapter != null && IotApplication.isVisible(WATCH))
+                    mWatchAdapter.update(SettingsStorage.instance().loadWatchReadings());
             }
         });
     }
 
     public void setTitle(String title) {
-        if (getActivity() == null) return;
-        if (((AppCompatActivity) getActivity()).getSupportActionBar() == null) return;
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(title);
+        if (title != null && getActivity() != null && ((AppCompatActivity) getActivity()).getSupportActionBar() != null)
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(title);
     }
 
     static class ReadingsAdapter extends RecyclerView.Adapter<ReadingViewHolder> {
 
-        private List<DeviceReading> mReadings = new ArrayList<>();
+        private final List<DeviceReading> mReadings = new ArrayList<>();
 
         public ReadingsAdapter(List<DeviceReading> items) {
-            this.mReadings = items;
+            update(items);
         }
 
         @Override
         public ReadingViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View layoutView = LayoutInflater.from(parent.getContext()).inflate(viewType, null);
-            return new ReadingViewHolder((ReadingWidget) layoutView, parent.getContext());
+            View view = LayoutInflater.from(parent.getContext()).inflate(viewType, null);
+            return new ReadingViewHolder((ReadingWidget) view, parent.getContext());
         }
 
         @Override public int getItemViewType(int position) {
-            final DeviceReading reading = mReadings.get(position);
-            return reading.getMeaning().equals("rssi") ||
-                    reading.getMeaning().equals("batteryLevel") ||
-                    reading.getMeaning().equals("acceleration") ? R.layout.widget_reading_graph :
-                    reading.getMeaning().equals("luminosity") ? R.layout.widget_reading_graph_bar :
+            final String meaning = mReadings.get(position).getMeaning();
+            return meaning.equals("rssi") ||
+                    meaning.equals("batteryLevel") ||
+                    meaning.equals("acceleration") ||
+                    meaning.equals("angularSpeed") ||
+                    meaning.equals("luminosity") ? R.layout.widget_reading_graph :
+                    meaning.equals("touch") ? R.layout.widget_reading_graph_bar :
                             R.layout.widget_reading_default;
         }
 
@@ -132,6 +157,12 @@ public class FragmentReadings extends Fragment {
         @Override
         public int getItemCount() {
             return this.mReadings.size();
+        }
+
+        public void update(List<DeviceReading> readings) {
+            mReadings.clear();
+            mReadings.addAll(readings);
+            notifyDataSetChanged();
         }
     }
 }

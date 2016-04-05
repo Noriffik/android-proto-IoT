@@ -57,7 +57,7 @@
     <string name="sv_subscribe_flash">Flashlight</string>
     <string name="sv_subscribe_sound">Alarm</string>
     <string name="sv_warning_dialog_title">Mobile data warning</string>
-    <string name="sv_warning_dialog_text">Be aware that sending accelerometer readings is using a lot of Internet data.</string>
+    <string name="sv_warning_dialog_text">Be aware that sending accelerometer and gyroscope readings is using a lot of Internet data.</string>
     <string name="sv_warning_toast">Accelerometer readings are using a lot of Internet data.</string>
     <string name="sv_location_off_title">Location is OFF</string>
     <string name="sv_location_off_message">Would you like to turn it on?</string>

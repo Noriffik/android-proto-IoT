@@ -1,17 +1,22 @@
 package io.relayr.iotsmartphone.tabs.readings;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.AttributeSet;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
+
+import static android.widget.Toast.LENGTH_LONG;
 
 public class DialogView extends LinearLayout {
 
@@ -62,9 +67,27 @@ public class DialogView extends LinearLayout {
 
         mCloudSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (mMeaning.equals("acceleration") || mMeaning.equals("angularSpeed"))
+                    showAccelerometerWarning();
                 SettingsStorage.instance().saveActivity(mMeaning, mPhone, isChecked);
             }
         });
         mCloudSwitch.setChecked(SettingsStorage.instance().loadActivity(mMeaning, mPhone));
+    }
+
+    private void showAccelerometerWarning() {
+        if (SettingsStorage.instance().isWarningShown())
+            Toast.makeText(getContext(), getContext().getResources().getString(R.string.sv_warning_toast), LENGTH_LONG).show();
+        else
+            new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+                    .setTitle(getContext().getResources().getString(R.string.sv_warning_dialog_title))
+                    .setIcon(R.drawable.ic_warning)
+                    .setMessage(getContext().getResources().getString(R.string.sv_warning_dialog_text))
+                    .setPositiveButton(getContext().getResources().getString(R.string.ok), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int i) {
+                            SettingsStorage.instance().warningShown();
+                            dialog.dismiss();
+                        }
+                    }).show();
     }
 }

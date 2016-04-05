@@ -12,18 +12,17 @@ import java.util.Map;
 
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.java.model.Device;
-import io.relayr.java.model.User;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 public class SettingsStorage {
 
-    public static final String MODEL_ID = "86e0a7d7-5e18-449c-b7aa-f3b089c33b67";
+    public static final String MODEL_PHONE = "86e0a7d7-5e18-449c-b7aa-f3b089c33b67";
+    public static final String MODEL_WATCH = "b42cc83d-5766-406c-872d-9294d96bdf69";
+
     private static final String PREFS_NAME = "io.relayr.iotsp.settings";
-    private static final String PREFS_SETTINGS_TOTAL = "io.relayr.iotsp.settings.total";
-    private static final String PREFS_SETTINGS_VALUE = "io.relayr.iotsp.settings.value";
-    private static final String PREFS_SETTINGS_LOCATION = "io.relayr.iotsp.permission.location";
 
     private static final String PREFS_WARNING = "io.relayr.warning";
+    private static final String PREFS_SETTINGS_LOCATION = "io.relayr.iotsp.permission.location";
 
     private static final String PREFS_ACTIVE_PHONE = "active_p";
     private static final String PREFS_ACTIVE_WATCH = "active_w";
@@ -37,7 +36,9 @@ public class SettingsStorage {
     private final static SettingsStorage singleton = new SettingsStorage();
     private static Device sDevice;
     private final SharedPreferences PREFS;
-    private static List<DeviceReading> phoneReadings = new ArrayList<>();
+
+    private static List<DeviceReading> sReadingsPhone = new ArrayList<>();
+    private static List<DeviceReading> sReadingsWatch = new ArrayList<>();
 
     private SettingsStorage() {
         PREFS = IotApplication.context().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -46,6 +47,7 @@ public class SettingsStorage {
     public static Map<String, Integer> FREQS = new HashMap<String, Integer>() {
         {
             put("acceleration", SettingsStorage.instance().loadFrequency("acceleration", true));
+            put("angularSpeed", SettingsStorage.instance().loadFrequency("angularSpeed", true));
             put("batteryLevel", SettingsStorage.instance().loadFrequency("batteryLevel", true));
             put("location", SettingsStorage.instance().loadFrequency("location", true));
             put("rssi", SettingsStorage.instance().loadFrequency("rssi", true));
@@ -53,10 +55,6 @@ public class SettingsStorage {
     };
 
     public static SettingsStorage instance() {return singleton;}
-
-    public List<DeviceReading> getPhoneReadings() {
-        return phoneReadings;
-    }
 
     public Device getDevice() {return sDevice;}
 
@@ -100,14 +98,32 @@ public class SettingsStorage {
         return PREFS.getBoolean(PREFS_WARNING, false);
     }
 
-    public void setPhoneReadings(List<DeviceReading> readings) {
-        phoneReadings.clear();
-        phoneReadings.addAll(readings);
-        Collections.sort(phoneReadings, new Comparator<DeviceReading>() {
+    public void savePhoneReadings(List<DeviceReading> readings) {
+        sReadingsPhone.clear();
+        sReadingsPhone.addAll(readings);
+        Collections.sort(sReadingsPhone, new Comparator<DeviceReading>() {
             @Override public int compare(DeviceReading lhs, DeviceReading rhs) {
                 return lhs.getMeaning().compareTo(rhs.getMeaning());
             }
         });
+    }
+
+    public List<DeviceReading> loadPhoneReadings() {
+        return sReadingsPhone;
+    }
+
+    public void saveWatchReadings(List<DeviceReading> readings) {
+        sReadingsWatch.clear();
+        sReadingsWatch.addAll(readings);
+        Collections.sort(sReadingsWatch, new Comparator<DeviceReading>() {
+            @Override public int compare(DeviceReading lhs, DeviceReading rhs) {
+                return lhs.getMeaning().compareTo(rhs.getMeaning());
+            }
+        });
+    }
+
+    public List<DeviceReading> loadWatchReadings() {
+        return sReadingsWatch;
     }
 
     public void savePhoneData(String manufacturer, String model, int sdk) {

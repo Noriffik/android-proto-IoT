@@ -26,7 +26,6 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -38,17 +37,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.Surface;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
@@ -79,18 +75,17 @@ import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.Intent.ACTION_BATTERY_CHANGED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static android.hardware.Sensor.TYPE_ACCELEROMETER;
+import static android.hardware.Sensor.TYPE_GYROSCOPE;
 import static android.hardware.Sensor.TYPE_LIGHT;
 import static android.hardware.Sensor.TYPE_LINEAR_ACCELERATION;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
-import static android.hardware.SensorManager.SENSOR_DELAY_UI;
 import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.os.BatteryManager.EXTRA_LEVEL;
 import static android.os.BatteryManager.EXTRA_SCALE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
-import static android.widget.Toast.LENGTH_LONG;
 import static android.widget.Toast.LENGTH_SHORT;
+import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS;
 
 public class MainTabActivity extends AppCompatActivity implements
         SensorEventListener, LocationListener {
@@ -107,13 +102,13 @@ public class MainTabActivity extends AppCompatActivity implements
     private ConnectivityManager mConnectivityManager;
 
     private Subscription mCommandsSubscription = null;
-    private int mSensorChange = 0;
+    private int mAccelerationChange = 0;
+    private int mGyroscopeChange = 0;
 
     private Subscription mRefreshSubs;
-    private int mRotation;
 
     private final Fragment[] mFragments = new Fragment[3];
-    private Map<String, Boolean> mUploadActions = new HashMap<>();
+    //    private Map<String, Boolean> mUploadActions = new HashMap<>();
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -134,13 +129,11 @@ public class MainTabActivity extends AppCompatActivity implements
         //            mRotation = getDisplay().getRotation();
         //        else  //noinspection deprecation
         //            mRotation = getDisplay().getOrientation();
-
-        initReadings();
     }
 
     @Override protected void onResume() {
         super.onResume();
-        IotApplication.activityVisible(true);
+        initReadings();
         if (mRefreshSubs == null)
             mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
@@ -152,20 +145,18 @@ public class MainTabActivity extends AppCompatActivity implements
                             e.printStackTrace();
                         }
 
-                        @Override public void onNext(Long aLong) {
+                        @Override public void onNext(Long num) {
                             refreshTouch();
-                            if (aLong % SettingsStorage.FREQS.get("batteryLevel") == 0)
-                                monitorBattery();
-                            if (aLong % SettingsStorage.FREQS.get("location") == 0)
-                                monitorLocation();
-                            if (aLong % SettingsStorage.FREQS.get("rssi") == 0) monitorWiFi();
+                            if (num % FREQS.get("batteryLevel") == 0) monitorBattery();
+                            if (num % FREQS.get("location") == 0) monitorLocation();
+                            if (num % FREQS.get("rssi") == 0) monitorWiFi();
                         }
                     });
     }
 
     @Override protected void onPause() {
         super.onPause();
-        IotApplication.activityVisible(false);
+        turnSensorOff();
         if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
         mRefreshSubs = null;
     }
@@ -184,25 +175,43 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        //        if (ev.getAction() == MotionEvent.ACTION_DOWN)
-        //            publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", 80000));
-        //        if (ev.getAction() == MotionEvent.ACTION_UP)
-        //            publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", 0));
+        if (ev.getAction() == MotionEvent.ACTION_DOWN)
+            publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", true));
+        else if (ev.getAction() == MotionEvent.ACTION_UP)
+            publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
         return super.dispatchTouchEvent(ev);
     }
 
     private void getReadings() {
-        RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_ID)
+        RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_PHONE)
                 .subscribe(new SimpleObserver<DeviceModel>() {
                     @Override public void error(Throwable e) {
-                        Log.e("MODEL", "PROBLEM");
+                        Log.e("MTA", "PHONE model error");
                         e.printStackTrace();
                     }
 
                     @Override public void success(DeviceModel deviceModel) {
                         try {
                             final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                            SettingsStorage.instance().setPhoneReadings(transport.getReadings());
+                            SettingsStorage.instance().savePhoneReadings(transport.getReadings());
+                            EventBus.getDefault().post(new Constants.DeviceModelEvent());
+                        } catch (DeviceModelsException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
+        RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_WATCH)
+                .subscribe(new SimpleObserver<DeviceModel>() {
+                    @Override public void error(Throwable e) {
+                        Log.e("MTA", "WATCH model error");
+                        e.printStackTrace();
+                    }
+
+                    @Override public void success(DeviceModel deviceModel) {
+                        try {
+                            final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
+                            SettingsStorage.instance().saveWatchReadings(transport.getReadings());
                             EventBus.getDefault().post(new Constants.DeviceModelEvent());
                         } catch (DeviceModelsException e) {
                             e.printStackTrace();
@@ -255,6 +264,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void setupTabIcons() {
+        if (mTabView == null) return;
         mTabView.getTabAt(0).setIcon(R.drawable.ic_tab_hardware);
         mTabView.getTabAt(1).setIcon(R.drawable.ic_tab_cloud);
         mTabView.getTabAt(2).setIcon(R.drawable.ic_tab_rule);
@@ -310,19 +320,21 @@ public class MainTabActivity extends AppCompatActivity implements
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void onSensorChanged(SensorEvent e) {
-        if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION)
-            if (mSensorChange++ % SettingsStorage.FREQS.get("acceleration") == 0)
-                publishAcceleration(e);
-
-            else if (e.sensor.getType() == TYPE_LIGHT) publishLight(e);
+        if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION) {
+            if (mAccelerationChange++ % FREQS.get("acceleration") == 0)
+                publishReading(createAccelReading(e.values[0], e.values[1], e.values[2]));
+        } else if (e.sensor.getType() == TYPE_GYROSCOPE) {
+            if (mGyroscopeChange++ % FREQS.get("angularSpeed") == 0)
+                publishReading(createGyroReading(e.values[0], e.values[1], e.values[2]));
+        } else if (e.sensor.getType() == TYPE_LIGHT) {
+            publishLight(e);
+        }
     }
 
     private void initReadings() {
         initSensorManager();
-        showAccelerometerWarning();
 
         initWifiManager();
-        monitorWiFi();
 
         monitorBattery();
 
@@ -335,15 +347,24 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void refreshTouch() {
-        //        publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", 0));
+        publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
     }
 
     private void initSensorManager() {
         if (mSensorManager == null)
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT), SensorManager.SENSOR_DELAY_NORMAL);
+        final Sensor acceleration = mSensorManager.getDefaultSensor(TYPE_LINEAR_ACCELERATION);
+        if (acceleration != null)
+            mSensorManager.registerListener(this, acceleration, SENSOR_DELAY_NORMAL);
+
+        final Sensor gyroscope = mSensorManager.getDefaultSensor(TYPE_GYROSCOPE);
+        if (gyroscope != null)
+            mSensorManager.registerListener(this, gyroscope, SENSOR_DELAY_NORMAL);
+
+        final Sensor light = mSensorManager.getDefaultSensor(TYPE_LIGHT);
+        if (light != null)
+            mSensorManager.registerListener(this, light, SENSOR_DELAY_NORMAL);
     }
 
     private void turnSensorOff() {
@@ -355,22 +376,6 @@ public class MainTabActivity extends AppCompatActivity implements
         publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
     }
 
-    private void publishAcceleration(SensorEvent e) {
-        switch (mRotation) {
-            case Surface.ROTATION_0:
-                publishReading(createAccelReading(e.values[0], e.values[1], e.values[2]));
-                break;
-            case Surface.ROTATION_90:
-                publishReading(createAccelReading(-e.values[1], e.values[0], e.values[2]));
-                break;
-            case Surface.ROTATION_180:
-                publishReading(createAccelReading(-e.values[0], -e.values[1], e.values[2]));
-                break;
-            case Surface.ROTATION_270:
-                publishReading(createAccelReading(e.values[1], -e.values[0], e.values[2]));
-        }
-    }
-
     private Reading createAccelReading(float x, float y, float z) {
         final AccelGyroscope.Acceleration acceleration = new AccelGyroscope.Acceleration();
         acceleration.x = x;
@@ -379,25 +384,19 @@ public class MainTabActivity extends AppCompatActivity implements
         return new Reading(0, System.currentTimeMillis(), "acceleration", "/", acceleration);
     }
 
-    private void showAccelerometerWarning() {
-        if (SettingsStorage.instance().isWarningShown())
-            Toast.makeText(MainTabActivity.this, MainTabActivity.this.getString(R.string.sv_warning_toast), LENGTH_LONG).show();
-        else
-            new AlertDialog.Builder(MainTabActivity.this).setTitle(MainTabActivity.this.getString(R.string.sv_warning_dialog_title))
-                    .setIcon(R.drawable.ic_warning)
-                    .setMessage(MainTabActivity.this.getString(R.string.sv_warning_dialog_text))
-                    .setPositiveButton(MainTabActivity.this.getString(R.string.ok), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int i) {
-                            SettingsStorage.instance().warningShown();
-                            dialog.dismiss();
-                        }
-                    }).show();
+    private Reading createGyroReading(float x, float y, float z) {
+        final AccelGyroscope.AngularSpeed angularSpeed = new AccelGyroscope.AngularSpeed();
+        angularSpeed.x = x;
+        angularSpeed.y = y;
+        angularSpeed.z = z;
+        return new Reading(0, System.currentTimeMillis(), "angularSpeed", "/", angularSpeed);
     }
 
     private void initWifiManager() {
         if (mWifiManager != null && mConnectivityManager != null) return;
         mWifiManager = (WifiManager) MainTabActivity.this.getSystemService(WIFI_SERVICE);
         mConnectivityManager = (ConnectivityManager) MainTabActivity.this.getSystemService(CONNECTIVITY_SERVICE);
+        monitorWiFi();
     }
 
     private void monitorWiFi() {
@@ -587,7 +586,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     void publishReading(Reading reading) {
-        if (IotApplication.issVisible())
+        if (IotApplication.isVisible(Constants.DeviceType.PHONE))
             EventBus.getDefault().post(new Constants.ReadingEvent(reading));
         //        if (reading == null || reading.meaning == null) return;
         //        RelayrSdk.getWebSocketClient()
