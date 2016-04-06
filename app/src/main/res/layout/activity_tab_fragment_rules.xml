@@ -2,17 +2,13 @@
 <LinearLayout
     style="@style/MatchMatch"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:padding="@dimen/default_padding"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    android:background="@color/background"
+    android:padding="@dimen/default_padding">
 
     <TextView
-        style="@style/NormalText"
+        style="@style/SubtitleText"
         android:layout_gravity="center_horizontal|center_vertical"
-        android:layout_marginBottom="@dimen/default_padding"
         android:gravity="center_horizontal|center_vertical"
-        android:text="Coming soon"
-        android:textSize="@dimen/small_text"/>
+        android:text="Coming soon"/>
 
 </LinearLayout>

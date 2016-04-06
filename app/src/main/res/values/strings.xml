@@ -81,4 +81,25 @@
     <string name="stv_acceleration_intensity">Select the intensity of publishing acceleration readings.</string>
     <string name="stv_delay">%s sec</string>
 
+    <!--NEW IMPLEMENTATION-->
+    <string name="close">Close</string>
+
+    <string name="reading_title_acceleration">Acceleration</string>
+    <string name="reading_title_gyro">Gyroscope</string>
+    <string name="reading_title_battery">Battery</string>
+    <string name="reading_title_light">Light</string>
+    <string name="reading_title_location">Location</string>
+    <string name="reading_title_rssi">WiFi signal</string>
+    <string name="reading_title_touch">Screen touch</string>
+
+    <string name="settings_dialog_title">%s settings</string>
+
+    <string name="cloud_log_out">Log out</string>
+    <string name="cloud_log_in">Log in</string>
+    <string name="cloud_watch_info">This app also supports wearables.</string>
+    <string name="cloud_phone_version">Android v%s</string>
+    <string name="cloud_establish_connection">Establish connection with the relayr Cloud</string>
+    <string name="app_title_phone">IoT smartphone</string>
+    <string name="app_title_watch">IoT watch</string>
+
 </resources>

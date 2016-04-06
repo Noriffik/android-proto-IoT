@@ -3,49 +3,120 @@
     style="@style/MatchMatch"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:background="@color/background"
-    android:gravity="center_vertical"
-    android:orientation="vertical"
-    android:padding="@dimen/default_padding">
+    android:gravity="center_horizontal|center_vertical"
+    android:paddingLeft="@dimen/big_padding"
+    android:paddingRight="@dimen/big_padding">
 
-    <ImageView
-        android:id="@+id/cloud"
-        android:layout_width="@dimen/cloud_icon_size"
-        android:layout_height="@dimen/cloud_icon_size"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/cloud_circle"
-        android:padding="@dimen/default_padding"
-        android:src="@drawable/ic_cloud"/>
+    <RelativeLayout
+        style="@style/WrapWrap"
+        android:layout_marginLeft="@dimen/big_padding"
+        android:layout_marginRight="@dimen/big_padding"
+        android:gravity="center_vertical">
 
-    <View
-        android:id="@+id/cloud_connection"
-        android:layout_width="@dimen/default_padding"
-        android:layout_height="100dp"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/cloud_dotted_line"/>
+        <ImageView
+            android:id="@+id/cloud"
+            android:layout_width="@dimen/cloud_icon_size"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/cloud_circle"
+            android:padding="@dimen/default_padding"
+            android:src="@drawable/ic_graphic_cloud"/>
 
-    <ImageView
-        android:id="@+id/phone"
-        android:layout_width="@dimen/cloud_icon_size"
-        android:layout_height="@dimen/cloud_icon_size"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/cloud_circle"
-        android:padding="@dimen/default_padding"
-        android:src="@drawable/ic_graphic_phone"/>
+        <TextView
+            android:id="@+id/cloud_info_text"
+            style="@style/NormalText"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_alignTop="@+id/cloud"
+            android:layout_marginLeft="@dimen/big_padding"
+            android:layout_toRightOf="@+id/cloud"
+            android:gravity="center_vertical|center_horizontal"
+            android:text="@string/cloud_establish_connection"/>
 
-    <View
-        android:id="@+id/watch_connection"
-        android:layout_width="@dimen/default_padding"
-        android:layout_height="100dp"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/cloud_dotted_line"/>
+        <Button
+            android:id="@+id/cloud_info_button"
+            style="@style/AppTheme.ButtonActive"
+            android:layout_alignLeft="@id/cloud_info_text"
+            android:layout_below="@id/cloud_info_text"
+            android:text="@string/cloud_log_in"/>
 
-    <ImageView
-        android:id="@+id/watch"
-        android:layout_width="@dimen/cloud_icon_size"
-        android:layout_height="@dimen/cloud_icon_size"
-        android:layout_gravity="center_horizontal"
-        android:background="@drawable/cloud_circle"
-        android:padding="@dimen/default_padding"
-        android:src="@drawable/ic_graphic_watch"/>
+        <View
+            android:id="@+id/cloud_connection"
+            android:layout_width="@dimen/default_padding"
+            android:layout_height="100dp"
+            android:layout_below="@+id/cloud"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="@dimen/cloud_icon_radius"
+            android:background="@drawable/cloud_dotted_vertical_line"
+            android:paddingLeft="@dimen/dotted_line_padding"/>
 
+        <ImageView
+            android:id="@+id/phone"
+            android:layout_width="@dimen/cloud_icon_size"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_below="@id/cloud_connection"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/cloud_circle"
+            android:padding="@dimen/default_padding"
+            android:src="@drawable/ic_graphic_phone"/>
+
+        <LinearLayout
+            android:id="@+id/phone_info"
+            style="@style/WrapWrap"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_alignTop="@+id/phone"
+            android:layout_marginLeft="@dimen/big_padding"
+            android:layout_toRightOf="@+id/phone"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/phone_info_name"
+                style="@style/NormalText"
+                android:singleLine="true"/>
+
+            <TextView
+                android:id="@+id/phone_info_version"
+                style="@style/NormalText"
+                android:singleLine="true"/>
+
+        </LinearLayout>
+
+        <View
+            android:id="@+id/watch_connection"
+            android:layout_width="@dimen/default_padding"
+            android:layout_height="100dp"
+            android:layout_below="@id/phone"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginLeft="@dimen/cloud_icon_radius"
+            android:background="@drawable/cloud_dotted_vertical_line"
+            android:paddingLeft="@dimen/dotted_line_padding"/>
+
+        <ImageView
+            android:id="@+id/watch"
+            android:layout_width="@dimen/cloud_icon_size"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_below="@id/watch_connection"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/cloud_circle"
+            android:padding="@dimen/default_padding"
+            android:src="@drawable/ic_graphic_watch"/>
+
+        <LinearLayout
+            android:id="@+id/watch_info"
+            style="@style/WrapWrap"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_alignTop="@+id/watch"
+            android:layout_marginLeft="@dimen/big_padding"
+            android:layout_toRightOf="@+id/watch"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/watch_info_name"
+                style="@style/NormalText"/>
+
+            <TextView
+                android:id="@+id/watch_info_version"
+                style="@style/NormalText"/>
+
+        </LinearLayout>
+    </RelativeLayout>
 </LinearLayout>

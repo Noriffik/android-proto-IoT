@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-       android:shape="rectangle">
+<shape
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <solid android:color="@android:color/transparent"/>
     <stroke
-        android:width="@dimen/default_padding_half"
-        android:color="@color/accent"
-        android:dashGap="@dimen/default_padding"
-        android:dashWidth="@dimen/default_padding"/>
+        android:width="@dimen/dotted_line_width"
+        android:color="@color/secondary"
+        android:dashGap="@dimen/dotted_line_gap"
+        android:dashWidth="@dimen/dotted_line_dash"/>
 </shape>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:bottom="@dimen/dotted_line_padding"
+        android:drawable="@drawable/cloud_dotted_line"
+        android:left="0dp"
+        android:right="@dimen/dotted_line_padding"
+        android:top="@dimen/dotted_line_padding">
+
+    </item>
+</layer-list>

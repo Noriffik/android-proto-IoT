@@ -79,7 +79,7 @@
         android:id="@+id/dashboard_data"
         style="@style/NormalText"
         android:drawablePadding="@dimen/default_padding"
-        android:drawableRight="@drawable/ic_cloud"
+        android:drawableRight="@drawable/ic_graphic_cloud"
         android:gravity="center_vertical"
         android:singleLine="true"
         android:text="@string/srv_open_dashboard"/>
