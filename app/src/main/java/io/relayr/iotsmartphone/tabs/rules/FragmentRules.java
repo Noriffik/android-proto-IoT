@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs;
+package io.relayr.iotsmartphone.tabs.rules;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;

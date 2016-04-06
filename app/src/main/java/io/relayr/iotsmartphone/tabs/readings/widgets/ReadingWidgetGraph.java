@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
@@ -27,7 +26,6 @@ import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
 import io.relayr.java.model.models.schema.ObjectSchema;
-import io.relayr.java.model.models.schema.ValueSchema;
 
 public class ReadingWidgetGraph extends ReadingWidget {
 

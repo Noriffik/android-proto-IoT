@@ -21,7 +21,6 @@ import static android.widget.Toast.LENGTH_LONG;
 public class DialogView extends LinearLayout {
 
     @InjectView(R.id.cloud_upload) SwitchCompat mCloudSwitch;
-
     @InjectView(R.id.frequency_seek) SeekBar mSeek;
     @InjectView(R.id.frequency_info) TextView mSeekInfo;
 

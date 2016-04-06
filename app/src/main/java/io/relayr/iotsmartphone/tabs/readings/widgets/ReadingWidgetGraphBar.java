@@ -14,13 +14,11 @@ import com.github.mikephil.charting.data.BarEntry;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
-import io.relayr.java.model.models.schema.ValueSchema;
 
 public class ReadingWidgetGraphBar extends ReadingWidget {
 

@@ -3,11 +3,12 @@ package io.relayr.iotsmartphone.tabs.readings;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -18,46 +19,63 @@ import io.relayr.java.model.models.transport.DeviceReading;
 
 public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
-    @InjectView(R.id.reading_meaning) TextView mMeaningTv;
+    private static final Map<String, String> sNameMap = new HashMap<>();
 
-    private String mMeaning;
+    @InjectView(R.id.reading_title) TextView mMeaningTv;
+
     private final Context mContext;
     private final ReadingWidget widget;
+    private String mMeaning;
+
 
     public ReadingViewHolder(ReadingWidget widget, Context context) {
         super(widget);
-        ButterKnife.inject(this, widget);
-
         this.widget = widget;
         this.mContext = context;
+
+        ButterKnife.inject(this, widget);
+
+        if (sNameMap.isEmpty()) {
+            sNameMap.put("acceleration", context.getString(R.string.reading_title_acceleration));
+            sNameMap.put("angularSpeed", context.getString(R.string.reading_title_gyro));
+            sNameMap.put("batteryLevel", context.getString(R.string.reading_title_battery));
+            sNameMap.put("luminosity", context.getString(R.string.reading_title_light));
+            sNameMap.put("location", context.getString(R.string.reading_title_location));
+            sNameMap.put("rssi", context.getString(R.string.reading_title_rssi));
+            sNameMap.put("touch", context.getString(R.string.reading_title_touch));
+        }
+    }
+
+    @SuppressWarnings("unused") @OnClick(R.id.reading_title)
+    public void onTitleClick() {
+        showSettings();
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.reading_settings)
     public void onSettingsClick() {
+        showSettings();
+    }
+
+    private void showSettings() {
         final DialogView view = (DialogView) View.inflate(mContext, R.layout.dialog_content, null);
         view.setMeaning(mMeaning, true);
 
         new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay)
                 .setView(view)
-                .setTitle(mMeaning + " settings")
-                .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                .setTitle(mContext.getString(R.string.settings_dialog_title, sNameMap.get(mMeaning)))
+                .setPositiveButton(mContext.getString(R.string.close), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
                 })
                 .create()
                 .show();
-
     }
 
     public void refresh(DeviceReading reading) {
-        this.mMeaning = reading.getMeaning();
+        mMeaning = reading.getMeaning();
+        mMeaningTv.setText(sNameMap.get(mMeaning));
 
-        String path = "";
-        final String readingPath = reading.getPath();
-        if (readingPath != null && readingPath.length() > 1) path = readingPath + "/";
-
-        mMeaningTv.setText(path + reading.getMeaning());
-        widget.setUp(readingPath, reading.getMeaning(), reading.getValueSchema());
+        widget.setUp(reading.getPath(), reading.getMeaning(), reading.getValueSchema());
     }
 }

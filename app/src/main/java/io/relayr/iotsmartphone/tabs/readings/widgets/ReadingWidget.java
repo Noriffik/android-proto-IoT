@@ -1,19 +1,14 @@
 package io.relayr.iotsmartphone.tabs.readings.widgets;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
-import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.tabs.helper.Constants;
 import io.relayr.iotsmartphone.tabs.helper.LimitedQueue;
 import io.relayr.java.model.action.Reading;
