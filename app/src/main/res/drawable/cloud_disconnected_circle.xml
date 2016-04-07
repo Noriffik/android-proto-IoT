@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <size
+                android:width="@dimen/cloud_connected_size"
+                android:height="@dimen/cloud_connected_size"/>
+            <solid android:color="@color/secondary"/>
+        </shape>
+        <padding
+            android:bottom="@dimen/default_padding_double"
+            android:left="@dimen/default_padding_double"
+            android:right="@dimen/default_padding_double"
+            android:top="@dimen/default_padding_double"/>
+    </item>
+    <item
+        android:bottom="@dimen/default_padding_half"
+        android:left="@dimen/default_padding_half"
+        android:right="@dimen/default_padding_half"
+        android:top="@dimen/default_padding_half">
+        <shape android:shape="oval">
+            <size
+                android:width="@dimen/cloud_connected_size"
+                android:height="@dimen/cloud_connected_size"/>
+            <solid android:color="@color/background"/>
+        </shape>
+    </item>
+    <item
+        android:bottom="@dimen/default_padding"
+        android:left="@dimen/default_padding"
+        android:right="@dimen/default_padding"
+        android:top="@dimen/default_padding">
+        <shape android:shape="oval">
+            <size
+                android:width="@dimen/cloud_icon_size"
+                android:height="@dimen/cloud_icon_size"/>
+            <solid android:color="@color/secondary"/>
+        </shape>
+    </item>
+</layer-list>

@@ -5,7 +5,6 @@
     <string name="navigation_drawer_open">Open</string>
     <string name="navigation_drawer_close">Close</string>
 
-    <string name="ok">OK</string>
     <string name="initializing">Initializing…</string>
     <string name="please_wait">Please wait…</string>
     <string name="something_went_wrong">Something went wrong…</string>
@@ -16,7 +15,6 @@
 
     <!--IntroActivity-->
     <string name="ia_hello">Hello %s</string>
-    <string name="ia_log_in_failed">Log in failed</string>
 
     <!--MainActivity-->
     <string name="ma_log_out_dialog_title">Log out</string>
@@ -82,7 +80,12 @@
     <string name="stv_delay">%s sec</string>
 
     <!--NEW IMPLEMENTATION-->
+    <string name="ok">OK</string>
+    <string name="yes">Yes</string>
     <string name="close">Close</string>
+
+    <string name="app_title_phone">IoT smartphone</string>
+    <string name="app_title_watch">IoT watch</string>
 
     <string name="reading_title_acceleration">Acceleration</string>
     <string name="reading_title_gyro">Gyroscope</string>
@@ -91,15 +94,23 @@
     <string name="reading_title_location">Location</string>
     <string name="reading_title_rssi">WiFi signal</string>
     <string name="reading_title_touch">Screen touch</string>
-
-    <string name="settings_dialog_title">%s settings</string>
+    <string name="reading_settings_dialog_title">%s settings</string>
 
     <string name="cloud_log_out">Log out</string>
     <string name="cloud_log_in">Log in</string>
     <string name="cloud_watch_info">This app also supports wearables.</string>
     <string name="cloud_phone_version">Android v%s</string>
     <string name="cloud_establish_connection">Establish connection with the relayr Cloud</string>
-    <string name="app_title_phone">IoT smartphone</string>
-    <string name="app_title_watch">IoT watch</string>
+    <string name="cloud_log_in_failed">Log in failed… Please try again.</string>
+    <string name="cloud_log_in_success">Logged in successfully</string>
+    <string name="cloud_log_out_message">Are you sure you want to log out?</string>
+    <string name="cloud_progress_loading_devices">Loading devices...</string>
+    <string name="cloud_progress_creating_device">Creating relayr device</string>
+    <string name="cloud_progress_title">initializing...</string>
+    <string name="cloud_error_user_data">Failed to get user data</string>
+    <string name="cloud_error_device_data">Failed to load device data</string>
+    <string name="cloud_error_create_device">Failed to create a device</string>
+    <string name="cloud_device_success">Connected to relayr cloud!</string>
+
 
 </resources>

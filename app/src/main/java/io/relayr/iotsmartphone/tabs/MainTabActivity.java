@@ -10,8 +10,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -27,8 +25,6 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
@@ -41,32 +37,21 @@ import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
-import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
 import io.relayr.iotsmartphone.tabs.cloud.FragmentCloud;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
+import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
 import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
 import io.relayr.iotsmartphone.tabs.readings.FragmentReadings;
 import io.relayr.iotsmartphone.tabs.rules.FragmentRules;
-import io.relayr.java.helper.observer.SimpleObserver;
-import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
-import io.relayr.java.model.models.DeviceModel;
-import io.relayr.java.model.models.error.DeviceModelsException;
-import io.relayr.java.model.models.transport.Transport;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
@@ -87,7 +72,8 @@ import static android.os.BatteryManager.EXTRA_SCALE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.widget.Toast.LENGTH_SHORT;
-import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS;
+import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_PHONE;
 
 public class MainTabActivity extends AppCompatActivity implements
         SensorEventListener, LocationListener {
@@ -110,14 +96,13 @@ public class MainTabActivity extends AppCompatActivity implements
     private Subscription mRefreshSubs;
 
     private final Fragment[] mFragments = new Fragment[3];
-    //    private Map<String, Boolean> mUploadActions = new HashMap<>();
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_tab_main);
         ButterKnife.inject(this);
 
-        getReadings();
+        ReadingUtils.getReadings();
 
         setSupportActionBar(mToolbar);
         setupViewPager(state);
@@ -149,9 +134,9 @@ public class MainTabActivity extends AppCompatActivity implements
 
                         @Override public void onNext(Long num) {
                             refreshTouch();
-                            if (num % FREQS.get("batteryLevel") == 0) monitorBattery();
-                            if (num % FREQS.get("location") == 0) monitorLocation();
-                            if (num % FREQS.get("rssi") == 0) monitorWiFi();
+                            if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
+                            if (num % FREQS_PHONE.get("location") == 0) monitorLocation();
+                            if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
                         }
                     });
     }
@@ -178,48 +163,10 @@ public class MainTabActivity extends AppCompatActivity implements
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN)
-            publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", true));
+            ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", true));
         else if (ev.getAction() == MotionEvent.ACTION_UP)
-            publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
+            ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
         return super.dispatchTouchEvent(ev);
-    }
-
-    private void getReadings() {
-        RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_PHONE)
-                .subscribe(new SimpleObserver<DeviceModel>() {
-                    @Override public void error(Throwable e) {
-                        Log.e("MTA", "PHONE model error");
-                        e.printStackTrace();
-                    }
-
-                    @Override public void success(DeviceModel deviceModel) {
-                        try {
-                            final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                            SettingsStorage.instance().savePhoneReadings(transport.getReadings());
-                            EventBus.getDefault().post(new Constants.DeviceModelEvent());
-                        } catch (DeviceModelsException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-
-        RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_WATCH)
-                .subscribe(new SimpleObserver<DeviceModel>() {
-                    @Override public void error(Throwable e) {
-                        Log.e("MTA", "WATCH model error");
-                        e.printStackTrace();
-                    }
-
-                    @Override public void success(DeviceModel deviceModel) {
-                        try {
-                            final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                            SettingsStorage.instance().saveWatchReadings(transport.getReadings());
-                            EventBus.getDefault().post(new Constants.DeviceModelEvent());
-                        } catch (DeviceModelsException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
     }
 
     private void setupViewPager(Bundle savedInstanceState) {
@@ -278,33 +225,6 @@ public class MainTabActivity extends AppCompatActivity implements
         }
     }
 
-    class ViewPagerAdapter extends FragmentPagerAdapter {
-        private final List<Fragment> mFragmentList = new ArrayList<>();
-
-        public ViewPagerAdapter(FragmentManager manager) {
-            super(manager);
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return mFragmentList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return mFragmentList.size();
-        }
-
-        public void addFrag(Fragment fragment) {
-            mFragmentList.add(fragment);
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return null;
-        }
-    }
-
     @Override public void onProviderEnabled(String provider) {
         initLocationManager();
     }
@@ -323,11 +243,11 @@ public class MainTabActivity extends AppCompatActivity implements
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void onSensorChanged(SensorEvent e) {
         if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION) {
-            if (mAccelerationChange++ % FREQS.get("acceleration") == 0)
-                publishReading(createAccelReading(e.values[0], e.values[1], e.values[2]));
+            if (mAccelerationChange++ % FREQS_PHONE.get("acceleration") == 0)
+                ReadingUtils.publishReading(ReadingUtils.createAccelReading(e.values[0], e.values[1], e.values[2]));
         } else if (e.sensor.getType() == TYPE_GYROSCOPE) {
-            if (mGyroscopeChange++ % FREQS.get("angularSpeed") == 0)
-                publishReading(createGyroReading(e.values[0], e.values[1], e.values[2]));
+            if (mGyroscopeChange++ % FREQS_PHONE.get("angularSpeed") == 0)
+                ReadingUtils.publishReading(ReadingUtils.createGyroReading(e.values[0], e.values[1], e.values[2]));
         } else if (e.sensor.getType() == TYPE_LIGHT) {
             publishLight(e);
         }
@@ -335,9 +255,7 @@ public class MainTabActivity extends AppCompatActivity implements
 
     private void initReadings() {
         initSensorManager();
-
         initWifiManager();
-
         monitorBattery();
 
         //        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED &&
@@ -349,7 +267,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void refreshTouch() {
-        publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
+        ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
     }
 
     private void initSensorManager() {
@@ -375,23 +293,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void publishLight(SensorEvent e) {
-        publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
-    }
-
-    private Reading createAccelReading(float x, float y, float z) {
-        final AccelGyroscope.Acceleration acceleration = new AccelGyroscope.Acceleration();
-        acceleration.x = x;
-        acceleration.y = y;
-        acceleration.z = z;
-        return new Reading(0, System.currentTimeMillis(), "acceleration", "/", acceleration);
-    }
-
-    private Reading createGyroReading(float x, float y, float z) {
-        final AccelGyroscope.AngularSpeed angularSpeed = new AccelGyroscope.AngularSpeed();
-        angularSpeed.x = x;
-        angularSpeed.y = y;
-        angularSpeed.z = z;
-        return new Reading(0, System.currentTimeMillis(), "angularSpeed", "/", angularSpeed);
+        ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
     }
 
     private void initWifiManager() {
@@ -409,7 +311,7 @@ public class MainTabActivity extends AppCompatActivity implements
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
-            publishReading(new Reading(0, System.currentTimeMillis(), "rssi", "wifi", wifiInfo.getRssi()));
+            ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "rssi", "wifi", wifiInfo.getRssi()));
     }
 
     private boolean checkWifi(ConnectivityManager cm) {
@@ -436,7 +338,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (level == -1 || scale == -1) bat = 50.0f;
         else bat = ((float) level / (float) scale) * 100.0f;
 
-        publishReading(new Reading(0, System.currentTimeMillis(), "batteryLevel", "/", bat));
+        ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "batteryLevel", "/", bat));
     }
 
     private void initLocationManager() {
@@ -474,29 +376,11 @@ public class MainTabActivity extends AppCompatActivity implements
                     if (location == null)
                         location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (location != null)
-                        publishLocation(location.getLatitude(), location.getLongitude());
+                        ReadingUtils.publishLocation(MainTabActivity.this, location.getLatitude(), location.getLongitude());
                     else showLocationDialog();
                 }
             }
         });
-    }
-
-    public void publishLocation(double lat, double lng) {
-        try {
-            Geocoder geocoder = new Geocoder(MainTabActivity.this, Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
-            if (addresses.isEmpty()) return;
-
-            Address obj = addresses.get(0);
-            String address = obj.getCountryName() + ", ";
-            address += obj.getAddressLine(1) + ", ";
-            address += obj.getAddressLine(0);
-
-            publishReading(new Reading(0, System.currentTimeMillis(), "location", "/", address));
-        } catch (IOException e) {
-            Toast.makeText(MainTabActivity.this, R.string.sv_location_resolve_err, Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-        }
     }
 
     //    private void turnOffLocation() {
@@ -549,7 +433,7 @@ public class MainTabActivity extends AppCompatActivity implements
     private void subscribeToCommands() {
         if (mCommandsSubscription == null)
             mCommandsSubscription = RelayrSdk.getWebSocketClient()
-                    .subscribeToCommands(SettingsStorage.instance().getDevice().getId())
+                    .subscribeToCommands(SettingsStorage.instance().getDeviceId(PHONE))
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<Command>() {
                         @Override public void onCompleted() {}
@@ -585,24 +469,5 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mSound == null) createSoundHelper();
 
         mSound.playMusic(MainTabActivity.this, value);
-    }
-
-    void publishReading(Reading reading) {
-        if (IotApplication.isVisible(Constants.DeviceType.PHONE))
-            EventBus.getDefault().post(new Constants.ReadingEvent(reading));
-        //        if (reading == null || reading.meaning == null) return;
-        //        RelayrSdk.getWebSocketClient()
-        //                .publish(Storage.instance().getDevice().getId(), reading)
-        //                .subscribeOn(Schedulers.io())
-        //                .subscribe(new Subscriber<Void>() {
-        //                    @Override public void onCompleted() {}
-        //
-        //                    @Override public void onError(Throwable e) {
-        //                        Crashlytics.log(Log.ERROR, "SettingsView", "publishReading - error");
-        //                        e.printStackTrace();
-        //                    }
-        //
-        //                    @Override public void onNext(Void aVoid) {}
-        //                });
     }
 }

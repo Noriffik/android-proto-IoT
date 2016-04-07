@@ -14,6 +14,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.tabs.helper.Constants;
 import io.relayr.iotsmartphone.tabs.readings.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
 
@@ -26,7 +27,7 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
     private final Context mContext;
     private final ReadingWidget widget;
     private String mMeaning;
-
+    private Constants.DeviceType mType;
 
     public ReadingViewHolder(ReadingWidget widget, Context context) {
         super(widget);
@@ -58,11 +59,11 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
     private void showSettings() {
         final DialogView view = (DialogView) View.inflate(mContext, R.layout.dialog_content, null);
-        view.setMeaning(mMeaning, true);
+        view.setMeaning(mMeaning, mType);
 
         new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay)
                 .setView(view)
-                .setTitle(mContext.getString(R.string.settings_dialog_title, sNameMap.get(mMeaning)))
+                .setTitle(mContext.getString(R.string.reading_settings_dialog_title, sNameMap.get(mMeaning)))
                 .setPositiveButton(mContext.getString(R.string.close), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -72,7 +73,8 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
                 .show();
     }
 
-    public void refresh(DeviceReading reading) {
+    public void refresh(DeviceReading reading, Constants.DeviceType type) {
+        mType = type;
         mMeaning = reading.getMeaning();
         mMeaningTv.setText(sNameMap.get(mMeaning));
 

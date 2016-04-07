@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:bottom="@dimen/cloud_connected_radius"
+        android:left="0dp"
+        android:right="@dimen/cloud_connected_radius"
+        android:top="0dp">
+        <shape android:shape="rectangle">
+            <corners android:topLeftRadius="@dimen/cloud_connected_radius"/>
+            <size
+                android:width="@dimen/cloud_connected_size"
+                android:height="@dimen/cloud_connected_size"/>
+            <solid android:color="@color/graph_blue"/>
+        </shape>
+    </item>
+    <item
+        android:bottom="@dimen/cloud_connected_radius"
+        android:left="@dimen/cloud_connected_radius"
+        android:right="0dp"
+        android:top="0dp">
+        <shape android:shape="rectangle">
+            <corners android:topRightRadius="@dimen/cloud_connected_radius"/>
+            <size
+                android:width="@dimen/cloud_connected_size"
+                android:height="@dimen/cloud_connected_size"/>
+            <solid android:color="@color/graph_yellow"/>
+        </shape>
+    </item>
+
+    <item
+        android:bottom="0dp"
+        android:left="0dp"
+        android:right="@dimen/cloud_connected_radius"
+        android:top="@dimen/cloud_connected_radius">
+        <shape android:shape="rectangle">
+            <corners android:bottomLeftRadius="@dimen/cloud_connected_radius"/>
+            <size
+                android:width="@dimen/cloud_connected_size"
+                android:height="@dimen/cloud_connected_size"/>
+            <solid android:color="@color/graph_green"/>
+        </shape>
+    </item>
+    <item
+        android:bottom="0dp"
+        android:left="@dimen/cloud_connected_radius"
+        android:right="0dp"
+        android:top="@dimen/cloud_connected_radius">
+        <shape android:shape="rectangle">
+            <corners android:bottomRightRadius="@dimen/cloud_connected_radius"/>
+            <size
+                android:width="@dimen/cloud_connected_size"
+                android:height="@dimen/cloud_connected_size"/>
+            <solid android:color="@color/graph_red"/>
+        </shape>
+    </item>
+
+    <item
+        android:bottom="@dimen/default_padding_half"
+        android:left="@dimen/default_padding_half"
+        android:right="@dimen/default_padding_half"
+        android:top="@dimen/default_padding_half">
+        <shape android:shape="oval">
+            <size
+                android:width="@dimen/cloud_connected_size"
+                android:height="@dimen/cloud_connected_size"/>
+            <solid android:color="@color/background"/>
+        </shape>
+    </item>
+
+    <item
+        android:bottom="@dimen/default_padding"
+        android:left="@dimen/default_padding"
+        android:right="@dimen/default_padding"
+        android:top="@dimen/default_padding">
+        <shape android:shape="oval">
+            <size
+                android:width="@dimen/cloud_icon_size"
+                android:height="@dimen/cloud_icon_size"/>
+            <solid android:color="@color/accent"/>
+            <padding
+                android:bottom="@dimen/default_padding_double"
+                android:left="@dimen/default_padding_double"
+                android:right="@dimen/default_padding_double"
+                android:top="@dimen/default_padding_double"/>
+        </shape>
+    </item>
+</layer-list>

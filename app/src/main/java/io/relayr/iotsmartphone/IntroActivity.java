@@ -105,7 +105,7 @@ public class IntroActivity extends AppCompatActivity {
                         Crashlytics.log(Log.ERROR, "IA", "Login failed.");
                         e.printStackTrace();
 
-                        showToast(getString(R.string.ia_log_in_failed));
+                        showToast(getString(R.string.cloud_log_in_failed));
 
                         if (e instanceof TimeoutException) logIn();
                         else finish();
