@@ -3,9 +3,13 @@ package io.relayr.iotsmartphone.tabs.helper;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.DataMapItem;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,14 +28,17 @@ import io.relayr.java.model.models.transport.Transport;
 import rx.schedulers.Schedulers;
 
 import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
 
 public class ReadingUtils {
+
+    private static final String TAG = "ReadingUtils";
 
     public static void getReadings() {
         RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_PHONE)
                 .subscribe(new SimpleObserver<DeviceModel>() {
                     @Override public void error(Throwable e) {
-                        Log.e("MTA", "PHONE model error");
+                        Log.e(TAG, "PHONE model error");
                         e.printStackTrace();
                     }
 
@@ -49,7 +56,7 @@ public class ReadingUtils {
         RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_WATCH)
                 .subscribe(new SimpleObserver<DeviceModel>() {
                     @Override public void error(Throwable e) {
-                        Log.e("MTA", "WATCH model error");
+                        Log.e(TAG, "WATCH model error");
                         e.printStackTrace();
                     }
 
@@ -81,25 +88,62 @@ public class ReadingUtils {
         return new Reading(0, System.currentTimeMillis(), "angularSpeed", "/", angularSpeed);
     }
 
-    public static void publishReading(Reading reading) {
+    public static void publish(Reading reading) {
         if (IotApplication.isVisible(PHONE))
-            EventBus.getDefault().post(new Constants.ReadingEvent(reading));
+            EventBus.getDefault().post(reading);
         if (IotApplication.isVisible(PHONE) && SettingsStorage.ACTIVITY_PHONE.get(reading.meaning))
             RelayrSdk.getWebSocketClient()
                     .publish(SettingsStorage.instance().getDeviceId(PHONE), reading)
                     .subscribeOn(Schedulers.io())
                     .subscribe(new ErrorObserver<Void>() {
                         @Override public void error(Throwable e) {
-                            Crashlytics.log(Log.ERROR, "ReadingUtils", "publishReading - error");
+                            Crashlytics.log(Log.ERROR, TAG, "publish phone reading - error");
                             e.printStackTrace();
                         }
                     });
     }
 
-    public static void publishLocation(Context context, double lat, double lng) {
+    public static void publishWatch(DataItem dataItem) {
+        final String path = dataItem.getUri().getPath();
+        final DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
+        if (Constants.SENSOR_ACCEL_PATH.equals(path)) {
+            final float[] array = dataMap.getFloatArray(Constants.SENSOR_ACCEL);
+            publishWatch(createAccelReading(array[0], array[1], array[2]));
+        } else if (Constants.SENSOR_BATTERY_PATH.equals(path)) {
+            String batteryData = dataMap.getString(Constants.SENSOR_BATTERY);
+            final long ts = Long.parseLong(batteryData.split("#")[0]);
+            final float val = Float.parseFloat(batteryData.split("#")[1]);
+            publishWatch(new Reading(0, ts, "batteryLevel", "/", val));
+        } else if (Constants.SENSOR_LIGHT_PATH.equals(path)) {
+            float val = dataMap.getFloat(Constants.SENSOR_LIGHT);
+            publishWatch(new Reading(0, System.currentTimeMillis(), "luminosity", "/", val));
+        } else if (Constants.SENSOR_TOUCH_PATH.equals(path)) {
+            String touchData = dataMap.getString(Constants.SENSOR_TOUCH);
+            final long ts = Long.parseLong(touchData.split("#")[0]);
+            final boolean val = Boolean.parseBoolean(touchData.split("#")[1]);
+            publishWatch(new Reading(0, ts, "touch", "/", val));
+        }
+    }
+
+    private static void publishWatch(Reading reading) {
+        if (IotApplication.isVisible(WATCH))
+            EventBus.getDefault().post(reading);
+        if (IotApplication.isVisible(WATCH) && SettingsStorage.ACTIVITY_WATCH.get(reading.meaning))
+            RelayrSdk.getWebSocketClient()
+                    .publish(SettingsStorage.instance().getDeviceId(WATCH), reading)
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(new ErrorObserver<Void>() {
+                        @Override public void error(Throwable e) {
+                            Crashlytics.log(Log.ERROR, TAG, "publish watch reading - error");
+                            e.printStackTrace();
+                        }
+                    });
+    }
+
+    public static void publishLocation(Context context, Location location) {
         try {
             Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+            List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
             if (addresses.isEmpty()) return;
 
             Address obj = addresses.get(0);
@@ -107,9 +151,9 @@ public class ReadingUtils {
             address += obj.getAddressLine(1) + ", ";
             address += obj.getAddressLine(0);
 
-            ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "location", "/", address));
+            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "location", "/", address));
         } catch (IOException e) {
-            Crashlytics.log(Log.DEBUG, "ReadingUtils", "Failed to get location.");
+            Crashlytics.log(Log.DEBUG, TAG, "Failed to get location.");
             e.printStackTrace();
         }
     }

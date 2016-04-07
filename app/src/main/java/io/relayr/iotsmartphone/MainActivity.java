@@ -221,7 +221,7 @@ public class MainActivity extends AppCompatActivity implements OnNavigationItemS
                     @Override public void onCompleted() {}
 
                     @Override public void onError(Throwable e) {
-                        Crashlytics.log(Log.ERROR, "SettingsView", "publishReading - error");
+                        Crashlytics.log(Log.ERROR, "SettingsView", "publish - error");
                         e.printStackTrace();
                     }
 

@@ -1,4 +1,6 @@
-package io.relayr.iotsmartphone.tabs.helper;
+package io.relayr.iotsmartphone;
+
+import io.relayr.java.model.action.Reading;
 
 public class Constants {
 
@@ -21,7 +23,15 @@ public class Constants {
         public DeviceModelEvent() {}
     }
 
-    public static class WatchSelected {
-        public WatchSelected() {}
+    public static class ReadingEvent {
+        private Reading reading;
+
+        public ReadingEvent(Reading reading) {
+            this.reading = reading;
+        }
+
+        public Reading getReading() {
+            return reading;
+        }
     }
 }

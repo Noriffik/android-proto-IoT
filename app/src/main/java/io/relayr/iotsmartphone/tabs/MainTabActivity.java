@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -36,16 +37,27 @@ import android.view.MotionEvent;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.data.FreezableUtils;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
 
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
 import io.relayr.iotsmartphone.tabs.cloud.FragmentCloud;
+import io.relayr.iotsmartphone.tabs.helper.Constants;
 import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
 import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
 import io.relayr.iotsmartphone.tabs.readings.FragmentReadings;
@@ -76,7 +88,8 @@ import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_PHONE;
 
 public class MainTabActivity extends AppCompatActivity implements
-        SensorEventListener, LocationListener {
+        SensorEventListener, LocationListener,
+        DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     @InjectView(R.id.toolbar) Toolbar mToolbar;
     @InjectView(R.id.viewpager) ViewPager mViewPager;
@@ -95,7 +108,10 @@ public class MainTabActivity extends AppCompatActivity implements
 
     private Subscription mRefreshSubs;
 
+    private GoogleApiClient mGoogleApiClient;
+
     private final Fragment[] mFragments = new Fragment[3];
+    private boolean mResolvingError;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -112,14 +128,18 @@ public class MainTabActivity extends AppCompatActivity implements
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
 
-        //        if (SDK_INT >= JELLY_BEAN_MR1)
-        //            mRotation = getDisplay().getRotation();
-        //        else  //noinspection deprecation
-        //            mRotation = getDisplay().getOrientation();
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+        if (!mResolvingError) mGoogleApiClient.connect();
     }
 
     @Override protected void onResume() {
         super.onResume();
+
+        EventBus.getDefault().register(this);
         initReadings();
         if (mRefreshSubs == null)
             mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
@@ -143,6 +163,8 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override protected void onPause() {
         super.onPause();
+        EventBus.getDefault().unregister(this);
+
         turnSensorOff();
         if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
         mRefreshSubs = null;
@@ -163,9 +185,9 @@ public class MainTabActivity extends AppCompatActivity implements
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN)
-            ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", true));
+            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", true));
         else if (ev.getAction() == MotionEvent.ACTION_UP)
-            ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
+            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
         return super.dispatchTouchEvent(ev);
     }
 
@@ -219,6 +241,46 @@ public class MainTabActivity extends AppCompatActivity implements
         mTabView.getTabAt(2).setIcon(R.drawable.ic_tab_rule);
     }
 
+    @SuppressWarnings("unused") public void onEvent(Constants.WatchSelected event) {
+        sendToWearable();
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        Log.e("APP", "Google API Client was connected");
+        mResolvingError = false;
+        Wearable.DataApi.addListener(mGoogleApiClient, this);
+        sendToWearable();
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+        Log.e("APP", "Connection to Google API client was suspended");
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
+        if (mResolvingError) return;
+        if (result.hasResolution()) {
+            try {
+                mResolvingError = true;
+                result.startResolutionForResult(this, Constants.REQUEST_RESOLVE_ERROR);
+            } catch (IntentSender.SendIntentException e) {
+                mGoogleApiClient.connect();
+            }
+        } else {
+            mResolvingError = false;
+            Wearable.DataApi.removeListener(mGoogleApiClient, this);
+        }
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEvents) {
+        for (DataEvent event : FreezableUtils.freezeIterable(dataEvents))
+            if (event.getType() == DataEvent.TYPE_CHANGED)
+                ReadingUtils.publishWatch(event.getDataItem());
+    }
+
     public class MessageReceiver extends BroadcastReceiver {
         @Override public void onReceive(Context context, Intent intent) {
             toggleFlash(false);
@@ -244,10 +306,10 @@ public class MainTabActivity extends AppCompatActivity implements
     public void onSensorChanged(SensorEvent e) {
         if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION) {
             if (mAccelerationChange++ % FREQS_PHONE.get("acceleration") == 0)
-                ReadingUtils.publishReading(ReadingUtils.createAccelReading(e.values[0], e.values[1], e.values[2]));
+                ReadingUtils.publish(ReadingUtils.createAccelReading(e.values[0], e.values[1], e.values[2]));
         } else if (e.sensor.getType() == TYPE_GYROSCOPE) {
             if (mGyroscopeChange++ % FREQS_PHONE.get("angularSpeed") == 0)
-                ReadingUtils.publishReading(ReadingUtils.createGyroReading(e.values[0], e.values[1], e.values[2]));
+                ReadingUtils.publish(ReadingUtils.createGyroReading(e.values[0], e.values[1], e.values[2]));
         } else if (e.sensor.getType() == TYPE_LIGHT) {
             publishLight(e);
         }
@@ -267,7 +329,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void refreshTouch() {
-        ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
+        ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
     }
 
     private void initSensorManager() {
@@ -293,7 +355,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void publishLight(SensorEvent e) {
-        ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
+        ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
     }
 
     private void initWifiManager() {
@@ -311,7 +373,7 @@ public class MainTabActivity extends AppCompatActivity implements
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
-            ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "rssi", "wifi", wifiInfo.getRssi()));
+            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "rssi", "wifi", wifiInfo.getRssi()));
     }
 
     private boolean checkWifi(ConnectivityManager cm) {
@@ -338,7 +400,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (level == -1 || scale == -1) bat = 50.0f;
         else bat = ((float) level / (float) scale) * 100.0f;
 
-        ReadingUtils.publishReading(new Reading(0, System.currentTimeMillis(), "batteryLevel", "/", bat));
+        ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "batteryLevel", "/", bat));
     }
 
     private void initLocationManager() {
@@ -376,7 +438,7 @@ public class MainTabActivity extends AppCompatActivity implements
                     if (location == null)
                         location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (location != null)
-                        ReadingUtils.publishLocation(MainTabActivity.this, location.getLatitude(), location.getLongitude());
+                        ReadingUtils.publishLocation(MainTabActivity.this, location);
                     else showLocationDialog();
                 }
             }
@@ -391,7 +453,8 @@ public class MainTabActivity extends AppCompatActivity implements
     //    }
 
     private void showLocationDialog() {
-        new AlertDialog.Builder(MainTabActivity.this).setTitle(MainTabActivity.this.getString(R.string.sv_location_off_title))
+        new AlertDialog.Builder(this, R.style.AppTheme_DialogOverlay)
+                .setTitle(this.getString(R.string.sv_location_off_title))
                 .setIcon(R.drawable.ic_warning)
                 .setMessage(MainTabActivity.this.getString(R.string.sv_location_off_message))
                 .setPositiveButton(MainTabActivity.this.getString(R.string.ok), new DialogInterface.OnClickListener() {
@@ -469,5 +532,12 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mSound == null) createSoundHelper();
 
         mSound.playMusic(MainTabActivity.this, value);
+    }
+
+    private void sendToWearable() {
+        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.ACTIVATE_PATH);
+        putDataMapRequest.getDataMap().putBoolean(Constants.ACTIVATE, true);
+        PutDataRequest request = putDataMapRequest.asPutDataRequest();
+        Wearable.DataApi.putDataItem(mGoogleApiClient, request);
     }
 }

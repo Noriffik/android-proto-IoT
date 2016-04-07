@@ -57,9 +57,9 @@ public abstract class ReadingWidget extends LinearLayout {
     }
 
     @SuppressWarnings("unused")
-    public void onEvent(final Constants.ReadingEvent event) {
-        if (!event.getReading().meaning.equals(mMeaning)) return;
-        mReadings.add(event.getReading());
+    public void onEvent(final Reading reading) {
+        if (!reading.meaning.equals(mMeaning)) return;
+        mReadings.add(reading);
         refresh();
     }
 

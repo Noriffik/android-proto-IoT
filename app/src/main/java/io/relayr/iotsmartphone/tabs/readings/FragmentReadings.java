@@ -122,6 +122,8 @@ public class FragmentReadings extends Fragment {
 
     private void onWatchClicked() {
         IotApplication.visible(WATCH, true);
+        EventBus.getDefault().post(new Constants.WatchSelected());
+
         mFab.setImageResource(R.drawable.ic_graphic_phone);
 
         mPhoneGrid.setVisibility(View.GONE);
