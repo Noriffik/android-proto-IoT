@@ -22,6 +22,7 @@ import java.util.Map;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.tabs.helper.LimitedQueue;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
@@ -64,7 +65,8 @@ public class ReadingWidgetGraph extends ReadingWidget {
     }
 
     @Override void refresh() {
-        if (mChart != null) setData(mReadings);
+        final LimitedQueue<Reading> readings = mReadings.get(mMeaning);
+        if (mChart != null) setData(readings);
     }
 
     @SuppressWarnings("unchecked")

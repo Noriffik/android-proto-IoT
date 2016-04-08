@@ -34,6 +34,10 @@ public class ReadingUtils {
 
     private static final String TAG = "ReadingUtils";
 
+    public static boolean isComplex(String meaning) {
+        return meaning.equals("acceleration") || meaning.equals("angularSpeed") || meaning.equals("luminosity");
+    }
+
     public static void getReadings() {
         RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_PHONE)
                 .subscribe(new SimpleObserver<DeviceModel>() {

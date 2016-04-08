@@ -43,6 +43,7 @@ import com.google.android.gms.common.data.FreezableUtils;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -103,8 +104,9 @@ public class MainTabActivity extends AppCompatActivity implements
     private ConnectivityManager mConnectivityManager;
 
     private Subscription mCommandsSubscription = null;
-    private int mAccelerationChange = 0;
-    private int mGyroscopeChange = 0;
+    private long mAccelerationChange = 0;
+    private long mGyroscopeChange = 0;
+    private long mLightChange = 0;
 
     private Subscription mRefreshSubs;
 
@@ -118,11 +120,11 @@ public class MainTabActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_tab_main);
         ButterKnife.inject(this);
 
-        ReadingUtils.getReadings();
-
         setSupportActionBar(mToolbar);
         setupViewPager(state);
         setUpTabs();
+
+        ReadingUtils.getReadings();
 
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
@@ -153,10 +155,10 @@ public class MainTabActivity extends AppCompatActivity implements
                         }
 
                         @Override public void onNext(Long num) {
-                            refreshTouch();
-                            if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
-                            if (num % FREQS_PHONE.get("location") == 0) monitorLocation();
                             if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
+                            if (num % FREQS_PHONE.get("location") == 0) monitorLocation();
+                            if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
+                            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
                         }
                     });
     }
@@ -189,6 +191,82 @@ public class MainTabActivity extends AppCompatActivity implements
         else if (ev.getAction() == MotionEvent.ACTION_UP)
             ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
         return super.dispatchTouchEvent(ev);
+    }
+
+    @SuppressWarnings("unused") public void onEvent(Constants.WatchSelected event) {
+        sendToWearable();
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        mResolvingError = false;
+        Wearable.DataApi.addListener(mGoogleApiClient, this);
+        sendToWearable();
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {}
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
+        if (mResolvingError) return;
+        if (result.hasResolution()) {
+            try {
+                mResolvingError = true;
+                result.startResolutionForResult(this, Constants.REQUEST_RESOLVE_ERROR);
+            } catch (IntentSender.SendIntentException e) {
+                mGoogleApiClient.connect();
+            }
+        } else {
+            mResolvingError = false;
+            Wearable.DataApi.removeListener(mGoogleApiClient, this);
+        }
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEvents) {
+        for (DataEvent event : FreezableUtils.freezeIterable(dataEvents))
+            if (event.getType() == DataEvent.TYPE_CHANGED)
+                ReadingUtils.publishWatch(event.getDataItem());
+    }
+
+    public class MessageReceiver extends BroadcastReceiver {
+        @Override public void onReceive(Context context, Intent intent) {
+            toggleFlash(false);
+        }
+    }
+
+    @Override public void onProviderEnabled(String provider) {
+        initLocationManager();
+    }
+
+    @Override public void onProviderDisabled(String provider) {
+        //        if (mLocSwitch != null) mLocSwitch.setChecked(false);
+    }
+
+    @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+    @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+    @Override public void onLocationChanged(Location location) {}
+
+    @Override
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+    public void onSensorChanged(SensorEvent e) {
+        final long millis = System.currentTimeMillis();
+        if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION &&
+                millis - FREQS_PHONE.get("acceleration") > mAccelerationChange) {
+            mAccelerationChange = millis;
+            ReadingUtils.publish(ReadingUtils.createAccelReading(e.values[0], e.values[1], e.values[2]));
+        } else if (e.sensor.getType() == TYPE_GYROSCOPE &&
+                millis - FREQS_PHONE.get("angularSpeed") > mGyroscopeChange) {
+            ReadingUtils.publish(ReadingUtils.createGyroReading(e.values[0], e.values[1], e.values[2]));
+            mGyroscopeChange = millis;
+        } else if (e.sensor.getType() == TYPE_LIGHT &&
+                millis - FREQS_PHONE.get("luminosity") > mLightChange) {
+            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
+            mLightChange = millis;
+        }
     }
 
     private void setupViewPager(Bundle savedInstanceState) {
@@ -241,80 +319,6 @@ public class MainTabActivity extends AppCompatActivity implements
         mTabView.getTabAt(2).setIcon(R.drawable.ic_tab_rule);
     }
 
-    @SuppressWarnings("unused") public void onEvent(Constants.WatchSelected event) {
-        sendToWearable();
-    }
-
-    @Override
-    public void onConnected(Bundle connectionHint) {
-        Log.e("APP", "Google API Client was connected");
-        mResolvingError = false;
-        Wearable.DataApi.addListener(mGoogleApiClient, this);
-        sendToWearable();
-    }
-
-    @Override
-    public void onConnectionSuspended(int cause) {
-        Log.e("APP", "Connection to Google API client was suspended");
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult result) {
-        if (mResolvingError) return;
-        if (result.hasResolution()) {
-            try {
-                mResolvingError = true;
-                result.startResolutionForResult(this, Constants.REQUEST_RESOLVE_ERROR);
-            } catch (IntentSender.SendIntentException e) {
-                mGoogleApiClient.connect();
-            }
-        } else {
-            mResolvingError = false;
-            Wearable.DataApi.removeListener(mGoogleApiClient, this);
-        }
-    }
-
-    @Override
-    public void onDataChanged(DataEventBuffer dataEvents) {
-        for (DataEvent event : FreezableUtils.freezeIterable(dataEvents))
-            if (event.getType() == DataEvent.TYPE_CHANGED)
-                ReadingUtils.publishWatch(event.getDataItem());
-    }
-
-    public class MessageReceiver extends BroadcastReceiver {
-        @Override public void onReceive(Context context, Intent intent) {
-            toggleFlash(false);
-        }
-    }
-
-    @Override public void onProviderEnabled(String provider) {
-        initLocationManager();
-    }
-
-    @Override public void onProviderDisabled(String provider) {
-        //        if (mLocSwitch != null) mLocSwitch.setChecked(false);
-    }
-
-    @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-
-    @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-    @Override public void onLocationChanged(Location location) {}
-
-    @Override
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    public void onSensorChanged(SensorEvent e) {
-        if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION) {
-            if (mAccelerationChange++ % FREQS_PHONE.get("acceleration") == 0)
-                ReadingUtils.publish(ReadingUtils.createAccelReading(e.values[0], e.values[1], e.values[2]));
-        } else if (e.sensor.getType() == TYPE_GYROSCOPE) {
-            if (mGyroscopeChange++ % FREQS_PHONE.get("angularSpeed") == 0)
-                ReadingUtils.publish(ReadingUtils.createGyroReading(e.values[0], e.values[1], e.values[2]));
-        } else if (e.sensor.getType() == TYPE_LIGHT) {
-            publishLight(e);
-        }
-    }
-
     private void initReadings() {
         initSensorManager();
         initWifiManager();
@@ -326,10 +330,6 @@ public class MainTabActivity extends AppCompatActivity implements
         //        } else {
         //            initLocationManager();
         //        }
-    }
-
-    private void refreshTouch() {
-        ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
     }
 
     private void initSensorManager() {
@@ -352,10 +352,6 @@ public class MainTabActivity extends AppCompatActivity implements
     private void turnSensorOff() {
         if (mSensorManager != null)
             mSensorManager.unregisterListener(this);
-    }
-
-    private void publishLight(SensorEvent e) {
-        ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
     }
 
     private void initWifiManager() {
@@ -535,9 +531,25 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void sendToWearable() {
-        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.ACTIVATE_PATH);
-        putDataMapRequest.getDataMap().putBoolean(Constants.ACTIVATE, true);
-        PutDataRequest request = putDataMapRequest.asPutDataRequest();
-        Wearable.DataApi.putDataItem(mGoogleApiClient, request);
+        DataMap dataMap = new DataMap();
+        dataMap.putLong(Constants.ACTIVATE, System.currentTimeMillis());
+        new SendToDataLayerThread(Constants.ACTIVATE_PATH, dataMap).start();
+    }
+
+    class SendToDataLayerThread extends Thread {
+        String path;
+        DataMap dataMap;
+
+        SendToDataLayerThread(String p, DataMap data) {
+            path = p;
+            dataMap = data;
+        }
+
+        public void run() {
+            PutDataMapRequest putDMR = PutDataMapRequest.create(path);
+            putDMR.getDataMap().putAll(dataMap);
+            PutDataRequest request = putDMR.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, request).await();
+        }
     }
 }

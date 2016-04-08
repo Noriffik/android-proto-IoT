@@ -36,7 +36,6 @@ public class IotApplication extends Application {
     public static void visible(Constants.DeviceType type, boolean visible) {
         sVisible.put(type, visible);
         sVisible.put(type == WATCH ? PHONE : WATCH, false);
-        Log.e("VISIBILITY", sVisible.toString());
     }
 
     public static boolean isVisible(Constants.DeviceType type) {

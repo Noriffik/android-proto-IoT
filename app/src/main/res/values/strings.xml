@@ -111,6 +111,14 @@
     <string name="cloud_error_device_data">Failed to load device data</string>
     <string name="cloud_error_create_device">Failed to create a device</string>
     <string name="cloud_device_success">Connected to relayr cloud!</string>
+    <string name="dialog_unit">Unit</string>
+    <string name="dialog_identifier">Identifier</string>
+    <string name="dialog_sampling">Sampling</string>
+    <string name="dialog_data">Data</string>
+    <string name="dialog_send_to_the_cloud">send to the cloud</string>
+    <string name="dialog_keep_local">keep local</string>
+    <string name="dialog_low">low</string>
+    <string name="dialog_high">high</string>
 
 
 </resources>

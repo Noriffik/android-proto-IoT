@@ -36,10 +36,11 @@ public class ReadingWidgetDefault extends ReadingWidget {
     @Override void update() {}
 
     @Override void refresh() {
-        if (mReadings.isEmpty()) return;
-        if (mReadings.getLast().value == null) return;
-        if (!(mReadings.getLast().value instanceof String)) return;
-
-        mData.setText((String) mReadings.getLast().value);
+//        if (mReadings.isEmpty()) return;
+//        if (mReadings.get(mMeaning) == null) return;
+//        if (mReadings.get(mMeaning).getLast().value == null) return;
+//        if (!(mReadings.get(mMeaning).getLast().value instanceof String)) return;
+//
+//        mData.setText((String) mReadings.get(mMeaning).getLast().value);
     }
 }

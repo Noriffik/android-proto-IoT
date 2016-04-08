@@ -28,18 +28,18 @@ public class SettingsStorage {
     private static final String PREFS_WARNING = "io.relayr.warning";
     private static final String PREFS_SETTINGS_LOCATION = "io.relayr.iotsp.permission.location";
 
-    private static final String PREFS_ACTIVE_PHONE = "active_p";
-    private static final String PREFS_ACTIVE_WATCH = "active_w";
-    private static final String PREFS_FREQUENCY_PHONE = "freq_p";
-    private static final String PREFS_FREQUENCY_WATCH = "freq_w";
+    private static final String ACTIVE_PHONE = "active_p";
+    private static final String ACTIVE_WATCH = "active_w";
+    private static final String FREQUENCY_PHONE = "freq_p";
+    private static final String FREQUENCY_WATCH = "freq_w";
 
-    private static final String PREFS_PHONE_ID = "phone_id";
-    private static final String PREFS_PHONE_NAME = "phone_name";
-    private static final String PREFS_PHONE_SDK = "phone_sdk";
+    private static final String PHONE_ID = "phone_id";
+    private static final String PHONE_NAME = "phone_name";
+    private static final String PHONE_SDK = "phone_sdk";
 
-    private static final String PREFS_WATCH_ID = "watch_id";
-    private static final String PREFS_WATCH_NAME = "watch_name";
-    private static final String PREFS_WATCH_SDK = "watch_sdk";
+    private static final String WATCH_ID = "watch_id";
+    private static final String WATCH_NAME = "watch_name";
+    private static final String WATCH_SDK = "watch_sdk";
 
     private static List<DeviceReading> sReadingsPhone = new ArrayList<>();
     private static List<DeviceReading> sReadingsWatch = new ArrayList<>();
@@ -61,6 +61,7 @@ public class SettingsStorage {
             put("batteryLevel", SettingsStorage.instance().loadFrequency("batteryLevel", PHONE));
             put("luminosity", SettingsStorage.instance().loadFrequency("luminosity", PHONE));
             put("location", SettingsStorage.instance().loadFrequency("location", PHONE));
+            put("touch", SettingsStorage.instance().loadFrequency("touch", PHONE));
             put("rssi", SettingsStorage.instance().loadFrequency("rssi", PHONE));
         }
     };
@@ -70,6 +71,7 @@ public class SettingsStorage {
             put("acceleration", SettingsStorage.instance().loadFrequency("acceleration", WATCH));
             put("batteryLevel", SettingsStorage.instance().loadFrequency("batteryLevel", WATCH));
             put("luminosity", SettingsStorage.instance().loadFrequency("luminosity", WATCH));
+            put("touch", SettingsStorage.instance().loadFrequency("touch", WATCH));
         }
     };
 
@@ -80,8 +82,8 @@ public class SettingsStorage {
             put("batteryLevel", SettingsStorage.instance().loadActivity("batteryLevel", PHONE));
             put("luminosity", SettingsStorage.instance().loadActivity("luminosity", PHONE));
             put("location", SettingsStorage.instance().loadActivity("location", PHONE));
-            put("rssi", SettingsStorage.instance().loadActivity("rssi", PHONE));
             put("touch", SettingsStorage.instance().loadActivity("touch", PHONE));
+            put("rssi", SettingsStorage.instance().loadActivity("rssi", PHONE));
         }
     };
 
@@ -97,35 +99,37 @@ public class SettingsStorage {
     public static SettingsStorage instance() {return singleton;}
 
     public void saveDevice(Device device, Constants.DeviceType type) {
-        Log.e("Storage", device.toString());
         if (type == PHONE) {
-            PREFS.edit().putString(PREFS_PHONE_ID, device.getId()).apply();
-            PREFS.edit().putString(PREFS_PHONE_NAME, device.getName()).apply();
+            PREFS.edit().putString(PHONE_ID, device.getId()).apply();
+            PREFS.edit().putString(PHONE_NAME, device.getName()).apply();
         } else {
-            PREFS.edit().putString(PREFS_WATCH_ID, device.getId()).apply();
-            PREFS.edit().putString(PREFS_WATCH_NAME, device.getName()).apply();
+            PREFS.edit().putString(WATCH_ID, device.getId()).apply();
+            PREFS.edit().putString(WATCH_NAME, device.getName()).apply();
         }
     }
 
     public void saveActivity(String meaning, Constants.DeviceType type, boolean active) {
         if (type == PHONE) ACTIVITY_PHONE.put(meaning, active);
         else ACTIVITY_WATCH.put(meaning, active);
-        PREFS.edit().putBoolean((type == PHONE ? PREFS_ACTIVE_PHONE : PREFS_ACTIVE_WATCH) + meaning, active).apply();
+        PREFS.edit().putBoolean((type == PHONE ? ACTIVE_PHONE : ACTIVE_WATCH) + meaning, active).apply();
     }
 
     private boolean loadActivity(String meaning, Constants.DeviceType type) {
-        return PREFS.getBoolean((type == PHONE ? PREFS_ACTIVE_PHONE : PREFS_ACTIVE_WATCH) + meaning, false);
+        return PREFS.getBoolean((type == PHONE ? ACTIVE_PHONE : ACTIVE_WATCH) + meaning, false);
     }
 
-    public void saveFrequency(String meaning, Constants.DeviceType type, int freq) {
-        if (type == PHONE) FREQS_PHONE.put(meaning, freq);
-        else FREQS_WATCH.put(meaning, freq);
+    public int saveFrequency(String meaning, Constants.DeviceType type, int freq) {
+        int frequency = ReadingUtils.isComplex(meaning) ? freq * Constants.SAMPLING_COMPLEX : freq;
+        if (type == PHONE) FREQS_PHONE.put(meaning, frequency);
+        else FREQS_WATCH.put(meaning, frequency);
 
-        PREFS.edit().putInt((type == PHONE ? PREFS_FREQUENCY_PHONE : PREFS_FREQUENCY_WATCH) + meaning, freq).apply();
+        PREFS.edit().putInt((type == PHONE ? FREQUENCY_PHONE : FREQUENCY_WATCH) + meaning, frequency).apply();
+        return frequency;
     }
 
     public int loadFrequency(String meaning, Constants.DeviceType type) {
-        return PREFS.getInt((type == PHONE ? PREFS_FREQUENCY_PHONE : PREFS_FREQUENCY_WATCH) + meaning, 3);
+        int sampling = ReadingUtils.isComplex(meaning) ? Constants.SAMPLING_COMPLEX : Constants.SAMPLING_SIMPLE;
+        return PREFS.getInt((type == PHONE ? FREQUENCY_PHONE : FREQUENCY_WATCH) + meaning, sampling);
     }
 
     public void locationPermission(boolean granted) {
@@ -145,28 +149,28 @@ public class SettingsStorage {
     }
 
     public void savePhoneData(String name, int sdk) {
-        PREFS.edit().putString(PREFS_PHONE_NAME, name).apply();
-        PREFS.edit().putInt(PREFS_PHONE_SDK, sdk).apply();
+        PREFS.edit().putString(PHONE_NAME, name).apply();
+        PREFS.edit().putInt(PHONE_SDK, sdk).apply();
     }
 
     public String getDeviceName(Constants.DeviceType type) {
-        if (type == PHONE) return PREFS.getString(PREFS_PHONE_NAME, null);
-        else return PREFS.getString(PREFS_WATCH_NAME, null);
+        if (type == PHONE) return PREFS.getString(PHONE_NAME, null);
+        else return PREFS.getString(WATCH_NAME, null);
     }
 
     public String getDeviceId(Constants.DeviceType type) {
         if (type == PHONE) {
-            sPhoneId = PREFS.getString(PREFS_PHONE_ID, null);
+            sPhoneId = PREFS.getString(PHONE_ID, null);
             return sPhoneId;
         } else {
-            sWatchId = PREFS.getString(PREFS_WATCH_ID, null);
+            sWatchId = PREFS.getString(WATCH_ID, null);
             return sWatchId;
         }
     }
 
     public int getDeviceSdk(Constants.DeviceType type) {
-        if (type == PHONE) return PREFS.getInt(PREFS_PHONE_SDK, 0);
-        else return PREFS.getInt(PREFS_WATCH_SDK, 0);
+        if (type == PHONE) return PREFS.getInt(PHONE_SDK, 0);
+        else return PREFS.getInt(WATCH_SDK, 0);
     }
 
     //DEVICE MODEL DATA
@@ -199,8 +203,8 @@ public class SettingsStorage {
         sPhoneId = null;
         sWatchId = null;
 
-        PREFS.edit().remove(PREFS_PHONE_ID).apply();
-        PREFS.edit().remove(PREFS_WATCH_ID).apply();
+        PREFS.edit().remove(PHONE_ID).apply();
+        PREFS.edit().remove(WATCH_ID).apply();
         PREFS.edit().remove(PREFS_WARNING).apply();
     }
 }

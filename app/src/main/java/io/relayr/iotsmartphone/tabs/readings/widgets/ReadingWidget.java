@@ -5,7 +5,9 @@ import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
@@ -15,6 +17,19 @@ import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.ValueSchema;
 
 public abstract class ReadingWidget extends LinearLayout {
+
+    protected static final Map<String, LimitedQueue<Reading>> mReadings = new HashMap<String, LimitedQueue<Reading>>() {
+        {
+            put("acceleration", new LimitedQueue<Reading>(100));
+            put("angularSpeed", new LimitedQueue<Reading>(100));
+            put("luminosity", new LimitedQueue<Reading>(100));
+            put("touch", new LimitedQueue<Reading>(100));
+            put("batteryLevel", new LimitedQueue<Reading>(30));
+            put("rssi", new LimitedQueue<Reading>(30));
+            put("location", new LimitedQueue<Reading>(1));
+            put("message", new LimitedQueue<Reading>(1));
+        }
+    };
 
     protected final int DELAY_SIMPLE = 30 * 1000;
     protected final int DELAY_COMPLEX = 10 * 1000;
@@ -34,7 +49,6 @@ public abstract class ReadingWidget extends LinearLayout {
     protected String mPath;
     protected String mMeaning;
     protected ValueSchema mSchema;
-    protected LimitedQueue<Reading> mReadings = new LimitedQueue<>(100);
     protected int mMaxPoints = 500;
     protected List<String> axisX = new ArrayList<>();
 
@@ -53,13 +67,12 @@ public abstract class ReadingWidget extends LinearLayout {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         EventBus.getDefault().unregister(this);
-        mReadings.clear();
     }
 
     @SuppressWarnings("unused")
     public void onEvent(final Reading reading) {
         if (!reading.meaning.equals(mMeaning)) return;
-        mReadings.add(reading);
+        mReadings.get(reading.meaning).add(reading);
         refresh();
     }
 

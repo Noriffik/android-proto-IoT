@@ -20,7 +20,6 @@ public class ListenerService extends WearableListenerService {
     public void onDataChanged(DataEventBuffer dataEvents) {
         for (DataEvent event : dataEvents) {
             String path = event.getDataItem().getUri().getPath();
-            Log.e(TAG, path);
             if (Constants.ACTIVATE_PATH.equals(path)) {
                 Intent startIntent = new Intent(this, MainActivity.class);
                 startIntent.putExtra(Constants.ACTIVATE, true);

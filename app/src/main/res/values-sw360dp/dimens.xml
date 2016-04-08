@@ -29,5 +29,6 @@
     <dimen name="dotted_line_dash">8dp</dimen>
     <dimen name="dotted_line_padding">-4dp</dimen>
     <dimen name="dotted_line_width">4dp</dimen>
+    <dimen name="dialog_item_height">70dp</dimen>
 
 </resources>

@@ -36,8 +36,6 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
         super(context, attrs, defStyle);
     }
 
-    private boolean isBoolean = false;
-
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -49,20 +47,13 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
     }
 
     @Override void refresh() {
-        if (mChart != null) setData(mReadings);
+        if (mChart != null) setData(mReadings.get(mMeaning));
     }
 
     @SuppressWarnings("unchecked")
     private void setGraphParameters() {
-        if (mSchema.isIntegerSchema() || mSchema.isNumberSchema()) {
-            final NumberSchema schema = mSchema.asNumber();
-            initGraph(schema.getMin() != null ? schema.getMin().intValue() : 0, schema.getMax() != null ? schema.getMax().intValue() : 100);
-            isBoolean = false;
-        } else if (mSchema.isBooleanSchema()) {
-            initGraph(0, 1);
-            isBoolean = true;
-        } else
-            Crashlytics.log(Log.WARN, "RWGB", "Object not supported");
+        if (mSchema.isBooleanSchema()) initGraph(0, 1);
+        else Crashlytics.log(Log.WARN, "RWGB", "Object not supported");
     }
 
     private void initGraph(int min, int max) {
@@ -100,10 +91,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
             if (index < 0) continue;
             if (index >= mMaxPoints) break;
 
-            if (isBoolean)
-                yValues.add(new BarEntry(((Boolean) reading.value) ? 1 : 0, index));
-            else
-                yValues.add(new BarEntry(((Number) reading.value).intValue(), index));
+            yValues.add(new BarEntry(((Boolean) reading.value) ? 1 : 0, index));
         }
 
         BarDataSet barDataSet = new BarDataSet(yValues, mMeaning);

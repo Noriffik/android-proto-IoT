@@ -26,6 +26,9 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
     private final Context mContext;
     private final ReadingWidget widget;
+
+    private String mUnit;
+    private String mPath;
     private String mMeaning;
     private Constants.DeviceType mType;
 
@@ -59,7 +62,7 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
     private void showSettings() {
         final DialogView view = (DialogView) View.inflate(mContext, R.layout.dialog_content, null);
-        view.setMeaning(mMeaning, mType);
+        view.setUp(mMeaning, mPath, mUnit, mType);
 
         new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay)
                 .setView(view)
@@ -75,7 +78,10 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
     public void refresh(DeviceReading reading, Constants.DeviceType type) {
         mType = type;
+        mPath = reading.getPath();
         mMeaning = reading.getMeaning();
+        mUnit = reading.getValueSchema().isObjectSchema() ? "G" : reading.getValueSchema().getUnit();
+
         mMeaningTv.setText(sNameMap.get(mMeaning));
 
         widget.setUp(reading.getPath(), reading.getMeaning(), reading.getValueSchema());
