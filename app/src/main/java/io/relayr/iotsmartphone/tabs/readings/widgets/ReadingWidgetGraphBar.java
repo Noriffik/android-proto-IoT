@@ -17,8 +17,8 @@ import java.util.List;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
 import io.relayr.java.model.action.Reading;
-import io.relayr.java.model.models.schema.NumberSchema;
 
 public class ReadingWidgetGraphBar extends ReadingWidget {
 
@@ -47,7 +47,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
     }
 
     @Override void refresh() {
-        if (mChart != null) setData(mReadings.get(mMeaning));
+        if (mChart != null) setData(ReadingUtils.readings.get(mMeaning));
     }
 
     @SuppressWarnings("unchecked")
@@ -81,8 +81,8 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setData(List<Reading> points) {
-        long mFirstPoint = System.currentTimeMillis() - DELAY_COMPLEX;
-        long mDiff = DELAY_COMPLEX / mMaxPoints;
+        long mFirstPoint = (System.currentTimeMillis() - defaultFrame);
+        long mDiff = (long) (defaultFrame / mMaxPoints);
 
         List<BarEntry> yValues = new ArrayList<>();
         for (int i = 0; i < points.size(); i++) {
@@ -91,7 +91,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
             if (index < 0) continue;
             if (index >= mMaxPoints) break;
 
-            yValues.add(new BarEntry(((Boolean) reading.value) ? 1 : 0, index));
+            yValues.add(new BarEntry(((Boolean) reading.value) ? .8f : 0, index));
         }
 
         BarDataSet barDataSet = new BarDataSet(yValues, mMeaning);

@@ -3,7 +3,6 @@ package io.relayr.iotsmartphone.tabs.cloud;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,9 +23,10 @@ import butterknife.OnClick;
 import io.relayr.android.RelayrSdk;
 import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.helper.UiHelper;
+import io.relayr.iotsmartphone.tabs.IotFragment;
 import io.relayr.iotsmartphone.tabs.helper.Constants;
 import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
+import io.relayr.iotsmartphone.tabs.helper.UiHelper;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.CreateDevice;
 import io.relayr.java.model.Device;
@@ -35,7 +35,7 @@ import rx.android.schedulers.AndroidSchedulers;
 
 import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
 
-public class FragmentCloud extends Fragment {
+public class FragmentCloud extends IotFragment {
 
     private static final String TAG = "FragCloud";
 
@@ -64,6 +64,8 @@ public class FragmentCloud extends Fragment {
         setUpCloud();
         setUpPhone();
         setUpWearable();
+
+        setTitle(getString(R.string.cloud_title));
 
         if (UiHelper.isCloudConnected()) loadUserInfo();
 

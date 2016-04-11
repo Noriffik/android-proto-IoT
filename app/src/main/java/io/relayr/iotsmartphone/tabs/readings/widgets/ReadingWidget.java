@@ -5,34 +5,20 @@ import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.helper.LimitedQueue;
+import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.ValueSchema;
 
+import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_PHONE;
+import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_WATCH;
+
 public abstract class ReadingWidget extends LinearLayout {
-
-    protected static final Map<String, LimitedQueue<Reading>> mReadings = new HashMap<String, LimitedQueue<Reading>>() {
-        {
-            put("acceleration", new LimitedQueue<Reading>(100));
-            put("angularSpeed", new LimitedQueue<Reading>(100));
-            put("luminosity", new LimitedQueue<Reading>(100));
-            put("touch", new LimitedQueue<Reading>(100));
-            put("batteryLevel", new LimitedQueue<Reading>(30));
-            put("rssi", new LimitedQueue<Reading>(30));
-            put("location", new LimitedQueue<Reading>(1));
-            put("message", new LimitedQueue<Reading>(1));
-        }
-    };
-
-    protected final int DELAY_SIMPLE = 30 * 1000;
-    protected final int DELAY_COMPLEX = 10 * 1000;
 
     public ReadingWidget(Context context) {
         this(context, null);
@@ -48,9 +34,12 @@ public abstract class ReadingWidget extends LinearLayout {
 
     protected String mPath;
     protected String mMeaning;
+    protected Constants.DeviceType mType;
     protected ValueSchema mSchema;
     protected int mMaxPoints = 500;
-    protected List<String> axisX = new ArrayList<>();
+    protected List<String> axisX = new ArrayList<>(500);
+
+    protected int defaultFrame = 10000;
 
     @Override
     protected void onAttachedToWindow() {
@@ -58,8 +47,9 @@ public abstract class ReadingWidget extends LinearLayout {
         ButterKnife.inject(this, this);
         EventBus.getDefault().register(this);
 
-        axisX = new ArrayList<>(mMaxPoints);
+        axisX = new ArrayList<>((int) mMaxPoints);
         for (int i = 0; i < mMaxPoints; i++) axisX.add("");
+
         update();
     }
 
@@ -70,16 +60,15 @@ public abstract class ReadingWidget extends LinearLayout {
     }
 
     @SuppressWarnings("unused")
-    public void onEvent(final Reading reading) {
-        if (!reading.meaning.equals(mMeaning)) return;
-        mReadings.get(reading.meaning).add(reading);
-        refresh();
+    public void onEvent(final Constants.ReadingRefresh reading) {
+        if (reading.getMeaning().equals(mMeaning)) refresh();
     }
 
-    public void setUp(String mPath, String mMeaning, ValueSchema mSchema) {
-        this.mPath = mPath;
-        this.mMeaning = mMeaning;
-        this.mSchema = mSchema;
+    public void setUp(String path, String meaning, ValueSchema schema, Constants.DeviceType type) {
+        this.mType = type;
+        this.mPath = path;
+        this.mMeaning = meaning;
+        this.mSchema = schema;
         if (isShown()) update();
     }
 

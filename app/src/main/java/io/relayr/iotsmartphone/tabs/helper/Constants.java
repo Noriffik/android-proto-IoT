@@ -29,4 +29,15 @@ public class Constants {
     public static class WatchSelected {
         public WatchSelected() {}
     }
+    public static class ReadingRefresh {
+        private final String meaning;
+
+        public ReadingRefresh(String meaning) {
+            this.meaning = meaning;
+        }
+
+        public String getMeaning() {
+            return meaning;
+        }
+    }
 }

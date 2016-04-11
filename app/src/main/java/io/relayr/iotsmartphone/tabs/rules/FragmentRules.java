@@ -8,8 +8,9 @@ import android.view.ViewGroup;
 
 import butterknife.ButterKnife;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.tabs.IotFragment;
 
-public class FragmentRules extends Fragment {
+public class FragmentRules extends IotFragment {
 
     public FragmentRules() {}
 
@@ -18,6 +19,7 @@ public class FragmentRules extends Fragment {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_rules, container, false);
         ButterKnife.inject(this, view);
 
+        setTitle(getString(R.string.rules_title));
         return view;
     }
 }

@@ -119,6 +119,8 @@
     <string name="dialog_keep_local">keep local</string>
     <string name="dialog_low">low</string>
     <string name="dialog_high">high</string>
+    <string name="cloud_title">relayr cloud</string>
+    <string name="rules_title">relayr rules</string>
 
 
 </resources>

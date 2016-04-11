@@ -18,9 +18,4 @@ public class LimitedQueue<E> extends LinkedList<E> {
         }
         return true;
     }
-
-    @Override public E remove() {
-        System.gc();
-        return super.remove();
-    }
 }

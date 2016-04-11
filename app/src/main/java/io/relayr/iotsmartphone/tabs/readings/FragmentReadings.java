@@ -2,8 +2,6 @@ package io.relayr.iotsmartphone.tabs.readings;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
@@ -19,9 +17,11 @@ import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.helper.UiHelper;
+import io.relayr.iotsmartphone.tabs.IotFragment;
 import io.relayr.iotsmartphone.tabs.helper.Constants;
+import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
 import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
+import io.relayr.iotsmartphone.tabs.helper.UiHelper;
 import io.relayr.iotsmartphone.tabs.readings.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
 
@@ -32,7 +32,7 @@ import static android.support.v7.widget.StaggeredGridLayoutManager.VERTICAL;
 import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
 
-public class FragmentReadings extends Fragment {
+public class FragmentReadings extends IotFragment {
 
     @InjectView(R.id.readings_phone_grid) protected RecyclerView mPhoneGrid;
     @InjectView(R.id.readings_watch_grid) protected RecyclerView mWatchGrid;
@@ -75,6 +75,7 @@ public class FragmentReadings extends Fragment {
 
     @SuppressWarnings("unused") @OnClick(R.id.fab)
     public void onFabClicked() {
+        ReadingUtils.initializeReadings();
         if (IotApplication.isVisible(PHONE)) onWatchClicked();
         else onPhoneClicked();
     }
@@ -89,12 +90,6 @@ public class FragmentReadings extends Fragment {
                     mWatchAdapter.update(SettingsStorage.instance().loadReadings(WATCH), WATCH);
             }
         });
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    public void setTitle(String title) {
-        if (title != null && getActivity() != null && ((AppCompatActivity) getActivity()).getSupportActionBar() != null)
-            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(title);
     }
 
     private void setUpAdapters(int columns) {
@@ -152,13 +147,9 @@ public class FragmentReadings extends Fragment {
 
         @Override public int getItemViewType(int position) {
             final String meaning = mReadings.get(position).getMeaning();
-            return meaning.equals("rssi") ||
-                    meaning.equals("batteryLevel") ||
-                    meaning.equals("acceleration") ||
-                    meaning.equals("angularSpeed") ||
-                    meaning.equals("luminosity") ? R.layout.widget_reading_graph :
-                    meaning.equals("touch") ? R.layout.widget_reading_graph_bar :
-                            R.layout.widget_reading_default;
+            return meaning.equals("angularSpeed") || meaning.equals("acceleration") ? R.layout.widget_reading_graph :
+                    meaning.equals("rssi") || meaning.equals("batteryLevel") || meaning.equals("luminosity") ? R.layout.widget_reading_graph_simple :
+                            meaning.equals("touch") ? R.layout.widget_reading_graph_bar : R.layout.widget_reading_default;
         }
 
         @Override

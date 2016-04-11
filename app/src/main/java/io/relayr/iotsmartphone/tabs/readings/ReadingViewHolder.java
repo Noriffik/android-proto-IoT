@@ -84,6 +84,6 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
         mMeaningTv.setText(sNameMap.get(mMeaning));
 
-        widget.setUp(reading.getPath(), reading.getMeaning(), reading.getValueSchema());
+        widget.setUp(reading.getPath(), reading.getMeaning(), reading.getValueSchema(), mType);
     }
 }

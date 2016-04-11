@@ -12,8 +12,10 @@ import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
@@ -34,12 +36,47 @@ public class ReadingUtils {
 
     private static final String TAG = "ReadingUtils";
 
+    public static final Map<String, Integer> defaultSizes = new HashMap<>();
+
+    public static final Map<String, LimitedQueue<Reading>> readings = new HashMap<>();
+
+    static {
+        initializeSizes();
+        initializeReadings();
+    }
+
+    private static void initializeSizes() {
+        defaultSizes.clear();
+        defaultSizes.put("acceleration", 100);
+        defaultSizes.put("angularSpeed", 100);
+        defaultSizes.put("luminosity", 50);
+        defaultSizes.put("touch", 50);
+        defaultSizes.put("batteryLevel", 30);
+        defaultSizes.put("rssi", 30);
+        defaultSizes.put("location", 1);
+        defaultSizes.put("message", 1);
+    }
+
+    public static void initializeReadings() {
+        readings.clear();
+        readings.put("acceleration", new LimitedQueue<Reading>(defaultSizes.get("acceleration")));
+        readings.put("angularSpeed", new LimitedQueue<Reading>(defaultSizes.get("angularSpeed")));
+        readings.put("luminosity", new LimitedQueue<Reading>(defaultSizes.get("luminosity")));
+        readings.put("batteryLevel", new LimitedQueue<Reading>(defaultSizes.get("batteryLevel")));
+        readings.put("touch", new LimitedQueue<Reading>(defaultSizes.get("touch")));
+        readings.put("rssi", new LimitedQueue<Reading>(defaultSizes.get("rssi")));
+        readings.put("location", new LimitedQueue<Reading>(defaultSizes.get("location")));
+        readings.put("message", new LimitedQueue<Reading>(defaultSizes.get("message")));
+    }
+
     public static boolean isComplex(String meaning) {
         return meaning.equals("acceleration") || meaning.equals("angularSpeed") || meaning.equals("luminosity");
     }
 
     public static void getReadings() {
-        RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_PHONE)
+        RelayrSdk.getDeviceModelsApi()
+                .getDeviceModelById(SettingsStorage.MODEL_PHONE)
+                .subscribeOn(Schedulers.io())
                 .subscribe(new SimpleObserver<DeviceModel>() {
                     @Override public void error(Throwable e) {
                         Log.e(TAG, "PHONE model error");
@@ -57,7 +94,9 @@ public class ReadingUtils {
                     }
                 });
 
-        RelayrSdk.getDeviceModelsApi().getDeviceModelById(SettingsStorage.MODEL_WATCH)
+        RelayrSdk.getDeviceModelsApi()
+                .getDeviceModelById(SettingsStorage.MODEL_WATCH)
+                .subscribeOn(Schedulers.io())
                 .subscribe(new SimpleObserver<DeviceModel>() {
                     @Override public void error(Throwable e) {
                         Log.e(TAG, "WATCH model error");
@@ -93,8 +132,9 @@ public class ReadingUtils {
     }
 
     public static void publish(Reading reading) {
+        ReadingUtils.readings.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(PHONE))
-            EventBus.getDefault().post(reading);
+            EventBus.getDefault().post(new Constants.ReadingRefresh(reading.meaning));
         if (IotApplication.isVisible(PHONE) && SettingsStorage.ACTIVITY_PHONE.get(reading.meaning))
             RelayrSdk.getWebSocketClient()
                     .publish(SettingsStorage.instance().getDeviceId(PHONE), reading)
@@ -130,8 +170,9 @@ public class ReadingUtils {
     }
 
     private static void publishWatch(Reading reading) {
+        ReadingUtils.readings.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(WATCH))
-            EventBus.getDefault().post(reading);
+            EventBus.getDefault().post(new Constants.ReadingRefresh(reading.meaning));
         if (IotApplication.isVisible(WATCH) && SettingsStorage.ACTIVITY_WATCH.get(reading.meaning))
             RelayrSdk.getWebSocketClient()
                     .publish(SettingsStorage.instance().getDeviceId(WATCH), reading)

@@ -1,12 +1,16 @@
 package io.relayr.iotsmartphone.tabs;
 
 import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -25,7 +29,10 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
@@ -55,6 +62,7 @@ import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
 import io.relayr.iotsmartphone.tabs.cloud.FragmentCloud;
@@ -120,11 +128,11 @@ public class MainTabActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_tab_main);
         ButterKnife.inject(this);
 
+        ReadingUtils.getReadings();
+
         setSupportActionBar(mToolbar);
         setupViewPager(state);
         setUpTabs();
-
-        ReadingUtils.getReadings();
 
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
@@ -142,7 +150,6 @@ public class MainTabActivity extends AppCompatActivity implements
         super.onResume();
 
         EventBus.getDefault().register(this);
-        initReadings();
         if (mRefreshSubs == null)
             mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
@@ -161,6 +168,8 @@ public class MainTabActivity extends AppCompatActivity implements
                             ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
                         }
                     });
+
+        initReadings();
     }
 
     @Override protected void onPause() {
@@ -241,7 +250,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     @Override public void onProviderDisabled(String provider) {
-        //        if (mLocSwitch != null) mLocSwitch.setChecked(false);
+        SettingsStorage.instance().saveActivity("location", PHONE, false);
     }
 
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
@@ -324,12 +333,12 @@ public class MainTabActivity extends AppCompatActivity implements
         initWifiManager();
         monitorBattery();
 
-        //        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED &&
-        //                ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
-        //            ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
-        //        } else {
-        //            initLocationManager();
-        //        }
+        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
+        } else {
+            initLocationManager();
+        }
     }
 
     private void initSensorManager() {
@@ -441,13 +450,6 @@ public class MainTabActivity extends AppCompatActivity implements
         });
     }
 
-    //    private void turnOffLocation() {
-    //        if (mLocationManager != null)
-    //            if (ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
-    //                    ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED)
-    //                mLocationManager.removeUpdates(this);
-    //    }
-
     private void showLocationDialog() {
         new AlertDialog.Builder(this, R.style.AppTheme_DialogOverlay)
                 .setTitle(this.getString(R.string.sv_location_off_title))
@@ -466,27 +468,6 @@ public class MainTabActivity extends AppCompatActivity implements
                     }
                 })
                 .show();
-    }
-
-    private void createFlashHelper() {
-        if (mFlash != null) return;
-
-        mFlash = new FlashHelper();
-        try {
-            mFlash.open(MainTabActivity.this.getApplicationContext());
-        } catch (Exception e) {
-            Crashlytics.log(Log.ERROR, "SRV", "Failed to create FlashHelper.");
-            e.printStackTrace();
-
-            Toast.makeText(MainTabActivity.this, R.string.sv_err_using_flash, Toast.LENGTH_SHORT).show();
-            mFlash.close();
-            mFlash = null;
-        }
-    }
-
-    private void createSoundHelper() {
-        if (mSound != null) return;
-        mSound = new SoundHelper();
     }
 
     private void subscribeToCommands() {
@@ -516,10 +497,26 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mFlash != null && !mFlash.hasFlash(MainTabActivity.this)) {
             Toast.makeText(MainTabActivity.this, R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
         } else {
-            //            showNotification(on, mSettings[6]);
+            showNotification(true);
             if (mFlash == null) return;
             if (on) mFlash.on();
             else mFlash.off();
+        }
+    }
+
+    private void createFlashHelper() {
+        if (mFlash != null) return;
+
+        mFlash = new FlashHelper();
+        try {
+            mFlash.open(MainTabActivity.this.getApplicationContext());
+        } catch (Exception e) {
+            Crashlytics.log(Log.ERROR, "SRV", "Failed to create FlashHelper.");
+            e.printStackTrace();
+
+            Toast.makeText(MainTabActivity.this, R.string.sv_err_using_flash, Toast.LENGTH_SHORT).show();
+            mFlash.close();
+            mFlash = null;
         }
     }
 
@@ -528,6 +525,46 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mSound == null) createSoundHelper();
 
         mSound.playMusic(MainTabActivity.this, value);
+    }
+
+    private void createSoundHelper() {
+        if (mSound != null) return;
+        mSound = new SoundHelper();
+    }
+
+    private void turnOffLocation() {
+        if (mLocationManager != null)
+            if (ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED)
+                mLocationManager.removeUpdates(this);
+    }
+
+    public void showNotification(boolean wearEnabled) {
+        Intent demandIntent = new Intent(this, DemandIntentReceiver.class)
+                .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, false)
+                .setAction(DemandIntentReceiver.ACTION_DEMAND);
+        PendingIntent demandPendingIntent = PendingIntent.getBroadcast(this, 0, demandIntent, 0);
+        NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
+                this.getString(R.string.srv_turn_off_flash), demandPendingIntent).build();
+        showNotification(action, wearEnabled);
+    }
+
+    private void showNotification(NotificationCompat.Action action, boolean wearEnabled) {
+        final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.notification)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setContentTitle(this.getString(R.string.app_name))
+                .setContentText(this.getString(R.string.srv_flash_status, "ON"));
+
+        if (wearEnabled) {
+            Bitmap bg = BitmapFactory.decodeResource(getResources(), R.color.primary);
+            builder.extend(new NotificationCompat.WearableExtender().addAction(action).setBackground(bg));
+        }
+        builder.addAction(action);
+
+
+        final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(this);
+        managerCompat.notify(2376, builder.build());
     }
 
     private void sendToWearable() {

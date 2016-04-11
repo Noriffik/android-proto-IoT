@@ -61,6 +61,7 @@ public class SettingsStorage {
             put("batteryLevel", SettingsStorage.instance().loadFrequency("batteryLevel", PHONE));
             put("luminosity", SettingsStorage.instance().loadFrequency("luminosity", PHONE));
             put("location", SettingsStorage.instance().loadFrequency("location", PHONE));
+            put("message", SettingsStorage.instance().loadFrequency("message", PHONE));
             put("touch", SettingsStorage.instance().loadFrequency("touch", PHONE));
             put("rssi", SettingsStorage.instance().loadFrequency("rssi", PHONE));
         }
@@ -82,6 +83,7 @@ public class SettingsStorage {
             put("batteryLevel", SettingsStorage.instance().loadActivity("batteryLevel", PHONE));
             put("luminosity", SettingsStorage.instance().loadActivity("luminosity", PHONE));
             put("location", SettingsStorage.instance().loadActivity("location", PHONE));
+            put("message", SettingsStorage.instance().loadActivity("message", PHONE));
             put("touch", SettingsStorage.instance().loadActivity("touch", PHONE));
             put("rssi", SettingsStorage.instance().loadActivity("rssi", PHONE));
         }
