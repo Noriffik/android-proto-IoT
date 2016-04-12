@@ -50,11 +50,6 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-
-        final int places = ReadingUtils.defaultSizes.get(mMeaning);
-        final int frequency = FREQS_PHONE.get(mMeaning);
-        defaultFrame = (int) (places * frequency / 3f);
-
         update();
     }
 
@@ -114,6 +109,7 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         long mDiff;
         long mFirstPoint;
 
+        calculateFrame();
         mFirstPoint = System.currentTimeMillis() - defaultFrame;
         mDiff = (long) (defaultFrame / mMaxPoints);
 
@@ -149,6 +145,12 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
 
         mChart.setData(data);
         mChart.invalidate();
+    }
+
+    private void calculateFrame() {
+        final int places = ReadingUtils.defaultSizes.get(mMeaning);
+        final int frequency = FREQS_PHONE.get(mMeaning);
+        defaultFrame = (int) (places * frequency / 3f);
     }
 
     private LineDataSet createDataSet(String name, List<Entry> entrys, int dotColor, int lineColor) {
