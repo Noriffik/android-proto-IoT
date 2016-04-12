@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.readings;
+package io.relayr.iotsmartphone.ui.readings;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,15 +16,16 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
-import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
+import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.utils.UiHelper;
 
 import static android.widget.Toast.LENGTH_LONG;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.SAMPLING_PHONE_MIN;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.SAMPLING_WATCH_MIN;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
+import static io.relayr.iotsmartphone.storage.Constants.SAMPLING_PHONE_MIN;
+import static io.relayr.iotsmartphone.storage.Constants.SAMPLING_WATCH_MIN;
 
 public class SamplingDialog extends LinearLayout {
 
@@ -81,11 +82,12 @@ public class SamplingDialog extends LinearLayout {
     private void setSampling() {
         final boolean complex = ReadingUtils.isComplex(mMeaning);
         int frequency = 0;
-        if (mType == PHONE) frequency = SettingsStorage.FREQS_PHONE.get(mMeaning);
-        else if (mType == WATCH) frequency = SettingsStorage.FREQS_WATCH.get(mMeaning);
+        if (mType == PHONE) frequency = Storage.FREQS_PHONE.get(mMeaning);
+        else if (mType == WATCH) frequency = Storage.FREQS_WATCH.get(mMeaning);
         setFrequency(frequency, complex);
 
-        mSamplingLow.setText(complex ? getContext().getString(R.string.dialog_low) : ((mType == PHONE ? SAMPLING_PHONE_MIN : SAMPLING_WATCH_MIN) + " s"));
+        mSamplingLow.setText(complex ? getContext().getString(R.string.dialog_low) :
+                ((mType == PHONE ? SAMPLING_PHONE_MIN : SAMPLING_WATCH_MIN) + " s"));
         mSamplingHigh.setText(complex ? getContext().getString(R.string.dialog_high) : ((Constants.SAMPLING_MAX + 1) + " s"));
 
         mSamplingSeek.setMax(Constants.SAMPLING_MAX);
@@ -97,7 +99,7 @@ public class SamplingDialog extends LinearLayout {
         mSamplingSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int frequency, boolean fromUser) {
-                final int freq = SettingsStorage.instance().saveFrequency(mMeaning, mType,
+                final int freq = Storage.instance().saveFrequency(mMeaning, mType,
                         frequency + (mType == PHONE ? SAMPLING_PHONE_MIN : SAMPLING_WATCH_MIN));
                 if (mType == WATCH)
                     EventBus.getDefault().post(new Constants.WatchSamplingUpdate(mMeaning, freq));
@@ -118,16 +120,20 @@ public class SamplingDialog extends LinearLayout {
     private void setCloudSwitch() {
         mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                setSwitchInfo(isChecked);
-                if (mMeaning.equals("acceleration") || mMeaning.equals("angularSpeed"))
-                    showAccelerometerWarning();
-                SettingsStorage.instance().saveActivity(mMeaning, mType, isChecked);
+                if (UiHelper.isCloudConnected()) {
+                    Storage.instance().saveActivity(mMeaning, mType, isChecked);
+                    setSwitchInfo(isChecked);
+                    if (mMeaning.equals("acceleration") || mMeaning.equals("angularSpeed"))
+                        showAccelerometerWarning();
+                } else {
+                    Toast.makeText(getContext(), getContext().getResources().getString(R.string.cloud_establish_connection), LENGTH_LONG).show();
+                }
             }
         });
 
         boolean uploading = false;
-        if (mType == PHONE) uploading = SettingsStorage.ACTIVITY_PHONE.get(mMeaning);
-        else if (mType == WATCH) uploading = SettingsStorage.ACTIVITY_WATCH.get(mMeaning);
+        if (mType == PHONE) uploading = Storage.ACTIVITY_PHONE.get(mMeaning);
+        else if (mType == WATCH) uploading = Storage.ACTIVITY_WATCH.get(mMeaning);
 
         mSwitch.setChecked(uploading);
         setSwitchInfo(uploading);
@@ -139,7 +145,7 @@ public class SamplingDialog extends LinearLayout {
     }
 
     private void showAccelerometerWarning() {
-        if (SettingsStorage.instance().isWarningShown())
+        if (Storage.instance().isWarningShown())
             Toast.makeText(getContext(), getContext().getResources().getString(R.string.sv_warning_toast), LENGTH_LONG).show();
         else
             new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
@@ -148,7 +154,7 @@ public class SamplingDialog extends LinearLayout {
                     .setMessage(getContext().getResources().getString(R.string.sv_warning_dialog_text))
                     .setPositiveButton(getContext().getResources().getString(R.string.ok), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int i) {
-                            SettingsStorage.instance().warningShown();
+                            Storage.instance().warningShown();
                             dialog.dismiss();
                         }
                     }).show();

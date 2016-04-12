@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.helper;
+package io.relayr.iotsmartphone.utils;
 
 import android.content.Context;
 import android.location.Address;
@@ -10,6 +10,7 @@ import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -20,6 +21,8 @@ import java.util.Map;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.IotApplication;
+import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.java.helper.observer.ErrorObserver;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.AccelGyroscope;
@@ -29,46 +32,56 @@ import io.relayr.java.model.models.error.DeviceModelsException;
 import io.relayr.java.model.models.transport.Transport;
 import rx.schedulers.Schedulers;
 
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class ReadingUtils {
 
     private static final String TAG = "ReadingUtils";
 
-    public static final Map<String, Integer> defaultSizes = new HashMap<>();
+    private static float sWatchData;
+    private static float sPhoneData;
+    private static long sTimestamp;
+    public static float sWatchSpeed;
+    public static float sPhoneSpeed;
 
-    public static final Map<String, LimitedQueue<Reading>> readings = new HashMap<>();
+    public static final Map<String, Integer> defaultSizes = new HashMap<>();
+    public static final Map<String, LimitedQueue<Reading>> readingsPhone = new HashMap<>();
+    public static final Map<String, LimitedQueue<Reading>> readingsWatch = new HashMap<>();
 
     static {
         initializeSizes();
-        initializeReadings(PHONE);
+        initializeReadings();
     }
 
     private static void initializeSizes() {
         defaultSizes.clear();
-        defaultSizes.put("acceleration", 100);
-        defaultSizes.put("angularSpeed", 100);
-        defaultSizes.put("luminosity", 50);
-        defaultSizes.put("touch", 50);
+        defaultSizes.put("acceleration", 50);
+        defaultSizes.put("angularSpeed", 50);
+        defaultSizes.put("luminosity", 30);
+        defaultSizes.put("touch", 30);
         defaultSizes.put("batteryLevel", 30);
         defaultSizes.put("rssi", 30);
         defaultSizes.put("location", 1);
         defaultSizes.put("message", 1);
     }
 
-    public static void initializeReadings(Constants.DeviceType type) {
-        readings.clear();
-        readings.put("acceleration", new LimitedQueue<Reading>(defaultSizes.get("acceleration")));
-        readings.put("luminosity", new LimitedQueue<Reading>(defaultSizes.get("luminosity")));
-        readings.put("batteryLevel", new LimitedQueue<Reading>(defaultSizes.get("batteryLevel")));
-        readings.put("touch", new LimitedQueue<Reading>(defaultSizes.get("touch")));
-        if (type == PHONE) {
-            readings.put("angularSpeed", new LimitedQueue<Reading>(defaultSizes.get("angularSpeed")));
-            readings.put("rssi", new LimitedQueue<Reading>(defaultSizes.get("rssi")));
-            readings.put("location", new LimitedQueue<Reading>(defaultSizes.get("location")));
-            readings.put("message", new LimitedQueue<Reading>(defaultSizes.get("message")));
-        }
+    public static void initializeReadings() {
+        readingsPhone.clear();
+        readingsPhone.put("acceleration", new LimitedQueue<Reading>(defaultSizes.get("acceleration")));
+        readingsPhone.put("angularSpeed", new LimitedQueue<Reading>(defaultSizes.get("angularSpeed")));
+        readingsPhone.put("luminosity", new LimitedQueue<Reading>(defaultSizes.get("luminosity")));
+        readingsPhone.put("batteryLevel", new LimitedQueue<Reading>(defaultSizes.get("batteryLevel")));
+        readingsPhone.put("touch", new LimitedQueue<Reading>(defaultSizes.get("touch")));
+        readingsPhone.put("rssi", new LimitedQueue<Reading>(defaultSizes.get("rssi")));
+        readingsPhone.put("location", new LimitedQueue<Reading>(defaultSizes.get("location")));
+        readingsPhone.put("message", new LimitedQueue<Reading>(defaultSizes.get("message")));
+
+        readingsWatch.clear();
+        readingsWatch.put("acceleration", new LimitedQueue<Reading>(defaultSizes.get("acceleration")));
+        readingsWatch.put("luminosity", new LimitedQueue<Reading>(defaultSizes.get("luminosity")));
+        readingsWatch.put("batteryLevel", new LimitedQueue<Reading>(defaultSizes.get("batteryLevel")));
+        readingsWatch.put("touch", new LimitedQueue<Reading>(defaultSizes.get("touch")));
     }
 
     public static boolean isComplex(String meaning) {
@@ -77,7 +90,7 @@ public class ReadingUtils {
 
     public static void getReadings() {
         RelayrSdk.getDeviceModelsApi()
-                .getDeviceModelById(SettingsStorage.MODEL_PHONE)
+                .getDeviceModelById(Storage.MODEL_PHONE)
                 .subscribeOn(Schedulers.io())
                 .subscribe(new SimpleObserver<DeviceModel>() {
                     @Override public void error(Throwable e) {
@@ -88,7 +101,7 @@ public class ReadingUtils {
                     @Override public void success(DeviceModel deviceModel) {
                         try {
                             final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                            SettingsStorage.instance().savePhoneReadings(transport.getReadings());
+                            Storage.instance().savePhoneReadings(transport.getReadings());
                             EventBus.getDefault().post(new Constants.DeviceModelEvent());
                         } catch (DeviceModelsException e) {
                             e.printStackTrace();
@@ -97,7 +110,7 @@ public class ReadingUtils {
                 });
 
         RelayrSdk.getDeviceModelsApi()
-                .getDeviceModelById(SettingsStorage.MODEL_WATCH)
+                .getDeviceModelById(Storage.MODEL_WATCH)
                 .subscribeOn(Schedulers.io())
                 .subscribe(new SimpleObserver<DeviceModel>() {
                     @Override public void error(Throwable e) {
@@ -108,7 +121,7 @@ public class ReadingUtils {
                     @Override public void success(DeviceModel deviceModel) {
                         try {
                             final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                            SettingsStorage.instance().saveWatchReadings(transport.getReadings());
+                            Storage.instance().saveWatchReadings(transport.getReadings());
                             EventBus.getDefault().post(new Constants.DeviceModelEvent());
                         } catch (DeviceModelsException e) {
                             e.printStackTrace();
@@ -134,13 +147,13 @@ public class ReadingUtils {
     }
 
     public static void publish(Reading reading) {
-        if (!IotApplication.isVisible(WATCH))
-            ReadingUtils.readings.get(reading.meaning).add(reading);
+        ReadingUtils.readingsPhone.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(PHONE))
-            EventBus.getDefault().post(new Constants.ReadingRefresh(reading.meaning));
-        if (IotApplication.isVisible(PHONE) && SettingsStorage.ACTIVITY_PHONE.get(reading.meaning))
+            EventBus.getDefault().post(new Constants.ReadingRefresh(PHONE, reading.meaning));
+        if (Storage.ACTIVITY_PHONE.get(reading.meaning)) {
+            sPhoneData += new Gson().toJson(reading).getBytes().length + 1000;
             RelayrSdk.getWebSocketClient()
-                    .publish(SettingsStorage.instance().getDeviceId(PHONE), reading)
+                    .publish(Storage.instance().getDeviceId(PHONE), reading)
                     .subscribeOn(Schedulers.io())
                     .subscribe(new ErrorObserver<Void>() {
                         @Override public void error(Throwable e) {
@@ -148,13 +161,14 @@ public class ReadingUtils {
                             e.printStackTrace();
                         }
                     });
+        }
     }
 
     public static void publishWatch(DataItem dataItem) {
         final String path = dataItem.getUri().getPath();
         final DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
         if (Constants.DEVICE_INFO_PATH.equals(path)) {
-            SettingsStorage.instance().saveWatchData(dataMap.getString(Constants.DEVICE_MANUFACTURER),
+            Storage.instance().saveWatchData(dataMap.getString(Constants.DEVICE_MANUFACTURER),
                     dataMap.getString(Constants.DEVICE_MODEL), dataMap.getInt(Constants.DEVICE_SDK));
         } else if (Constants.SENSOR_ACCEL_PATH.equals(path)) {
             final float[] array = dataMap.getFloatArray(Constants.SENSOR_ACCEL);
@@ -176,13 +190,13 @@ public class ReadingUtils {
     }
 
     private static void publishWatch(Reading reading) {
-        if (!IotApplication.isVisible(PHONE))
-            ReadingUtils.readings.get(reading.meaning).add(reading);
+        ReadingUtils.readingsWatch.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(WATCH))
-            EventBus.getDefault().post(new Constants.ReadingRefresh(reading.meaning));
-        if (IotApplication.isVisible(WATCH) && SettingsStorage.ACTIVITY_WATCH.get(reading.meaning))
+            EventBus.getDefault().post(new Constants.ReadingRefresh(WATCH, reading.meaning));
+        if (Storage.ACTIVITY_WATCH.get(reading.meaning)) {
+            sWatchData += new Gson().toJson(reading.value).getBytes().length;
             RelayrSdk.getWebSocketClient()
-                    .publish(SettingsStorage.instance().getDeviceId(WATCH), reading)
+                    .publish(Storage.instance().getDeviceId(WATCH), reading)
                     .subscribeOn(Schedulers.io())
                     .subscribe(new ErrorObserver<Void>() {
                         @Override public void error(Throwable e) {
@@ -190,6 +204,7 @@ public class ReadingUtils {
                             e.printStackTrace();
                         }
                     });
+        }
     }
 
     public static void publishLocation(Context context, Location location) {
@@ -208,5 +223,20 @@ public class ReadingUtils {
             Crashlytics.log(Log.DEBUG, TAG, "Failed to get location.");
             e.printStackTrace();
         }
+    }
+
+    public static void calculateSpeeds() {
+        final long now = System.currentTimeMillis();
+        if (sTimestamp <= 0) {
+            sTimestamp = now;
+            return;
+        }
+        final float seconds = (now - sTimestamp) / 1000f;
+        sWatchSpeed = sWatchData / seconds;
+        sPhoneSpeed = sPhoneData / seconds;
+
+        sWatchData = 0;
+        sPhoneData = 0;
+        sTimestamp = now;
     }
 }

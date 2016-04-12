@@ -104,9 +104,9 @@
     <string name="cloud_log_in_failed">Log in failed… Please try again.</string>
     <string name="cloud_log_in_success">Logged in successfully</string>
     <string name="cloud_log_out_message">Are you sure you want to log out?</string>
-    <string name="cloud_progress_loading_devices">Loading devices...</string>
+    <string name="cloud_progress_loading_devices">Loading devices…</string>
     <string name="cloud_progress_creating_device">Creating relayr device</string>
-    <string name="cloud_progress_title">initializing...</string>
+    <string name="cloud_progress_title">initializing…</string>
     <string name="cloud_error_user_data">Failed to get user data</string>
     <string name="cloud_error_device_data">Failed to load device data</string>
     <string name="cloud_error_create_device">Failed to create a device</string>
@@ -123,6 +123,7 @@
     <string name="rules_title">relayr rules</string>
     <string name="rules_if">If</string>
     <string name="cloud_device_dialog_title">Device details</string>
+    <string name="cloud_connection_established">Watch data on: <u>dev.relayr.io</u></string>
 
 
 </resources>

@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.helper;
+package io.relayr.iotsmartphone.utils;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -7,18 +7,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.design.widget.Snackbar;
-import android.util.Log;
 import android.view.View;
 
-import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
-import io.relayr.java.helper.observer.SimpleObserver;
-import io.relayr.java.model.models.DeviceModel;
-import io.relayr.java.model.models.error.DeviceModelsException;
-import io.relayr.java.model.models.transport.Transport;
 
 public class UiHelper {
 
@@ -57,13 +49,25 @@ public class UiHelper {
             return;
         }
 
+        String urlString = "https://developer.relayr.io/";
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(urlString));
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setPackage("com.android.chrome");
         try {
-            Uri storeUri = Uri.parse("market://details?id=" + packageName);
-            startStoreActivity(context, storeUri);
-        } catch (ActivityNotFoundException anfe) {
-            Uri webUri = Uri.parse("http://play.google.com/store/apps/details?id=" + packageName);
-            startStoreActivity(context, webUri);
+            context.startActivity(intent);
+        } catch (ActivityNotFoundException ex) {
+            intent.setPackage(null);
+            context.startActivity(intent);
         }
+
+
+        //        try {
+        //            Uri storeUri = Uri.parse("market://details?id=" + packageName);
+        //            startStoreActivity(context, storeUri);
+        //        } catch (ActivityNotFoundException anfe) {
+        //            Uri webUri = Uri.parse("http://play.google.com/store/apps/details?id=" + packageName);
+        //            startStoreActivity(context, webUri);
+        //        }
     }
 
     private static void startStoreActivity(Context context, Uri uri) {

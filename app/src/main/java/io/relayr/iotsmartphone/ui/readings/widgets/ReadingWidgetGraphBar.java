@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.readings.widgets;
+package io.relayr.iotsmartphone.ui.readings.widgets;
 
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
@@ -17,8 +17,11 @@ import java.util.List;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
+import io.relayr.iotsmartphone.utils.LimitedQueue;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
 import io.relayr.java.model.action.Reading;
+
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 
 public class ReadingWidgetGraphBar extends ReadingWidget {
 
@@ -46,8 +49,8 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
         setGraphParameters();
     }
 
-    @Override void refresh() {
-        if (mChart != null) setData(ReadingUtils.readings.get(mMeaning));
+    @Override void refresh(LimitedQueue<Reading> readings) {
+        if (mChart != null && isShown()) setData(readings);
     }
 
     @SuppressWarnings("unchecked")
@@ -69,7 +72,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
         initAxis(mChart.getAxisLeft(), min, max);
         initAxis(mChart.getAxisRight(), min, max);
 
-        refresh();
+        refresh(mType == PHONE ? ReadingUtils.readingsPhone.get(mMeaning) : ReadingUtils.readingsWatch.get(mMeaning));
     }
 
     private void initAxis(YAxis axis, int min, int max) {

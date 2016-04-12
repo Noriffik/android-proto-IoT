@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.readings.widgets;
+package io.relayr.iotsmartphone.ui.readings.widgets;
 
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
@@ -20,13 +20,16 @@ import java.util.List;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
+import io.relayr.iotsmartphone.utils.LimitedQueue;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
 import io.relayr.java.model.models.schema.ObjectSchema;
 
-import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Storage.FREQS_PHONE;
+import static io.relayr.iotsmartphone.storage.Storage.FREQS_WATCH;
 
 public class ReadingWidgetGraphComplex extends ReadingWidget {
 
@@ -61,8 +64,8 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         setGraphParameters();
     }
 
-    @Override void refresh() {
-        if (mChart != null) setData(ReadingUtils.readings.get(mMeaning));
+    @Override void refresh(LimitedQueue<Reading> readings) {
+        if (mChart != null && isShown()) setData(readings);
     }
 
     @SuppressWarnings("unchecked")
@@ -94,7 +97,7 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         initAxis(mChart.getAxisLeft(), min, max);
         initAxis(mChart.getAxisRight(), min, max);
 
-        refresh();
+        refresh(mType == PHONE ? ReadingUtils.readingsPhone.get(mMeaning) : ReadingUtils.readingsWatch.get(mMeaning));
     }
 
     private void initAxis(YAxis axis, int min, int max) {
@@ -149,7 +152,7 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
 
     private void calculateFrame() {
         final int places = ReadingUtils.defaultSizes.get(mMeaning);
-        final int frequency = FREQS_PHONE.get(mMeaning);
+        final int frequency = mType == PHONE ? FREQS_PHONE.get(mMeaning) : FREQS_WATCH.get(mMeaning);
         defaultFrame = (int) (places * frequency / 3f);
     }
 

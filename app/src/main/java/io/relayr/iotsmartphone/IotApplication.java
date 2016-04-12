@@ -2,7 +2,6 @@ package io.relayr.iotsmartphone;
 
 import android.app.Application;
 import android.content.Context;
-import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 
@@ -10,10 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.fabric.sdk.android.Fabric;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
+import io.relayr.iotsmartphone.storage.Constants;
 
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class IotApplication extends Application {
 

@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.readings.widgets;
+package io.relayr.iotsmartphone.ui.readings.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -9,14 +9,13 @@ import java.util.List;
 
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
+import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.utils.LimitedQueue;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.ValueSchema;
 
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_WATCH;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 
 public abstract class ReadingWidget extends LinearLayout {
 
@@ -61,7 +60,8 @@ public abstract class ReadingWidget extends LinearLayout {
 
     @SuppressWarnings("unused")
     public void onEvent(final Constants.ReadingRefresh reading) {
-        if (reading.getMeaning().equals(mMeaning)) refresh();
+        if (reading.getMeaning().equals(mMeaning) && reading.getType() == mType)
+            refresh(mType == PHONE ? ReadingUtils.readingsPhone.get(mMeaning) : ReadingUtils.readingsWatch.get(mMeaning));
     }
 
     public void setUp(String path, String meaning, ValueSchema schema, Constants.DeviceType type) {
@@ -74,5 +74,5 @@ public abstract class ReadingWidget extends LinearLayout {
 
     abstract void update();
 
-    abstract void refresh();
+    abstract void refresh(LimitedQueue<Reading> readings);
 }

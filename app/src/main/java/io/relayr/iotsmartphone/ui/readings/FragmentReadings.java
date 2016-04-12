@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.readings;
+package io.relayr.iotsmartphone.ui.readings;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -17,20 +17,20 @@ import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.IotFragment;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
-import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
-import io.relayr.iotsmartphone.tabs.helper.UiHelper;
-import io.relayr.iotsmartphone.tabs.readings.widgets.ReadingWidget;
+import io.relayr.iotsmartphone.ui.IotFragment;
+import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 import static android.os.Build.MANUFACTURER;
 import static android.os.Build.MODEL;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.support.v7.widget.StaggeredGridLayoutManager.VERTICAL;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class FragmentReadings extends IotFragment {
 
@@ -45,8 +45,8 @@ public class FragmentReadings extends IotFragment {
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (SettingsStorage.instance().getDeviceName(PHONE) == null)
-            SettingsStorage.instance().savePhoneData(MANUFACTURER, MODEL, SDK_INT);
+        if (Storage.instance().getDeviceName(PHONE) == null)
+            Storage.instance().savePhoneData(MANUFACTURER, MODEL, SDK_INT);
     }
 
     @Override public void onResume() {
@@ -89,42 +89,38 @@ public class FragmentReadings extends IotFragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override public void run() {
                 if (mPhoneAdapter != null && IotApplication.isVisible(PHONE))
-                    mPhoneAdapter.update(SettingsStorage.instance().loadReadings(PHONE), PHONE);
+                    mPhoneAdapter.update(Storage.instance().loadReadings(PHONE), PHONE);
                 if (mWatchAdapter != null && IotApplication.isVisible(WATCH))
-                    mWatchAdapter.update(SettingsStorage.instance().loadReadings(WATCH), WATCH);
+                    mWatchAdapter.update(Storage.instance().loadReadings(WATCH), WATCH);
             }
         });
     }
 
     private void setUpAdapters(int columns) {
-        mPhoneAdapter = new ReadingsAdapter(SettingsStorage.instance().loadReadings(PHONE), PHONE);
+        mPhoneAdapter = new ReadingsAdapter(Storage.instance().loadReadings(PHONE), PHONE);
         mPhoneGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
         mPhoneGrid.setAdapter(mPhoneAdapter);
 
-        mWatchAdapter = new ReadingsAdapter(SettingsStorage.instance().loadReadings(WATCH), WATCH);
+        mWatchAdapter = new ReadingsAdapter(Storage.instance().loadReadings(WATCH), WATCH);
         mWatchGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
         mWatchGrid.setAdapter(mWatchAdapter);
     }
 
     private void onPhoneClicked() {
         IotApplication.visible(PHONE, true);
-        ReadingUtils.initializeReadings(PHONE);
-
         mFab.setImageResource(R.drawable.ic_graphic_watch);
 
         mPhoneGrid.setVisibility(View.VISIBLE);
         mWatchGrid.setVisibility(View.GONE);
 
         if (mPhoneAdapter != null)
-            mPhoneAdapter.update(SettingsStorage.instance().loadReadings(PHONE), PHONE);
+            mPhoneAdapter.update(Storage.instance().loadReadings(PHONE), PHONE);
 
         setTitle(getActivity().getString(R.string.app_title_phone));
     }
 
     private void onWatchClicked() {
         IotApplication.visible(WATCH, true);
-        ReadingUtils.initializeReadings(WATCH);
-
         EventBus.getDefault().post(new Constants.WatchSelected());
 
         mFab.setImageResource(R.drawable.ic_graphic_phone);
@@ -133,7 +129,7 @@ public class FragmentReadings extends IotFragment {
         mWatchGrid.setVisibility(View.VISIBLE);
 
         if (mWatchAdapter != null)
-            mWatchAdapter.update(SettingsStorage.instance().loadReadings(WATCH), WATCH);
+            mWatchAdapter.update(Storage.instance().loadReadings(WATCH), WATCH);
 
         setTitle(getActivity().getString(R.string.app_title_watch));
     }

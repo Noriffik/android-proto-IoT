@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.cloud;
+package io.relayr.iotsmartphone.ui.cloud;
 
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -14,27 +14,31 @@ import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
+import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.IotFragment;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
-import io.relayr.iotsmartphone.tabs.helper.UiHelper;
+import io.relayr.iotsmartphone.ui.IotFragment;
+import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.utils.UiHelper;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.CreateDevice;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
 import rx.android.schedulers.AndroidSchedulers;
 
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class FragmentCloud extends IotFragment {
 
@@ -42,6 +46,7 @@ public class FragmentCloud extends IotFragment {
 
     @InjectView(R.id.cloud) ImageView mCloudImg;
     @InjectView(R.id.cloud_connection) View mCloudConnection;
+    @InjectView(R.id.cloud_connection_speed) TextView mCloudSpeed;
     @InjectView(R.id.cloud_info) TextView mCloudInfoText;
     @InjectView(R.id.cloud_button) Button mCloudInfoBtn;
 
@@ -50,10 +55,12 @@ public class FragmentCloud extends IotFragment {
 
     @InjectView(R.id.watch) ImageView mWatchImg;
     @InjectView(R.id.watch_connection) View mWatchConnection;
+    @InjectView(R.id.watch_connection_speed) TextView mWatchSpeed;
     @InjectView(R.id.watch_info_name) TextView mWatchName;
     @InjectView(R.id.watch_info_version) TextView mWatchVersion;
 
     private ProgressDialog mProgress;
+    private TimerTask mSpeedTimer;
 
     public FragmentCloud() {}
 
@@ -66,11 +73,22 @@ public class FragmentCloud extends IotFragment {
         setUpPhone();
         setUpWearable();
 
-        setTitle(getString(R.string.cloud_title));
+        setSpeedTimer();
 
         if (UiHelper.isCloudConnected()) loadUserInfo();
 
         return view;
+    }
+
+    @Override public void onResume() {
+        super.onResume();
+        setTitle(getString(R.string.cloud_title));
+    }
+
+    @Override public void onDestroyView() {
+        super.onDestroyView();
+        if (mSpeedTimer != null) mSpeedTimer.cancel();
+        mSpeedTimer = null;
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.cloud_button)
@@ -115,8 +133,35 @@ public class FragmentCloud extends IotFragment {
     @SuppressWarnings("unused") @OnClick(R.id.watch)
     public void onWatchClick() {showDeviceDialog(WATCH);}
 
+    @SuppressWarnings("unused") @OnClick(R.id.cloud_info)
+    public void onLinkClick() {
+        if (UiHelper.isCloudConnected()) UiHelper.openDashboard(getContext());
+    }
+
+    private void setSpeedTimer() {
+        if (mSpeedTimer != null) mSpeedTimer.cancel();
+        mSpeedTimer = new TimerTask() {
+            @Override public void run() {
+                ReadingUtils.calculateSpeeds();
+                getActivity().runOnUiThread(new TimerTask() {
+                    @Override public void run() {
+                        mWatchSpeed.setText(getSpeed(ReadingUtils.sWatchSpeed));
+                        mCloudSpeed.setText(getSpeed(ReadingUtils.sPhoneSpeed + ReadingUtils.sWatchSpeed));
+                    }
+                });
+            }
+        };
+        new Timer().scheduleAtFixedRate(mSpeedTimer, 5000, 5000);
+    }
+
+    private String getSpeed(float speed) {
+        if (speed <= 0) return "";
+        if (speed > 1024) return String.format("%.2f KB/s", speed / 1024f);
+        else return String.format("%.2f B/s", speed);
+    }
+
     private void showDeviceDialog(Constants.DeviceType type) {
-        final Device device = SettingsStorage.instance().getDevice(type);
+        final Device device = Storage.instance().getDevice(type);
         if (device == null) return;
 
         final CloudDeviceDialog view = (CloudDeviceDialog) View.inflate(getContext(), R.layout.cloud_device_dialog, null);
@@ -144,27 +189,27 @@ public class FragmentCloud extends IotFragment {
         if (UiHelper.isCloudConnected()) {
             mCloudImg.setBackgroundResource(R.drawable.cloud_connected_circle);
             mCloudConnection.setBackgroundResource(R.drawable.cloud_line);
-            mCloudInfoText.setVisibility(View.GONE);
+            mCloudInfoText.setText(R.string.cloud_connection_established);
             mCloudInfoBtn.setText(R.string.cloud_log_out);
         } else {
             mCloudImg.setBackgroundResource(R.drawable.cloud_disconnected_circle);
             mCloudConnection.setBackgroundResource(R.drawable.cloud_dotted_vertical_line);
-            mCloudInfoText.setVisibility(View.VISIBLE);
+            mCloudInfoText.setText(R.string.cloud_establish_connection);
             mCloudInfoBtn.setText(R.string.cloud_log_in);
         }
     }
 
     private void setUpPhone() {
-        mPhoneName.setText(SettingsStorage.instance().getDeviceName(PHONE));
-        mPhoneVersion.setText(getString(R.string.cloud_phone_version, SettingsStorage.instance().getDeviceSdk(PHONE)));
+        mPhoneName.setText(Storage.instance().getDeviceName(PHONE));
+        mPhoneVersion.setText(getString(R.string.cloud_phone_version, Storage.instance().getDeviceSdk(PHONE)));
     }
 
     private void setUpWearable() {
         if (UiHelper.isWearableConnected(getActivity())) {
             mWatchImg.setBackgroundResource(R.drawable.cloud_circle);
             mWatchConnection.setBackgroundResource(R.drawable.cloud_line);
-            mWatchName.setText(SettingsStorage.instance().getDeviceName(WATCH));
-            mWatchVersion.setText(getString(R.string.cloud_phone_version, SettingsStorage.instance().getDeviceSdk(WATCH)));
+            mWatchName.setText(Storage.instance().getDeviceName(WATCH));
+            mWatchVersion.setText(getString(R.string.cloud_phone_version, Storage.instance().getDeviceSdk(WATCH)));
         } else {
             mWatchImg.setBackgroundResource(R.drawable.cloud_circle_dark);
             mWatchConnection.setBackgroundResource(R.drawable.cloud_dotted_vertical_line);
@@ -188,6 +233,7 @@ public class FragmentCloud extends IotFragment {
                     @Override public void success(User user) {
                         loadUserInfo();
                         setUpCloud();
+                        EventBus.getDefault().post(new Constants.LoggedIn());
                     }
                 });
     }
@@ -212,13 +258,13 @@ public class FragmentCloud extends IotFragment {
     }
 
     private void loadDevices(User user) {
-        if (SettingsStorage.instance().getDeviceId(PHONE) != null)
+        if (Storage.instance().getDeviceId(PHONE) != null)
             getDeviceFromCloud(user, PHONE);
         else
             createDevice(PHONE);
 
         if (!UiHelper.isWearableConnected(getActivity())) return;
-        if (SettingsStorage.instance().getDeviceId(WATCH) != null)
+        if (Storage.instance().getDeviceId(WATCH) != null)
             getDeviceFromCloud(user, WATCH);
         else
             createDevice(WATCH);
@@ -227,9 +273,9 @@ public class FragmentCloud extends IotFragment {
     private void getDeviceFromCloud(User user, final Constants.DeviceType type) {
         showProgress(R.string.cloud_progress_loading_devices);
 
-        Crashlytics.log(Log.DEBUG, TAG, "Fetch " + SettingsStorage.instance().getDeviceId(type));
+        Crashlytics.log(Log.DEBUG, TAG, "Fetch " + Storage.instance().getDeviceId(type));
 
-        user.getDevice(SettingsStorage.instance().getDeviceId(type))
+        user.getDevice(Storage.instance().getDeviceId(type))
                 .timeout(5, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SimpleObserver<Device>() {
@@ -252,8 +298,8 @@ public class FragmentCloud extends IotFragment {
     private void createDevice(final Constants.DeviceType type) {
         showProgress(R.string.cloud_progress_creating_device);
 
-        final String name = SettingsStorage.instance().getDeviceName(type);
-        final String modelId = type == PHONE ? SettingsStorage.MODEL_PHONE : SettingsStorage.MODEL_WATCH;
+        final String name = Storage.instance().getDeviceName(type);
+        final String modelId = type == PHONE ? Storage.MODEL_PHONE : Storage.MODEL_WATCH;
         final String description = type == PHONE ? getString(R.string.app_title_phone) : getString(R.string.app_title_watch);
         final CreateDevice toCreate = new CreateDevice(name, description, modelId, DataStorage.getUserId(), null, "1.0.0");
 
@@ -280,7 +326,7 @@ public class FragmentCloud extends IotFragment {
     }
 
     private void refreshDevice(Device device, Constants.DeviceType type) {
-        SettingsStorage.instance().saveDevice(device, type);
+        Storage.instance().saveDevice(device, type);
         if (type == PHONE) setUpPhone();
         else setUpWearable();
         hideProgress();
@@ -289,7 +335,7 @@ public class FragmentCloud extends IotFragment {
     }
 
     private void logOut() {
-        SettingsStorage.instance().logOut();
+        Storage.instance().logOut();
         RelayrSdk.logOut();
         setUpCloud();
     }

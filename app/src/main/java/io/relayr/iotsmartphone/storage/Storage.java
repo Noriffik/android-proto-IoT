@@ -1,8 +1,7 @@
-package io.relayr.iotsmartphone.tabs.helper;
+package io.relayr.iotsmartphone.storage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,13 +11,14 @@ import java.util.List;
 import java.util.Map;
 
 import io.relayr.iotsmartphone.IotApplication;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.models.transport.DeviceReading;
 
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
-public class SettingsStorage {
+public class Storage {
 
     public static final String MODEL_PHONE = "86e0a7d7-5e18-449c-b7aa-f3b089c33b67";
     public static final String MODEL_WATCH = "b42cc83d-5766-406c-872d-9294d96bdf69";
@@ -49,58 +49,58 @@ public class SettingsStorage {
     private static Device sPhoneDevice;
     private static Device sWatchDevice;
 
-    private final static SettingsStorage singleton = new SettingsStorage();
+    private final static Storage singleton = new Storage();
     private final SharedPreferences PREFS;
 
-    private SettingsStorage() {
+    private Storage() {
         PREFS = IotApplication.context().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     public static Map<String, Integer> FREQS_PHONE = new HashMap<String, Integer>() {
         {
-            put("acceleration", SettingsStorage.instance().loadFrequency("acceleration", PHONE));
-            put("angularSpeed", SettingsStorage.instance().loadFrequency("angularSpeed", PHONE));
-            put("batteryLevel", SettingsStorage.instance().loadFrequency("batteryLevel", PHONE));
-            put("luminosity", SettingsStorage.instance().loadFrequency("luminosity", PHONE));
-            put("location", SettingsStorage.instance().loadFrequency("location", PHONE));
-            put("message", SettingsStorage.instance().loadFrequency("message", PHONE));
-            put("touch", SettingsStorage.instance().loadFrequency("touch", PHONE));
-            put("rssi", SettingsStorage.instance().loadFrequency("rssi", PHONE));
+            put("acceleration", Storage.instance().loadFrequency("acceleration", PHONE));
+            put("angularSpeed", Storage.instance().loadFrequency("angularSpeed", PHONE));
+            put("batteryLevel", Storage.instance().loadFrequency("batteryLevel", PHONE));
+            put("luminosity", Storage.instance().loadFrequency("luminosity", PHONE));
+            put("location", Storage.instance().loadFrequency("location", PHONE));
+            put("message", Storage.instance().loadFrequency("message", PHONE));
+            put("touch", Storage.instance().loadFrequency("touch", PHONE));
+            put("rssi", Storage.instance().loadFrequency("rssi", PHONE));
         }
     };
 
     public static Map<String, Integer> FREQS_WATCH = new HashMap<String, Integer>() {
         {
-            put("acceleration", SettingsStorage.instance().loadFrequency("acceleration", WATCH));
-            put("batteryLevel", SettingsStorage.instance().loadFrequency("batteryLevel", WATCH));
-            put("luminosity", SettingsStorage.instance().loadFrequency("luminosity", WATCH));
-            put("touch", SettingsStorage.instance().loadFrequency("touch", WATCH));
+            put("acceleration", Storage.instance().loadFrequency("acceleration", WATCH));
+            put("batteryLevel", Storage.instance().loadFrequency("batteryLevel", WATCH));
+            put("luminosity", Storage.instance().loadFrequency("luminosity", WATCH));
+            put("touch", Storage.instance().loadFrequency("touch", WATCH));
         }
     };
 
     public static Map<String, Boolean> ACTIVITY_PHONE = new HashMap<String, Boolean>() {
         {
-            put("acceleration", SettingsStorage.instance().loadActivity("acceleration", PHONE));
-            put("angularSpeed", SettingsStorage.instance().loadActivity("angularSpeed", PHONE));
-            put("batteryLevel", SettingsStorage.instance().loadActivity("batteryLevel", PHONE));
-            put("luminosity", SettingsStorage.instance().loadActivity("luminosity", PHONE));
-            put("location", SettingsStorage.instance().loadActivity("location", PHONE));
-            put("message", SettingsStorage.instance().loadActivity("message", PHONE));
-            put("touch", SettingsStorage.instance().loadActivity("touch", PHONE));
-            put("rssi", SettingsStorage.instance().loadActivity("rssi", PHONE));
+            put("acceleration", Storage.instance().loadActivity("acceleration", PHONE));
+            put("angularSpeed", Storage.instance().loadActivity("angularSpeed", PHONE));
+            put("batteryLevel", Storage.instance().loadActivity("batteryLevel", PHONE));
+            put("luminosity", Storage.instance().loadActivity("luminosity", PHONE));
+            put("location", Storage.instance().loadActivity("location", PHONE));
+            put("message", Storage.instance().loadActivity("message", PHONE));
+            put("touch", Storage.instance().loadActivity("touch", PHONE));
+            put("rssi", Storage.instance().loadActivity("rssi", PHONE));
         }
     };
 
     public static Map<String, Boolean> ACTIVITY_WATCH = new HashMap<String, Boolean>() {
         {
-            put("acceleration", SettingsStorage.instance().loadActivity("acceleration", WATCH));
-            put("batteryLevel", SettingsStorage.instance().loadActivity("batteryLevel", WATCH));
-            put("luminosity", SettingsStorage.instance().loadActivity("luminosity", WATCH));
-            put("touch", SettingsStorage.instance().loadActivity("touch", WATCH));
+            put("acceleration", Storage.instance().loadActivity("acceleration", WATCH));
+            put("batteryLevel", Storage.instance().loadActivity("batteryLevel", WATCH));
+            put("luminosity", Storage.instance().loadActivity("luminosity", WATCH));
+            put("touch", Storage.instance().loadActivity("touch", WATCH));
         }
     };
 
-    public static SettingsStorage instance() {return singleton;}
+    public static Storage instance() {return singleton;}
 
     public void saveDevice(Device device, Constants.DeviceType type) {
         if (type == PHONE) {

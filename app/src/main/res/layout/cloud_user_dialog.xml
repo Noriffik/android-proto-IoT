@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<io.relayr.iotsmartphone.tabs.cloud.CloudUserDialog
+<io.relayr.iotsmartphone.ui.cloud.CloudUserDialog
     style="@style/MatchWrap"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_margin="@dimen/big_padding"
@@ -121,4 +121,4 @@
             android:text="Email"
             android:textColor="@color/accent"/>
     </LinearLayout>
-</io.relayr.iotsmartphone.tabs.cloud.CloudUserDialog>
+</io.relayr.iotsmartphone.ui.cloud.CloudUserDialog>

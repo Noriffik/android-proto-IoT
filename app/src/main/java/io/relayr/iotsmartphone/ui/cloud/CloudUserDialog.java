@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.cloud;
+package io.relayr.iotsmartphone.ui.cloud;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -16,7 +16,6 @@ import butterknife.InjectView;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
 import io.relayr.java.helper.observer.SimpleObserver;
-import io.relayr.java.model.Device;
 import io.relayr.java.model.User;
 import rx.android.schedulers.AndroidSchedulers;
 

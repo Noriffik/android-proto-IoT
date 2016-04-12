@@ -45,12 +45,23 @@
         <View
             android:id="@+id/cloud_connection"
             android:layout_width="@dimen/default_padding_half"
-            android:layout_height="100dp"
+            android:layout_height="@dimen/cloud_icon_size"
             android:layout_below="@+id/cloud"
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/cloud_connected_radius"
             android:background="@drawable/cloud_dotted_vertical_line"
             android:paddingLeft="@dimen/dotted_line_padding"/>
+
+        <TextView
+            android:id="@+id/cloud_connection_speed"
+            style="@style/NormalText"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_alignBottom="@id/cloud_connection"
+            android:layout_alignTop="@id/cloud_connection"
+            android:layout_marginLeft="@dimen/default_padding"
+            android:layout_toRightOf="@id/cloud_connection"
+            android:gravity="center_vertical"
+            android:textColor="@color/accent"/>
 
         <ImageView
             android:id="@+id/phone"
@@ -88,12 +99,23 @@
         <View
             android:id="@+id/watch_connection"
             android:layout_width="@dimen/default_padding_half"
-            android:layout_height="100dp"
+            android:layout_height="@dimen/cloud_icon_size"
             android:layout_below="@id/phone"
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/cloud_connected_radius"
             android:background="@drawable/cloud_dotted_vertical_line"
             android:paddingLeft="@dimen/dotted_line_padding"/>
+
+        <TextView
+            android:id="@+id/watch_connection_speed"
+            style="@style/NormalText"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_alignBottom="@id/watch_connection"
+            android:layout_alignTop="@id/watch_connection"
+            android:layout_marginLeft="@dimen/default_padding"
+            android:layout_toRightOf="@id/watch_connection"
+            android:gravity="center_vertical"
+            android:textColor="@color/accent"/>
 
         <ImageView
             android:id="@+id/watch"

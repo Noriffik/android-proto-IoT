@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.readings;
+package io.relayr.iotsmartphone.ui.readings;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,8 +14,8 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.readings.widgets.ReadingWidget;
+import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidget;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 public class ReadingViewHolder extends RecyclerView.ViewHolder {

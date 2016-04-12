@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.cloud;
+package io.relayr.iotsmartphone.ui.cloud;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -15,8 +15,8 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
+import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.Device;
 import rx.android.schedulers.AndroidSchedulers;
@@ -75,8 +75,8 @@ public class CloudDeviceDialog extends LinearLayout {
                                         }
 
                                         @Override public void success(Device device) {
-                                            SettingsStorage.instance().saveDevice(device, mType);
-                                            SettingsStorage.instance().updateDeviceName(device.getName(), mType);
+                                            Storage.instance().saveDevice(device, mType);
+                                            Storage.instance().updateDeviceName(device.getName(), mType);
                                             Toast.makeText(getContext(), "Device name updated!", Toast.LENGTH_LONG).show();
                                         }
                                     });
@@ -105,7 +105,7 @@ public class CloudDeviceDialog extends LinearLayout {
                                         }
 
                                         @Override public void success(Device device) {
-                                            SettingsStorage.instance().saveDevice(device, mType);
+                                            Storage.instance().saveDevice(device, mType);
                                             Toast.makeText(getContext(), "Device description updated!", Toast.LENGTH_LONG).show();
                                         }
                                     });

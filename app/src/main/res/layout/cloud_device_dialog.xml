@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<io.relayr.iotsmartphone.tabs.cloud.CloudDeviceDialog
+<io.relayr.iotsmartphone.ui.cloud.CloudDeviceDialog
     style="@style/MatchWrap"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_margin="@dimen/big_padding"
@@ -122,4 +122,4 @@
             android:text="Description"
             android:textColor="@color/accent"/>
     </LinearLayout>
-</io.relayr.iotsmartphone.tabs.cloud.CloudDeviceDialog>
+</io.relayr.iotsmartphone.ui.cloud.CloudDeviceDialog>

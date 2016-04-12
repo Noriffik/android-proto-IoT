@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs.readings.widgets;
+package io.relayr.iotsmartphone.ui.readings.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -6,6 +6,8 @@ import android.widget.TextView;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.utils.LimitedQueue;
+import io.relayr.java.model.action.Reading;
 
 public class ReadingWidgetDefault extends ReadingWidget {
 
@@ -35,7 +37,7 @@ public class ReadingWidgetDefault extends ReadingWidget {
 
     @Override void update() {}
 
-    @Override void refresh() {
+    @Override void refresh(LimitedQueue<Reading> readings) {
 //        if (readings.isEmpty()) return;
 //        if (readings.get(mMeaning) == null) return;
 //        if (readings.get(mMeaning).getLast().value == null) return;

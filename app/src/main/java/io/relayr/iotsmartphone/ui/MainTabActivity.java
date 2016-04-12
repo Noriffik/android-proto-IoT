@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.tabs;
+package io.relayr.iotsmartphone.ui;
 
 import android.annotation.TargetApi;
 import android.app.Notification;
@@ -66,12 +66,13 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
-import io.relayr.iotsmartphone.tabs.cloud.FragmentCloud;
-import io.relayr.iotsmartphone.tabs.helper.Constants;
-import io.relayr.iotsmartphone.tabs.helper.ReadingUtils;
-import io.relayr.iotsmartphone.tabs.helper.SettingsStorage;
-import io.relayr.iotsmartphone.tabs.readings.FragmentReadings;
-import io.relayr.iotsmartphone.tabs.rules.FragmentRules;
+import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.ui.cloud.FragmentCloud;
+import io.relayr.iotsmartphone.ui.readings.FragmentReadings;
+import io.relayr.iotsmartphone.ui.rules.FragmentRules;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.utils.UiHelper;
 import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
 import rx.Observable;
@@ -94,8 +95,8 @@ import static android.os.BatteryManager.EXTRA_SCALE;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.widget.Toast.LENGTH_SHORT;
-import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Storage.FREQS_PHONE;
 
 public class MainTabActivity extends AppCompatActivity implements
         SensorEventListener, LocationListener, DataApi.DataListener,
@@ -152,7 +153,7 @@ public class MainTabActivity extends AppCompatActivity implements
 
         EventBus.getDefault().register(this);
         if (mRefreshSubs == null)
-            mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
+            mRefreshSubs = Observable.interval(Constants.SAMPLING_PHONE_MIN, TimeUnit.SECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<Long>() {
                         @Override public void onCompleted() {}
@@ -164,7 +165,6 @@ public class MainTabActivity extends AppCompatActivity implements
 
                         @Override public void onNext(Long num) {
                             if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
-                            if (num % FREQS_PHONE.get("location") == 0) monitorLocation();
                             if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
                             ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
                         }
@@ -189,7 +189,7 @@ public class MainTabActivity extends AppCompatActivity implements
             case 100: {
                 final boolean granted = grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED;
                 Crashlytics.log(Log.INFO, "MA", "User granted permission: " + granted);
-                SettingsStorage.instance().locationPermission(granted);
+                Storage.instance().locationPermission(granted);
                 initLocationManager();
             }
         }
@@ -206,6 +206,10 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @SuppressWarnings("unused") public void onEvent(Constants.WatchSelected event) {
         sendToWearable();
+    }
+
+    @SuppressWarnings("unused") public void onEvent(Constants.LoggedIn event) {
+        initCommands();
     }
 
     @SuppressWarnings("unused") public void onEvent(Constants.WatchSamplingUpdate event) {
@@ -256,7 +260,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     @Override public void onProviderDisabled(String provider) {
-        SettingsStorage.instance().saveActivity("location", PHONE, false);
+        Storage.instance().saveActivity("location", PHONE, false);
     }
 
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
@@ -335,8 +339,10 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void initCommands() {
+        if (!UiHelper.isCloudConnected()) return;
         createFlashHelper();
         createSoundHelper();
+        subscribeToCommands();
     }
 
     private void initReadings() {
@@ -420,7 +426,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void initLocationManager() {
-        if (SettingsStorage.instance().locationGranted()) {
+        if (Storage.instance().locationGranted()) {
             new Handler().postDelayed(new Runnable() {
                 @Override public void run() {
                     if (mLocationManager == null)
@@ -484,7 +490,7 @@ public class MainTabActivity extends AppCompatActivity implements
     private void subscribeToCommands() {
         if (mCommandsSubscription == null)
             mCommandsSubscription = RelayrSdk.getWebSocketClient()
-                    .subscribeToCommands(SettingsStorage.instance().getDeviceId(PHONE))
+                    .subscribeToCommands(Storage.instance().getDeviceId(PHONE))
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Subscriber<Command>() {
                         @Override public void onCompleted() {}
@@ -581,7 +587,7 @@ public class MainTabActivity extends AppCompatActivity implements
         dataMap.putLong(Constants.ACTIVATE, System.currentTimeMillis());
         new SendToDataLayerThread(Constants.ACTIVATE_PATH, dataMap).start();
 
-        for (Map.Entry<String, Integer> entry : SettingsStorage.FREQS_WATCH.entrySet())
+        for (Map.Entry<String, Integer> entry : Storage.FREQS_WATCH.entrySet())
             sendToWearable(entry.getKey(), entry.getValue());
     }
 
