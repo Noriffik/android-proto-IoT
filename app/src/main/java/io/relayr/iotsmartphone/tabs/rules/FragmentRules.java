@@ -1,16 +1,22 @@
 package io.relayr.iotsmartphone.tabs.rules;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.tabs.IotFragment;
 
 public class FragmentRules extends IotFragment {
+
+    @InjectView(R.id.condition_one) View mConditionOne;
+    @InjectView(R.id.condition_two) View mConditionTwo;
+
+    @InjectView(R.id.outcome_one) View mOutcomeOne;
+    @InjectView(R.id.outcome_two) View mOutcomeTwo;
 
     public FragmentRules() {}
 
@@ -20,6 +26,10 @@ public class FragmentRules extends IotFragment {
         ButterKnife.inject(this, view);
 
         setTitle(getString(R.string.rules_title));
+
+        mConditionTwo.setVisibility(View.GONE);
+        mOutcomeTwo.setVisibility(View.GONE);
+
         return view;
     }
 }

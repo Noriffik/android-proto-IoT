@@ -50,11 +50,6 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    @SuppressWarnings("unused") @OnClick(R.id.reading_title)
-    public void onTitleClick() {
-        showSettings();
-    }
-
     @SuppressWarnings("unused") @OnClick(R.id.reading_settings)
     public void onSettingsClick() {
         showSettings();

@@ -121,6 +121,8 @@
     <string name="dialog_high">high</string>
     <string name="cloud_title">relayr cloud</string>
     <string name="rules_title">relayr rules</string>
+    <string name="rules_if">If</string>
+    <string name="cloud_device_dialog_title">Device details</string>
 
 
 </resources>
