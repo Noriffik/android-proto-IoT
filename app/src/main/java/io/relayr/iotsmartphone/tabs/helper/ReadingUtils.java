@@ -42,7 +42,7 @@ public class ReadingUtils {
 
     static {
         initializeSizes();
-        initializeReadings();
+        initializeReadings(PHONE);
     }
 
     private static void initializeSizes() {
@@ -57,16 +57,18 @@ public class ReadingUtils {
         defaultSizes.put("message", 1);
     }
 
-    public static void initializeReadings() {
+    public static void initializeReadings(Constants.DeviceType type) {
         readings.clear();
         readings.put("acceleration", new LimitedQueue<Reading>(defaultSizes.get("acceleration")));
-        readings.put("angularSpeed", new LimitedQueue<Reading>(defaultSizes.get("angularSpeed")));
         readings.put("luminosity", new LimitedQueue<Reading>(defaultSizes.get("luminosity")));
         readings.put("batteryLevel", new LimitedQueue<Reading>(defaultSizes.get("batteryLevel")));
         readings.put("touch", new LimitedQueue<Reading>(defaultSizes.get("touch")));
-        readings.put("rssi", new LimitedQueue<Reading>(defaultSizes.get("rssi")));
-        readings.put("location", new LimitedQueue<Reading>(defaultSizes.get("location")));
-        readings.put("message", new LimitedQueue<Reading>(defaultSizes.get("message")));
+        if (type == PHONE) {
+            readings.put("angularSpeed", new LimitedQueue<Reading>(defaultSizes.get("angularSpeed")));
+            readings.put("rssi", new LimitedQueue<Reading>(defaultSizes.get("rssi")));
+            readings.put("location", new LimitedQueue<Reading>(defaultSizes.get("location")));
+            readings.put("message", new LimitedQueue<Reading>(defaultSizes.get("message")));
+        }
     }
 
     public static boolean isComplex(String meaning) {
@@ -132,7 +134,8 @@ public class ReadingUtils {
     }
 
     public static void publish(Reading reading) {
-        ReadingUtils.readings.get(reading.meaning).add(reading);
+        if (!IotApplication.isVisible(WATCH))
+            ReadingUtils.readings.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(PHONE))
             EventBus.getDefault().post(new Constants.ReadingRefresh(reading.meaning));
         if (IotApplication.isVisible(PHONE) && SettingsStorage.ACTIVITY_PHONE.get(reading.meaning))
@@ -150,7 +153,10 @@ public class ReadingUtils {
     public static void publishWatch(DataItem dataItem) {
         final String path = dataItem.getUri().getPath();
         final DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
-        if (Constants.SENSOR_ACCEL_PATH.equals(path)) {
+        if (Constants.DEVICE_INFO_PATH.equals(path)) {
+            SettingsStorage.instance().saveWatchData(dataMap.getString(Constants.DEVICE_MANUFACTURER),
+                    dataMap.getString(Constants.DEVICE_MODEL), dataMap.getInt(Constants.DEVICE_SDK));
+        } else if (Constants.SENSOR_ACCEL_PATH.equals(path)) {
             final float[] array = dataMap.getFloatArray(Constants.SENSOR_ACCEL);
             publishWatch(createAccelReading(array[0], array[1], array[2]));
         } else if (Constants.SENSOR_BATTERY_PATH.equals(path)) {
@@ -170,7 +176,8 @@ public class ReadingUtils {
     }
 
     private static void publishWatch(Reading reading) {
-        ReadingUtils.readings.get(reading.meaning).add(reading);
+        if (!IotApplication.isVisible(PHONE))
+            ReadingUtils.readings.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(WATCH))
             EventBus.getDefault().post(new Constants.ReadingRefresh(reading.meaning));
         if (IotApplication.isVisible(WATCH) && SettingsStorage.ACTIVITY_WATCH.get(reading.meaning))

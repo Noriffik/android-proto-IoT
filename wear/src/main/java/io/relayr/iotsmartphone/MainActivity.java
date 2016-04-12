@@ -1,5 +1,6 @@
 package io.relayr.iotsmartphone;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -7,10 +8,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.wearable.activity.ConfirmationActivity;
-import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.DelayedConfirmationView;
 import android.support.wearable.view.DelayedConfirmationView.DelayedConfirmationListener;
 import android.support.wearable.view.WatchViewStub;
@@ -19,12 +20,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
-import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
@@ -33,22 +31,31 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import static android.content.Intent.ACTION_BATTERY_CHANGED;
 import static android.hardware.Sensor.TYPE_ACCELEROMETER;
-import static android.hardware.Sensor.TYPE_ALL;
 import static android.hardware.Sensor.TYPE_LIGHT;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
 import static android.os.BatteryManager.EXTRA_LEVEL;
 import static android.os.BatteryManager.EXTRA_SCALE;
 
-public class MainActivity extends WearableActivity implements ConnectionCallbacks,
+public class MainActivity extends Activity implements ConnectionCallbacks,
         DataApi.DataListener, SensorEventListener, DelayedConfirmationListener {
 
     private static final String TAG = "MainActivity";
+
+    private static Map<String, Integer> FREQS = new HashMap<String, Integer>() {
+        {
+            put("acceleration", 500);
+            put("batteryLevel", 3);
+            put("luminosity", 300);
+            put("touch", 1);
+        }
+    };
 
     private TextView mInfo;
     private DelayedConfirmationView mBtn;
@@ -57,11 +64,15 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
     private SensorManager mSensorManager;
 
     private boolean animation;
-    private boolean mSendingData = false;
-    private TimerTask mBatteryTimer;
-    private TimerTask mTouchTimer;
+    private boolean mSendingData = true;
 
-    private long mAccelCounter = 0;
+    private TimerTask mTouchTimer;
+    private TimerTask mBatteryTimer;
+    private TimerTask mLuminosityTimer;
+
+    private long mAccelerationChange;
+    private long mLuminosityChange;
+    private float mLastLuminosity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +109,7 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
     protected void onPause() {
         super.onPause();
         if (mSensorManager != null) mSensorManager.unregisterListener(this);
+        if (mLuminosityTimer != null) mLuminosityTimer.cancel();
         if (mBatteryTimer != null) mBatteryTimer.cancel();
         if (mTouchTimer != null) mTouchTimer.cancel();
 
@@ -115,14 +127,17 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
 
     @Override
     public final void onSensorChanged(SensorEvent e) {
-        if (e.sensor.getType() == TYPE_ACCELEROMETER && mAccelCounter++ % 10 == 0) {
+        if (e.sensor.getType() == TYPE_ACCELEROMETER &&
+                (System.currentTimeMillis() - FREQS.get("acceleration")) > mAccelerationChange) {
+            mAccelerationChange = System.currentTimeMillis();
             PutDataMapRequest request = PutDataMapRequest.create(Constants.SENSOR_ACCEL_PATH);
             request.getDataMap().putFloatArray(Constants.SENSOR_ACCEL, new float[]{e.values[0], e.values[1], e.values[2]});
             send(request.asPutDataRequest());
-        } else if (e.sensor.getType() == TYPE_LIGHT) {
-            PutDataMapRequest request = PutDataMapRequest.create(Constants.SENSOR_LIGHT_PATH);
-            request.getDataMap().putFloat(Constants.SENSOR_LIGHT, e.values[0]);
-            send(request.asPutDataRequest());
+        } else if (e.sensor.getType() == TYPE_LIGHT &&
+                (System.currentTimeMillis() - FREQS.get("luminosity")) > mLuminosityChange) {
+            mLuminosityChange = System.currentTimeMillis();
+            mLastLuminosity = e.values[0];
+            sendLuminosity();
         }
     }
 
@@ -136,6 +151,12 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
     @Override
     public void onConnected(Bundle connectionHint) {
         Wearable.DataApi.addListener(mGoogleApiClient, this);
+
+        PutDataMapRequest request = PutDataMapRequest.create(Constants.DEVICE_INFO_PATH);
+        request.getDataMap().putString(Constants.DEVICE_MANUFACTURER, Build.MANUFACTURER);
+        request.getDataMap().putString(Constants.DEVICE_MODEL, Build.MODEL);
+        request.getDataMap().putInt(Constants.DEVICE_SDK, Build.VERSION.SDK_INT);
+        send(request.asPutDataRequest());
     }
 
     @Override public void onConnectionSuspended(int i) {}
@@ -147,8 +168,14 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
                 String path = event.getDataItem().getUri().getPath();
                 if (Constants.ACTIVATE_PATH.equals(path)) {
                     DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
-                    mSendingData = dataMapItem.getDataMap().getBoolean(Constants.ACTIVATE);
+                    dataMapItem.getDataMap().getLong(Constants.ACTIVATE);
                     showInfo();
+                } else if (Constants.SAMPLING_PATH.equals(path)) {
+                    DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
+                    String meaning = dataMapItem.getDataMap().getString(Constants.SAMPLING_MEANING);
+                    int sampling = dataMapItem.getDataMap().getInt(Constants.SAMPLING);
+                    FREQS.put(meaning, sampling);
+                    if (meaning.equals("batteryLevel")) setBatteryTimer(FREQS.get("batteryLevel"));
                 }
             }
         }
@@ -179,6 +206,7 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
     }
 
     private void send(final PutDataRequest request) {
+        if (!mSendingData) return;
         Wearable.DataApi.putDataItem(mGoogleApiClient, request)
                 .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
                     @Override
@@ -190,7 +218,8 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
     }
 
     private void initSensors() {
-        setBatteryTimer();
+        setBatteryTimer(FREQS.get("batteryLevel"));
+        setLuminosityTimer();
         setTouchTimer();
 
         if (mSensorManager == null)
@@ -203,14 +232,14 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
         if (accel != null) mSensorManager.registerListener(this, accel, SENSOR_DELAY_NORMAL);
     }
 
-    private void setBatteryTimer() {
+    private void setBatteryTimer(int time) {
         if (mBatteryTimer != null) mBatteryTimer.cancel();
         mBatteryTimer = new TimerTask() {
             @Override public void run() {
                 monitorBattery();
             }
         };
-        new Timer().scheduleAtFixedRate(mBatteryTimer, 1000, 5000);
+        new Timer().scheduleAtFixedRate(mBatteryTimer, 1000, time * 1000);
     }
 
     private void setTouchTimer() {
@@ -220,12 +249,28 @@ public class MainActivity extends WearableActivity implements ConnectionCallback
                 sendTouch(false);
             }
         };
-        new Timer().scheduleAtFixedRate(mTouchTimer, 1000, 1000);
+        new Timer().scheduleAtFixedRate(mTouchTimer, 2000, 2000);
+    }
+
+    private void setLuminosityTimer() {
+        if (mLuminosityTimer != null) mLuminosityTimer.cancel();
+        mLuminosityTimer = new TimerTask() {
+            @Override public void run() {
+                sendLuminosity();
+            }
+        };
+        new Timer().scheduleAtFixedRate(mLuminosityTimer, 5000, 5000);
     }
 
     private void sendTouch(boolean touch) {
         PutDataMapRequest request = PutDataMapRequest.create(Constants.SENSOR_TOUCH_PATH);
         request.getDataMap().putString(Constants.SENSOR_TOUCH, System.currentTimeMillis() + "#" + touch);
+        send(request.asPutDataRequest());
+    }
+
+    private void sendLuminosity() {
+        PutDataMapRequest request = PutDataMapRequest.create(Constants.SENSOR_LIGHT_PATH);
+        request.getDataMap().putFloat(Constants.SENSOR_LIGHT, mLastLuminosity);
         send(request.asPutDataRequest());
     }
 

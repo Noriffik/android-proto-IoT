@@ -46,6 +46,8 @@ public class SettingsStorage {
 
     private static String sPhoneId;
     private static String sWatchId;
+    private static Device sPhoneDevice;
+    private static Device sWatchDevice;
 
     private final static SettingsStorage singleton = new SettingsStorage();
     private final SharedPreferences PREFS;
@@ -102,12 +104,19 @@ public class SettingsStorage {
 
     public void saveDevice(Device device, Constants.DeviceType type) {
         if (type == PHONE) {
+            sPhoneDevice = device;
             PREFS.edit().putString(PHONE_ID, device.getId()).apply();
             PREFS.edit().putString(PHONE_NAME, device.getName()).apply();
         } else {
+            sWatchDevice = device;
             PREFS.edit().putString(WATCH_ID, device.getId()).apply();
             PREFS.edit().putString(WATCH_NAME, device.getName()).apply();
         }
+    }
+
+    public Device getDevice(Constants.DeviceType type) {
+        if (type == PHONE) return sPhoneDevice;
+        else return sWatchDevice;
     }
 
     public void saveActivity(String meaning, Constants.DeviceType type, boolean active) {
@@ -150,9 +159,21 @@ public class SettingsStorage {
         return PREFS.getBoolean(PREFS_WARNING, false);
     }
 
-    public void savePhoneData(String name, int sdk) {
-        PREFS.edit().putString(PHONE_NAME, name).apply();
+    public void savePhoneData(String manufacturer, String model, int sdk) {
+        if (PREFS.getString(PHONE_NAME, null) == null)
+            PREFS.edit().putString(PHONE_NAME, manufacturer + " " + model).apply();
         PREFS.edit().putInt(PHONE_SDK, sdk).apply();
+    }
+
+    public void saveWatchData(String manufacturer, String model, int sdk) {
+        if (PREFS.getString(WATCH_NAME, null) == null)
+            PREFS.edit().putString(WATCH_NAME, manufacturer + " " + model).apply();
+        PREFS.edit().putInt(WATCH_SDK, sdk).apply();
+    }
+
+    public void updateDeviceName(String name, Constants.DeviceType type) {
+        if (type == PHONE) PREFS.edit().putString(PHONE_NAME, name).apply();
+        else if (type == WATCH) PREFS.edit().putString(WATCH_NAME, name).apply();
     }
 
     public String getDeviceName(Constants.DeviceType type) {

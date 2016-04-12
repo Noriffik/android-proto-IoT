@@ -14,4 +14,12 @@ public class Constants {
     public static final String SENSOR_TOUCH_PATH = "/touch";
     public static final String SENSOR_TOUCH = "touch";
 
+    public static final String SAMPLING_PATH = "/sampling";
+    public static final String SAMPLING_MEANING = "meaning";
+    public static final String SAMPLING = "sampling";
+
+    public static final String DEVICE_INFO_PATH = "/device_info";
+    public static final String DEVICE_MANUFACTURER = "manufacturer";
+    public static final String DEVICE_MODEL = "model";
+    public static final String DEVICE_SDK = "sdk";
 }

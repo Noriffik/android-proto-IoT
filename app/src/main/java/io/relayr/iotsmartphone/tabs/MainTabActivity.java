@@ -55,6 +55,7 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
@@ -97,8 +98,8 @@ import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.tabs.helper.SettingsStorage.FREQS_PHONE;
 
 public class MainTabActivity extends AppCompatActivity implements
-        SensorEventListener, LocationListener,
-        DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        SensorEventListener, LocationListener, DataApi.DataListener,
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     @InjectView(R.id.toolbar) Toolbar mToolbar;
     @InjectView(R.id.viewpager) ViewPager mViewPager;
@@ -170,6 +171,7 @@ public class MainTabActivity extends AppCompatActivity implements
                     });
 
         initReadings();
+        initCommands();
     }
 
     @Override protected void onPause() {
@@ -204,6 +206,10 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @SuppressWarnings("unused") public void onEvent(Constants.WatchSelected event) {
         sendToWearable();
+    }
+
+    @SuppressWarnings("unused") public void onEvent(Constants.WatchSamplingUpdate event) {
+        sendToWearable(event.getMeaning(), event.getSampling());
     }
 
     @Override
@@ -290,11 +296,11 @@ public class MainTabActivity extends AppCompatActivity implements
                 else if (fragment instanceof FragmentRules)
                     mFragments[2] = fragment;
             }
-        } else {
-            mFragments[0] = new FragmentReadings();
-            mFragments[1] = new FragmentCloud();
-            mFragments[2] = new FragmentRules();
         }
+
+        if (mFragments[0] == null) mFragments[0] = new FragmentReadings();
+        if (mFragments[1] == null) mFragments[1] = new FragmentCloud();
+        if (mFragments[2] == null) mFragments[2] = new FragmentRules();
 
         if (getSupportFragmentManager() == null) return;
         ViewPagerAdapter mViewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
@@ -326,6 +332,11 @@ public class MainTabActivity extends AppCompatActivity implements
         mTabView.getTabAt(0).setIcon(R.drawable.ic_tab_hardware);
         mTabView.getTabAt(1).setIcon(R.drawable.ic_tab_cloud);
         mTabView.getTabAt(2).setIcon(R.drawable.ic_tab_rule);
+    }
+
+    private void initCommands() {
+        createFlashHelper();
+        createSoundHelper();
     }
 
     private void initReadings() {
@@ -493,21 +504,8 @@ public class MainTabActivity extends AppCompatActivity implements
                     });
     }
 
-    private void toggleFlash(boolean on) {
-        if (mFlash != null && !mFlash.hasFlash(MainTabActivity.this)) {
-            Toast.makeText(MainTabActivity.this, R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
-        } else {
-            showNotification(true);
-            if (mFlash == null) return;
-            if (on) mFlash.on();
-            else mFlash.off();
-        }
-    }
-
     private void createFlashHelper() {
-        if (mFlash != null) return;
-
-        mFlash = new FlashHelper();
+        if (mFlash == null) mFlash = new FlashHelper();
         try {
             mFlash.open(MainTabActivity.this.getApplicationContext());
         } catch (Exception e) {
@@ -520,16 +518,27 @@ public class MainTabActivity extends AppCompatActivity implements
         }
     }
 
-    private void playMusic(String value) {
-        if (value == null) return;
-        if (mSound == null) createSoundHelper();
-
-        mSound.playMusic(MainTabActivity.this, value);
+    private void toggleFlash(boolean on) {
+        if (mFlash != null && !mFlash.hasFlash(MainTabActivity.this)) {
+            Toast.makeText(MainTabActivity.this, R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
+        } else {
+            showNotification(true);
+            if (mFlash == null) return;
+            if (on) mFlash.on();
+            else mFlash.off();
+        }
     }
 
     private void createSoundHelper() {
         if (mSound != null) return;
         mSound = new SoundHelper();
+    }
+
+    private void playMusic(String value) {
+        if (value == null) return;
+        if (mSound == null) createSoundHelper();
+
+        mSound.playMusic(MainTabActivity.this, value);
     }
 
     private void turnOffLocation() {
@@ -571,6 +580,16 @@ public class MainTabActivity extends AppCompatActivity implements
         DataMap dataMap = new DataMap();
         dataMap.putLong(Constants.ACTIVATE, System.currentTimeMillis());
         new SendToDataLayerThread(Constants.ACTIVATE_PATH, dataMap).start();
+
+        for (Map.Entry<String, Integer> entry : SettingsStorage.FREQS_WATCH.entrySet())
+            sendToWearable(entry.getKey(), entry.getValue());
+    }
+
+    private void sendToWearable(String meaning, int sampling) {
+        DataMap dataMap = new DataMap();
+        dataMap.putString(Constants.SAMPLING_MEANING, meaning);
+        dataMap.putInt(Constants.SAMPLING, sampling);
+        new SendToDataLayerThread(Constants.SAMPLING_PATH, dataMap).start();
     }
 
     class SendToDataLayerThread extends Thread {
