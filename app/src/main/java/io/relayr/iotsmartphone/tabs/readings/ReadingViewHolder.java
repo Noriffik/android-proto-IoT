@@ -61,7 +61,7 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void showSettings() {
-        final DialogView view = (DialogView) View.inflate(mContext, R.layout.dialog_content, null);
+        final SamplingDialog view = (SamplingDialog) View.inflate(mContext, R.layout.sampling_dialog, null);
         view.setUp(mMeaning, mPath, mUnit, mType);
 
         new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay)

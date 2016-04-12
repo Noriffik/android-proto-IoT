@@ -46,7 +46,12 @@ public class FragmentReadings extends IotFragment {
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (SettingsStorage.instance().getDeviceName(PHONE) == null)
-            SettingsStorage.instance().savePhoneData(MANUFACTURER + " " + MODEL, SDK_INT);
+            SettingsStorage.instance().savePhoneData(MANUFACTURER, MODEL, SDK_INT);
+    }
+
+    @Override public void onResume() {
+        super.onResume();
+        setTitle(getActivity().getString(R.string.app_title_phone));
     }
 
     @Override
@@ -75,7 +80,6 @@ public class FragmentReadings extends IotFragment {
 
     @SuppressWarnings("unused") @OnClick(R.id.fab)
     public void onFabClicked() {
-        ReadingUtils.initializeReadings();
         if (IotApplication.isVisible(PHONE)) onWatchClicked();
         else onPhoneClicked();
     }
@@ -104,6 +108,8 @@ public class FragmentReadings extends IotFragment {
 
     private void onPhoneClicked() {
         IotApplication.visible(PHONE, true);
+        ReadingUtils.initializeReadings(PHONE);
+
         mFab.setImageResource(R.drawable.ic_graphic_watch);
 
         mPhoneGrid.setVisibility(View.VISIBLE);
@@ -117,6 +123,8 @@ public class FragmentReadings extends IotFragment {
 
     private void onWatchClicked() {
         IotApplication.visible(WATCH, true);
+        ReadingUtils.initializeReadings(WATCH);
+
         EventBus.getDefault().post(new Constants.WatchSelected());
 
         mFab.setImageResource(R.drawable.ic_graphic_phone);
