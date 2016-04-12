@@ -34,6 +34,7 @@ import io.relayr.java.model.User;
 import rx.android.schedulers.AndroidSchedulers;
 
 import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.tabs.helper.Constants.DeviceType.WATCH;
 
 public class FragmentCloud extends IotFragment {
 
@@ -94,16 +95,57 @@ public class FragmentCloud extends IotFragment {
                     .show();
     }
 
+    @SuppressWarnings("unused") @OnClick(R.id.cloud)
+    public void onCloudClick() {
+        new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+                .setView(View.inflate(getContext(), R.layout.cloud_user_dialog, null))
+                .setTitle(getString(R.string.cloud_device_dialog_title))
+                .setPositiveButton(getString(R.string.close), new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .create()
+                .show();
+    }
+
+    @SuppressWarnings("unused") @OnClick(R.id.phone)
+    public void onPhoneClick() {showDeviceDialog(PHONE);}
+
+    @SuppressWarnings("unused") @OnClick(R.id.watch)
+    public void onWatchClick() {showDeviceDialog(WATCH);}
+
+    private void showDeviceDialog(Constants.DeviceType type) {
+        final Device device = SettingsStorage.instance().getDevice(type);
+        if (device == null) return;
+
+        final CloudDeviceDialog view = (CloudDeviceDialog) View.inflate(getContext(), R.layout.cloud_device_dialog, null);
+        view.setUp(device, type);
+
+        new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+                .setView(view)
+                .setTitle(getString(R.string.cloud_device_dialog_title))
+                .setPositiveButton(getString(R.string.close), new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override public void onDismiss(DialogInterface dialog) {
+                        setUpPhone();
+                        setUpWearable();
+                    }
+                })
+                .create()
+                .show();
+    }
+
     private void setUpCloud() {
         if (UiHelper.isCloudConnected()) {
             mCloudImg.setBackgroundResource(R.drawable.cloud_connected_circle);
             mCloudConnection.setBackgroundResource(R.drawable.cloud_line);
             mCloudInfoText.setVisibility(View.GONE);
             mCloudInfoBtn.setText(R.string.cloud_log_out);
-
-            //            Animation rotation = AnimationUtils.loadAnimation(getActivity(), R.anim.cloud_rotate_animation);
-            //            rotation.setRepeatCount(Animation.INFINITE);
-            //            mCloudImg.startAnimation(rotation);
         } else {
             mCloudImg.setBackgroundResource(R.drawable.cloud_disconnected_circle);
             mCloudConnection.setBackgroundResource(R.drawable.cloud_dotted_vertical_line);
@@ -121,8 +163,8 @@ public class FragmentCloud extends IotFragment {
         if (UiHelper.isWearableConnected(getActivity())) {
             mWatchImg.setBackgroundResource(R.drawable.cloud_circle);
             mWatchConnection.setBackgroundResource(R.drawable.cloud_line);
-            mWatchName.setText("Watch");
-            mWatchVersion.setText("Version");
+            mWatchName.setText(SettingsStorage.instance().getDeviceName(WATCH));
+            mWatchVersion.setText(getString(R.string.cloud_phone_version, SettingsStorage.instance().getDeviceSdk(WATCH)));
         } else {
             mWatchImg.setBackgroundResource(R.drawable.cloud_circle_dark);
             mWatchConnection.setBackgroundResource(R.drawable.cloud_dotted_vertical_line);
@@ -174,6 +216,12 @@ public class FragmentCloud extends IotFragment {
             getDeviceFromCloud(user, PHONE);
         else
             createDevice(PHONE);
+
+        if (!UiHelper.isWearableConnected(getActivity())) return;
+        if (SettingsStorage.instance().getDeviceId(WATCH) != null)
+            getDeviceFromCloud(user, WATCH);
+        else
+            createDevice(WATCH);
     }
 
     private void getDeviceFromCloud(User user, final Constants.DeviceType type) {
@@ -189,6 +237,10 @@ public class FragmentCloud extends IotFragment {
                         hideProgress();
                         UiHelper.showSnackBar(getActivity(), R.string.cloud_error_device_data);
                         Crashlytics.log(Log.DEBUG, TAG, "Failed to load " + type.name() + " device.");
+                        if (!(e instanceof TimeoutException)) {
+                            loadUserInfo();
+                            Crashlytics.logException(e);
+                        }
                     }
 
                     @Override public void success(Device device) {
@@ -202,7 +254,8 @@ public class FragmentCloud extends IotFragment {
 
         final String name = SettingsStorage.instance().getDeviceName(type);
         final String modelId = type == PHONE ? SettingsStorage.MODEL_PHONE : SettingsStorage.MODEL_WATCH;
-        final CreateDevice toCreate = new CreateDevice(name, modelId, DataStorage.getUserId(), null, "1.0.0");
+        final String description = type == PHONE ? getString(R.string.app_title_phone) : getString(R.string.app_title_watch);
+        final CreateDevice toCreate = new CreateDevice(name, description, modelId, DataStorage.getUserId(), null, "1.0.0");
 
         RelayrSdk.getDeviceApi()
                 .createDevice(toCreate)
@@ -210,9 +263,13 @@ public class FragmentCloud extends IotFragment {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SimpleObserver<Device>() {
                     @Override public void error(Throwable e) {
-                        hideProgress();
-                        UiHelper.showSnackBar(getActivity(), R.string.cloud_error_create_device);
-                        Crashlytics.log(Log.DEBUG, TAG, "Failed to create " + type.name() + " device.");
+                        if (e instanceof TimeoutException) createDevice(type);
+                        else {
+                            hideProgress();
+                            UiHelper.showSnackBar(getActivity(), R.string.cloud_error_create_device);
+                            Crashlytics.log(Log.DEBUG, TAG, "Failed to create " + type.name() + " device.");
+                            Crashlytics.logException(e);
+                        }
                     }
 
                     @Override public void success(Device device) {
