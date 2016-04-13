@@ -38,8 +38,6 @@ public abstract class ReadingWidget extends LinearLayout {
     protected int mMaxPoints = 500;
     protected List<String> axisX = new ArrayList<>(500);
 
-    protected int defaultFrame = 10000;
-
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();

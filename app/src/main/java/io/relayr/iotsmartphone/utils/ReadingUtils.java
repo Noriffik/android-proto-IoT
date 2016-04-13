@@ -45,43 +45,29 @@ public class ReadingUtils {
     public static float sWatchSpeed;
     public static float sPhoneSpeed;
 
-    public static final Map<String, Integer> defaultSizes = new HashMap<>();
     public static final Map<String, LimitedQueue<Reading>> readingsPhone = new HashMap<>();
     public static final Map<String, LimitedQueue<Reading>> readingsWatch = new HashMap<>();
 
     static {
-        initializeSizes();
         initializeReadings();
-    }
-
-    private static void initializeSizes() {
-        defaultSizes.clear();
-        defaultSizes.put("acceleration", 50);
-        defaultSizes.put("angularSpeed", 50);
-        defaultSizes.put("luminosity", 30);
-        defaultSizes.put("touch", 30);
-        defaultSizes.put("batteryLevel", 30);
-        defaultSizes.put("rssi", 30);
-        defaultSizes.put("location", 1);
-        defaultSizes.put("message", 1);
     }
 
     public static void initializeReadings() {
         readingsPhone.clear();
-        readingsPhone.put("acceleration", new LimitedQueue<Reading>(defaultSizes.get("acceleration")));
-        readingsPhone.put("angularSpeed", new LimitedQueue<Reading>(defaultSizes.get("angularSpeed")));
-        readingsPhone.put("luminosity", new LimitedQueue<Reading>(defaultSizes.get("luminosity")));
-        readingsPhone.put("batteryLevel", new LimitedQueue<Reading>(defaultSizes.get("batteryLevel")));
-        readingsPhone.put("touch", new LimitedQueue<Reading>(defaultSizes.get("touch")));
-        readingsPhone.put("rssi", new LimitedQueue<Reading>(defaultSizes.get("rssi")));
-        readingsPhone.put("location", new LimitedQueue<Reading>(defaultSizes.get("location")));
-        readingsPhone.put("message", new LimitedQueue<Reading>(defaultSizes.get("message")));
+        readingsPhone.put("acceleration", new LimitedQueue<Reading>(Constants.defaultSizes.get("acceleration")));
+        readingsPhone.put("angularSpeed", new LimitedQueue<Reading>(Constants.defaultSizes.get("angularSpeed")));
+        readingsPhone.put("luminosity", new LimitedQueue<Reading>(Constants.defaultSizes.get("luminosity")));
+        readingsPhone.put("batteryLevel", new LimitedQueue<Reading>(Constants.defaultSizes.get("batteryLevel")));
+        readingsPhone.put("touch", new LimitedQueue<Reading>(Constants.defaultSizes.get("touch")));
+        readingsPhone.put("rssi", new LimitedQueue<Reading>(Constants.defaultSizes.get("rssi")));
+        readingsPhone.put("location", new LimitedQueue<Reading>(Constants.defaultSizes.get("location")));
+        readingsPhone.put("message", new LimitedQueue<Reading>(Constants.defaultSizes.get("message")));
 
         readingsWatch.clear();
-        readingsWatch.put("acceleration", new LimitedQueue<Reading>(defaultSizes.get("acceleration")));
-        readingsWatch.put("luminosity", new LimitedQueue<Reading>(defaultSizes.get("luminosity")));
-        readingsWatch.put("batteryLevel", new LimitedQueue<Reading>(defaultSizes.get("batteryLevel")));
-        readingsWatch.put("touch", new LimitedQueue<Reading>(defaultSizes.get("touch")));
+        readingsWatch.put("acceleration", new LimitedQueue<Reading>(Constants.defaultSizes.get("acceleration")));
+        readingsWatch.put("luminosity", new LimitedQueue<Reading>(Constants.defaultSizes.get("luminosity")));
+        readingsWatch.put("batteryLevel", new LimitedQueue<Reading>(Constants.defaultSizes.get("batteryLevel")));
+        readingsWatch.put("touch", new LimitedQueue<Reading>(Constants.defaultSizes.get("touch")));
     }
 
     public static boolean isComplex(String meaning) {
@@ -151,7 +137,7 @@ public class ReadingUtils {
         if (IotApplication.isVisible(PHONE))
             EventBus.getDefault().post(new Constants.ReadingRefresh(PHONE, reading.meaning));
         if (Storage.ACTIVITY_PHONE.get(reading.meaning)) {
-            sPhoneData += new Gson().toJson(reading).getBytes().length + 1000;
+            sPhoneData += new Gson().toJson(reading).getBytes().length + 100;
             RelayrSdk.getWebSocketClient()
                     .publish(Storage.instance().getDeviceId(PHONE), reading)
                     .subscribeOn(Schedulers.io())
@@ -168,6 +154,7 @@ public class ReadingUtils {
         final String path = dataItem.getUri().getPath();
         final DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
         if (Constants.DEVICE_INFO_PATH.equals(path)) {
+
             Storage.instance().saveWatchData(dataMap.getString(Constants.DEVICE_MANUFACTURER),
                     dataMap.getString(Constants.DEVICE_MODEL), dataMap.getInt(Constants.DEVICE_SDK));
         } else if (Constants.SENSOR_ACCEL_PATH.equals(path)) {
@@ -218,8 +205,9 @@ public class ReadingUtils {
             address += obj.getAddressLine(1) + ", ";
             address += obj.getAddressLine(0);
 
-            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "location", "/", address));
+            publish(new Reading(0, System.currentTimeMillis(), "location", "/", address));
         } catch (IOException e) {
+            publish(new Reading(0, System.currentTimeMillis(), "location", "/", "Unresolved"));
             Crashlytics.log(Log.DEBUG, TAG, "Failed to get location.");
             e.printStackTrace();
         }
@@ -238,5 +226,9 @@ public class ReadingUtils {
         sWatchData = 0;
         sPhoneData = 0;
         sTimestamp = now;
+    }
+
+    public static void publishTouch(boolean active) {
+        ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", active));
     }
 }

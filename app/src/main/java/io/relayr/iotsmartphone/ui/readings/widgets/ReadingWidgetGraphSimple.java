@@ -17,6 +17,7 @@ import java.util.List;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.utils.LimitedQueue;
 import io.relayr.iotsmartphone.utils.ReadingUtils;
 import io.relayr.java.model.action.Reading;
@@ -43,7 +44,6 @@ public class ReadingWidgetGraphSimple extends ReadingWidget {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        defaultFrame = 30000;
         update();
     }
 
@@ -100,8 +100,8 @@ public class ReadingWidgetGraphSimple extends ReadingWidget {
 
         List<Entry> values = new ArrayList<>();
 
-        mFirstPoint = System.currentTimeMillis() - defaultFrame;
-        mDiff = defaultFrame / mMaxPoints;
+        mFirstPoint = System.currentTimeMillis() - Constants.GRAPH_FRAME;
+        mDiff = Constants.GRAPH_FRAME / mMaxPoints;
 
         for (int i = 0; i < readings.size(); i++) {
             final Reading reading = readings.get(i);

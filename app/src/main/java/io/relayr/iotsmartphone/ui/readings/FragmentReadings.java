@@ -2,6 +2,7 @@ package io.relayr.iotsmartphone.ui.readings;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
@@ -17,12 +18,10 @@ import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.ui.IotFragment;
 import io.relayr.iotsmartphone.storage.Constants;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.utils.UiHelper;
 import io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidget;
+import io.relayr.iotsmartphone.utils.UiHelper;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 import static android.os.Build.MANUFACTURER;
@@ -32,7 +31,7 @@ import static android.support.v7.widget.StaggeredGridLayoutManager.VERTICAL;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
-public class FragmentReadings extends IotFragment {
+public class FragmentReadings extends Fragment {
 
     @InjectView(R.id.readings_phone_grid) protected RecyclerView mPhoneGrid;
     @InjectView(R.id.readings_watch_grid) protected RecyclerView mWatchGrid;
@@ -49,11 +48,6 @@ public class FragmentReadings extends IotFragment {
             Storage.instance().savePhoneData(MANUFACTURER, MODEL, SDK_INT);
     }
 
-    @Override public void onResume() {
-        super.onResume();
-        setTitle(getActivity().getString(R.string.app_title_phone));
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle saved) {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_readings, container, false);
@@ -64,9 +58,9 @@ public class FragmentReadings extends IotFragment {
 
         setUpAdapters(columns);
 
-        if (UiHelper.isWearableConnected(getActivity())) mFab.setVisibility(View.VISIBLE);
-        else mFab.setVisibility(View.GONE);
-        onFabClicked();
+        mFab.setVisibility(UiHelper.isWearableConnected(getActivity()) ? View.VISIBLE : View.GONE);
+        if (IotApplication.isVisible(WATCH)) onWatchClicked();
+        else onPhoneClicked();
 
         return view;
     }
@@ -108,6 +102,7 @@ public class FragmentReadings extends IotFragment {
 
     private void onPhoneClicked() {
         IotApplication.visible(PHONE, true);
+        EventBus.getDefault().post(new Constants.DeviceChange(PHONE));
         mFab.setImageResource(R.drawable.ic_graphic_watch);
 
         mPhoneGrid.setVisibility(View.VISIBLE);
@@ -115,14 +110,11 @@ public class FragmentReadings extends IotFragment {
 
         if (mPhoneAdapter != null)
             mPhoneAdapter.update(Storage.instance().loadReadings(PHONE), PHONE);
-
-        setTitle(getActivity().getString(R.string.app_title_phone));
     }
 
     private void onWatchClicked() {
         IotApplication.visible(WATCH, true);
-        EventBus.getDefault().post(new Constants.WatchSelected());
-
+        EventBus.getDefault().post(new Constants.DeviceChange(WATCH));
         mFab.setImageResource(R.drawable.ic_graphic_phone);
 
         mPhoneGrid.setVisibility(View.GONE);
@@ -130,8 +122,6 @@ public class FragmentReadings extends IotFragment {
 
         if (mWatchAdapter != null)
             mWatchAdapter.update(Storage.instance().loadReadings(WATCH), WATCH);
-
-        setTitle(getActivity().getString(R.string.app_title_watch));
     }
 
     static class ReadingsAdapter extends RecyclerView.Adapter<ReadingViewHolder> {

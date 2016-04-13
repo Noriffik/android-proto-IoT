@@ -20,6 +20,7 @@
         style="@style/WrapWrap"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
+        android:padding="@dimen/default_padding_half"
         android:src="@drawable/ic_settings"/>
 
 </RelativeLayout>

@@ -1,85 +1,16 @@
 <resources>
 
-    <string name="app_name">IoTsmartphone</string>
-
-    <string name="navigation_drawer_open">Open</string>
-    <string name="navigation_drawer_close">Close</string>
-
-    <string name="initializing">Initializing…</string>
-    <string name="please_wait">Please wait…</string>
-    <string name="something_went_wrong">Something went wrong…</string>
-
-    <string name="menu_settings">Settings</string>
-    <string name="menu_user">User</string>
-    <string name="menu_log_out">Log out</string>
-
-    <!--IntroActivity-->
-    <string name="ia_hello">Hello %s</string>
-
-    <!--MainActivity-->
-    <string name="ma_log_out_dialog_title">Log out</string>
-    <string name="ma_log_out_dialog_message">Are you sure you want to log out?</string>
-    <string name="ma_log_out_dialog_negative">No</string>
-    <string name="ma_log_out_dialog_positive">Yes</string>
-
-    <!--DeviceView-->
-    <string name="dv_title">Let\'s create a device</string>
-    <string name="dv_device_name_hint">Device name</string>
-    <string name="dv_button_create">Create</string>
-    <string name="dv_creating_device">Creating device</string>
-
-    <!--UserView-->
-    <string name="uv_iot_device">This device</string>
-    <string name="uv_iot_device_name">Name:</string>
-    <string name="uv_iot_device_id">Device ID:</string>
-    <string name="uv_details">User details</string>
-    <string name="uv_details_username">Name:</string>
-    <string name="uv_details_email">Email:</string>
-    <string name="uv_details_user_id">User ID:</string>
-    <string name="uv_all_devices">All devices</string>
+    <string name="app_name">IoT smartphone</string>
 
     <!--SendReceiveView-->
     <string name="sv_no_wifi">Not connected to Wifi</string>
-    <string name="sv_location_resolve_err">Problem resolving location.</string>
     <string name="sv_err_using_flash">Error when using flash</string>
     <string name="sv_flashlight_not_available">Flashlight not available.</string>
-    <string name="sv_publish_title">Publish settings</string>
-    <string name="sv_publish_info">Activate a switch to start publishing data to the cloud.</string>
-    <string name="sv_publish_wifi">WiFi</string>
-    <string name="sv_publish_battery">Battery</string>
-    <string name="sv_publish_location">Location</string>
-    <string name="sv_publish_acceleration">Acceleration</string>
-    <string name="sv_publish_message_hint">Send something</string>
-    <string name="sv_subscribe_title">Subscribe settings</string>
-    <string name="sv_subscribe_info">Activate a switch to control a feature from the dashboard.</string>
-    <string name="sv_subscribe_flash">Flashlight</string>
-    <string name="sv_subscribe_sound">Alarm</string>
-    <string name="sv_warning_dialog_title">Mobile data warning</string>
-    <string name="sv_warning_dialog_text">Be aware that sending accelerometer and gyroscope readings is using a lot of Internet data.</string>
-    <string name="sv_warning_toast">Accelerometer readings are using a lot of Internet data.</string>
     <string name="sv_location_off_title">Location is OFF</string>
     <string name="sv_location_off_message">Would you like to turn it on?</string>
-    <string name="sv_sending_in_bck">IoTSmartphone is still sending data in the background.</string>
-    <string name="menu_send_receive">Send/receive</string>
     <string name="srv_flash_status">Flashlight turned %s</string>
     <string name="srv_turn_off_flash">Turn off flash</string>
-    <string name="sv_wearable_title">Wearable settings</string>
-    <string name="sv_wearable_info">Activate to publish data from your wearable.</string>
-    <string name="sv_wearable_data">Wearable data</string>
-    <string name="srv_no_wearable">It seems you don\'t have a wearable connected.</string>
-    <string name="srv_open_dashboard">Check incoming data</string>
 
-    <!--SettingsView-->
-    <string name="stv_publish_timing">Select the delay between publishing WiFi, battery and location readings.</string>
-    <string name="stv_publish_time">Publish delay set to: %s</string>
-    <string name="stv_low">Low</string>
-    <string name="stv_normal">Normal</string>
-    <string name="stv_high">High</string>
-    <string name="stv_very_high">Very high</string>
-    <string name="stv_acceleration_intensity">Select the intensity of publishing acceleration readings.</string>
-    <string name="stv_delay">%s sec</string>
-
-    <!--NEW IMPLEMENTATION-->
     <string name="ok">OK</string>
     <string name="yes">Yes</string>
     <string name="close">Close</string>
@@ -115,7 +46,7 @@
     <string name="dialog_identifier">Identifier</string>
     <string name="dialog_sampling">Sampling</string>
     <string name="dialog_data">Data</string>
-    <string name="dialog_send_to_the_cloud">send to the cloud</string>
+    <string name="dialog_send_to_the_cloud">send to cloud</string>
     <string name="dialog_keep_local">keep local</string>
     <string name="dialog_low">low</string>
     <string name="dialog_high">high</string>
@@ -124,6 +55,9 @@
     <string name="rules_if">If</string>
     <string name="cloud_device_dialog_title">Device details</string>
     <string name="cloud_connection_established">Watch data on: <u>dev.relayr.io</u></string>
+    <string name="cloud_upload_warning_title">Data upload</string>
+    <string name="cloud_upload_warning_message">Data is automatically uploaded to relayr cloud. Settings can be mannaged for each reading.</string>
+    <string name="cloud_no_wearable">It seems you don\'t have a wearable connected.</string>
 
 
 </resources>

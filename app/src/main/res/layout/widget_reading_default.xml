@@ -15,9 +15,7 @@
 
             <TextView
                 android:id="@+id/reading_data"
-                style="@style/WrapWrap"
-                android:text="Default"
-                android:textColor="@color/primaryDark"/>
+                style="@style/SubtitleText"/>
         </LinearLayout>
     </android.support.v7.widget.CardView>
 </io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidgetDefault>

@@ -127,7 +127,7 @@
 
             <TextView
                 android:id="@+id/sampling_info"
-                style="@style/NormalText"
+                style="@style/SmallText"
                 android:layout_below="@id/sampling_seek"
                 android:layout_centerHorizontal="true"
                 android:textColor="@color/accent"/>

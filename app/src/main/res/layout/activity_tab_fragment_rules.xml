@@ -7,28 +7,33 @@
 
     <TextView
         style="@style/TitleText"
-        android:text="Conditions"
+        android:text="SOON..."
         android:textColor="@color/accent"/>
 
-    <include
-        android:id="@+id/condition_one"
-        layout="@layout/widget_rules_condition"/>
+    <!--<TextView-->
+    <!--style="@style/TitleText"-->
+    <!--android:text="Conditions"-->
+    <!--android:textColor="@color/accent"/>-->
 
-    <include
-        android:id="@+id/condition_two"
-        layout="@layout/widget_rules_condition"/>
+    <!--<include-->
+    <!--android:id="@+id/condition_one"-->
+    <!--layout="@layout/widget_rules_condition"/>-->
 
-    <TextView
-        style="@style/TitleText"
-        android:text="Outcomes"
-        android:textColor="@color/accent"/>
+    <!--<include-->
+    <!--android:id="@+id/condition_two"-->
+    <!--layout="@layout/widget_rules_condition"/>-->
 
-    <include
-        android:id="@+id/outcome_one"
-        layout="@layout/widget_rules_condition"/>
+    <!--<TextView-->
+    <!--style="@style/TitleText"-->
+    <!--android:text="Outcomes"-->
+    <!--android:textColor="@color/accent"/>-->
 
-    <include
-        android:id="@+id/outcome_two"
-        layout="@layout/widget_rules_condition"/>
+    <!--<include-->
+    <!--android:id="@+id/outcome_one"-->
+    <!--layout="@layout/widget_rules_condition"/>-->
+
+    <!--<include-->
+    <!--android:id="@+id/outcome_two"-->
+    <!--layout="@layout/widget_rules_condition"/>-->
 
 </LinearLayout>

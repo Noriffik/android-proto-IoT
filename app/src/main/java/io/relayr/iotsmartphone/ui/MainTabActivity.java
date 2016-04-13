@@ -62,6 +62,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
+import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.helper.FlashHelper;
@@ -96,6 +97,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.LOLLIPOP;
 import static android.widget.Toast.LENGTH_SHORT;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 import static io.relayr.iotsmartphone.storage.Storage.FREQS_PHONE;
 
 public class MainTabActivity extends AppCompatActivity implements
@@ -130,8 +132,6 @@ public class MainTabActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_tab_main);
         ButterKnife.inject(this);
 
-        ReadingUtils.getReadings();
-
         setSupportActionBar(mToolbar);
         setupViewPager(state);
         setUpTabs();
@@ -146,14 +146,11 @@ public class MainTabActivity extends AppCompatActivity implements
                 .addOnConnectionFailedListener(this)
                 .build();
         if (!mResolvingError) mGoogleApiClient.connect();
-    }
 
-    @Override protected void onResume() {
-        super.onResume();
+        ReadingUtils.getReadings();
 
-        EventBus.getDefault().register(this);
         if (mRefreshSubs == null)
-            mRefreshSubs = Observable.interval(Constants.SAMPLING_PHONE_MIN, TimeUnit.SECONDS)
+            mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<Long>() {
                         @Override public void onCompleted() {}
@@ -166,17 +163,32 @@ public class MainTabActivity extends AppCompatActivity implements
                         @Override public void onNext(Long num) {
                             if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
                             if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
-                            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
+                            if (num % FREQS_PHONE.get("touch") == 0)
+                                ReadingUtils.publishTouch(false);
+
+                            if (num % 5 == 0) System.gc();
                         }
                     });
 
         initReadings();
-        initCommands();
+        if (UiHelper.isCloudConnected()) subscribeToCommands();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        EventBus.getDefault().register(this);
     }
 
     @Override protected void onPause() {
         super.onPause();
         EventBus.getDefault().unregister(this);
+    }
+
+    @Override protected void onDestroy() {
+        super.onDestroy();
+
+        if (mFlash != null) mFlash.close();
+        if (mSound != null) mSound.close();
 
         turnSensorOff();
         if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
@@ -197,19 +209,18 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN)
-            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", true));
-        else if (ev.getAction() == MotionEvent.ACTION_UP)
-            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", false));
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) ReadingUtils.publishTouch(true);
+        else if (ev.getAction() == MotionEvent.ACTION_UP) ReadingUtils.publishTouch(false);
         return super.dispatchTouchEvent(ev);
     }
 
-    @SuppressWarnings("unused") public void onEvent(Constants.WatchSelected event) {
-        sendToWearable();
+    @SuppressWarnings("unused") public void onEvent(Constants.DeviceChange event) {
+        setToolbarTitle(0);
+        if (event.getType() == WATCH) sendToWearable();
     }
 
     @SuppressWarnings("unused") public void onEvent(Constants.LoggedIn event) {
-        initCommands();
+        if (UiHelper.isCloudConnected()) subscribeToCommands();
     }
 
     @SuppressWarnings("unused") public void onEvent(Constants.WatchSamplingUpdate event) {
@@ -220,7 +231,6 @@ public class MainTabActivity extends AppCompatActivity implements
     public void onConnected(Bundle connectionHint) {
         mResolvingError = false;
         Wearable.DataApi.addListener(mGoogleApiClient, this);
-        sendToWearable();
     }
 
     @Override
@@ -320,7 +330,9 @@ public class MainTabActivity extends AppCompatActivity implements
         mTabView.setSelectedTabIndicatorHeight(getResources().getDimensionPixelSize(R.dimen.default_padding));
         mTabView.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override public void onTabSelected(TabLayout.Tab tab) {
-                mViewPager.setCurrentItem(tab.getPosition());
+                final int position = tab.getPosition();
+                mViewPager.setCurrentItem(position);
+                setToolbarTitle(position);
             }
 
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
@@ -331,18 +343,18 @@ public class MainTabActivity extends AppCompatActivity implements
         setupTabIcons();
     }
 
+    private void setToolbarTitle(int position) {
+        if (position == 0)
+            setTitle(IotApplication.isVisible(PHONE) ? R.string.app_title_phone : R.string.app_title_watch);
+        else if (position == 1) setTitle(R.string.cloud_title);
+        else if (position == 2) setTitle(R.string.rules_title);
+    }
+
     private void setupTabIcons() {
         if (mTabView == null) return;
         mTabView.getTabAt(0).setIcon(R.drawable.ic_tab_hardware);
         mTabView.getTabAt(1).setIcon(R.drawable.ic_tab_cloud);
         mTabView.getTabAt(2).setIcon(R.drawable.ic_tab_rule);
-    }
-
-    private void initCommands() {
-        if (!UiHelper.isCloudConnected()) return;
-        createFlashHelper();
-        createSoundHelper();
-        subscribeToCommands();
     }
 
     private void initReadings() {
@@ -496,16 +508,26 @@ public class MainTabActivity extends AppCompatActivity implements
                         @Override public void onCompleted() {}
 
                         @Override public void onError(Throwable e) {
-                            Crashlytics.log(Log.ERROR, "SettingsView", "subscribeToCommands - error");
+                            Crashlytics.log(Log.ERROR, "MTA", "subscribeToCommands - error");
                             Crashlytics.logException(e);
+                            mCommandsSubscription = null;
+                            subscribeToCommands();
                         }
 
                         @Override public void onNext(Command action) {
                             final String cmd = action.getName();
-                            Crashlytics.log(Log.DEBUG, "SettingsView", "CMD - " + cmd);
-                            if (cmd.equals("flashlight"))
-                                toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
-                            if (cmd.equals("playSound")) playMusic((String) action.getValue());
+                            Crashlytics.log(Log.DEBUG, "MTA", "CMD - " + cmd);
+                            switch (cmd) {
+                                case "flashlight":
+                                    toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
+                                    break;
+                                case "playSound":
+                                    playMusic();
+                                    break;
+                                case "vibration":
+                                    vibrate();
+                                    break;
+                            }
                         }
                     });
     }
@@ -514,8 +536,10 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mFlash == null) mFlash = new FlashHelper();
         try {
             mFlash.open(MainTabActivity.this.getApplicationContext());
+            mFlash.on();
+            showNotification();
         } catch (Exception e) {
-            Crashlytics.log(Log.ERROR, "SRV", "Failed to create FlashHelper.");
+            Crashlytics.log(Log.ERROR, "MTA", "Failed to create FlashHelper.");
             e.printStackTrace();
 
             Toast.makeText(MainTabActivity.this, R.string.sv_err_using_flash, Toast.LENGTH_SHORT).show();
@@ -528,55 +552,50 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mFlash != null && !mFlash.hasFlash(MainTabActivity.this)) {
             Toast.makeText(MainTabActivity.this, R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
         } else {
-            showNotification(true);
-            if (mFlash == null) return;
-            if (on) mFlash.on();
-            else mFlash.off();
+            if (mFlash == null) createFlashHelper();
+            else {
+                if (on) {
+                    mFlash.on();
+                    showNotification();
+                } else {
+                    mFlash.off();
+                }
+            }
         }
     }
 
-    private void createSoundHelper() {
-        if (mSound != null) return;
-        mSound = new SoundHelper();
+    private void playMusic() {
+        if (mSound == null) mSound = new SoundHelper();
+        mSound.playMusic(MainTabActivity.this);
     }
 
-    private void playMusic(String value) {
-        if (value == null) return;
-        if (mSound == null) createSoundHelper();
-
-        mSound.playMusic(MainTabActivity.this, value);
+    private void vibrate() {
+        if (mSound == null) mSound = new SoundHelper();
+        mSound.vibrate(MainTabActivity.this);
     }
 
-    private void turnOffLocation() {
-        if (mLocationManager != null)
-            if (ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED)
-                mLocationManager.removeUpdates(this);
-    }
-
-    public void showNotification(boolean wearEnabled) {
+    public void showNotification() {
         Intent demandIntent = new Intent(this, DemandIntentReceiver.class)
                 .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, false)
                 .setAction(DemandIntentReceiver.ACTION_DEMAND);
         PendingIntent demandPendingIntent = PendingIntent.getBroadcast(this, 0, demandIntent, 0);
         NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
                 this.getString(R.string.srv_turn_off_flash), demandPendingIntent).build();
-        showNotification(action, wearEnabled);
+        showNotification(action);
     }
 
-    private void showNotification(NotificationCompat.Action action, boolean wearEnabled) {
+    private void showNotification(NotificationCompat.Action action) {
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.notification)
                 .setDefaults(Notification.DEFAULT_ALL)
                 .setContentTitle(this.getString(R.string.app_name))
                 .setContentText(this.getString(R.string.srv_flash_status, "ON"));
 
-        if (wearEnabled) {
+        if (UiHelper.isWearableConnected(this)) {
             Bitmap bg = BitmapFactory.decodeResource(getResources(), R.color.primary);
             builder.extend(new NotificationCompat.WearableExtender().addAction(action).setBackground(bg));
         }
         builder.addAction(action);
-
 
         final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(this);
         managerCompat.notify(2376, builder.build());

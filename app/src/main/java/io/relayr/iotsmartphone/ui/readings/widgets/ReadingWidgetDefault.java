@@ -7,6 +7,7 @@ import android.widget.TextView;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.utils.LimitedQueue;
+import io.relayr.iotsmartphone.utils.ReadingUtils;
 import io.relayr.java.model.action.Reading;
 
 public class ReadingWidgetDefault extends ReadingWidget {
@@ -28,6 +29,12 @@ public class ReadingWidgetDefault extends ReadingWidget {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+
+        final LimitedQueue<Reading> readings = ReadingUtils.readingsPhone.get(mMeaning);
+        if (readings == null || readings.isEmpty()) return;
+        final Reading last = readings.getLast();
+        if (last == null) return;
+        mData.setText((String) last.value);
     }
 
     @Override
@@ -38,11 +45,7 @@ public class ReadingWidgetDefault extends ReadingWidget {
     @Override void update() {}
 
     @Override void refresh(LimitedQueue<Reading> readings) {
-//        if (readings.isEmpty()) return;
-//        if (readings.get(mMeaning) == null) return;
-//        if (readings.get(mMeaning).getLast().value == null) return;
-//        if (!(readings.get(mMeaning).getLast().value instanceof String)) return;
-//
-//        mData.setText((String) readings.get(mMeaning).getLast().value);
+        if (readings == null || readings.isEmpty()) return;
+        mData.setText((String) readings.getLast().value);
     }
 }

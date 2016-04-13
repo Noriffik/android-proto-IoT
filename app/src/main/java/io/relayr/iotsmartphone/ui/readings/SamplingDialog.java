@@ -6,6 +6,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -81,26 +82,23 @@ public class SamplingDialog extends LinearLayout {
 
     private void setSampling() {
         final boolean complex = ReadingUtils.isComplex(mMeaning);
-        int frequency = 0;
-        if (mType == PHONE) frequency = Storage.FREQS_PHONE.get(mMeaning);
-        else if (mType == WATCH) frequency = Storage.FREQS_WATCH.get(mMeaning);
+        int frequency = Storage.instance().loadFrequency(mMeaning, mType);
+        Log.e(mMeaning, "" + frequency);
         setFrequency(frequency, complex);
 
-        mSamplingLow.setText(complex ? getContext().getString(R.string.dialog_low) :
-                ((mType == PHONE ? SAMPLING_PHONE_MIN : SAMPLING_WATCH_MIN) + " s"));
-        mSamplingHigh.setText(complex ? getContext().getString(R.string.dialog_high) : ((Constants.SAMPLING_MAX + 1) + " s"));
+        final int minimum = mType == PHONE ? SAMPLING_PHONE_MIN : SAMPLING_WATCH_MIN;
+
+        mSamplingLow.setText(complex ? getContext().getString(R.string.dialog_low) : (minimum + " s"));
+        mSamplingHigh.setText(complex ? getContext().getString(R.string.dialog_high) : ((Constants.SAMPLING_MAX + minimum) + " s"));
 
         mSamplingSeek.setMax(Constants.SAMPLING_MAX);
-        if (complex)
-            mSamplingSeek.setProgress((frequency / Constants.SAMPLING_COMPLEX) - 1);
-        else
-            mSamplingSeek.setProgress(frequency - (mType == PHONE ? SAMPLING_PHONE_MIN : SAMPLING_WATCH_MIN));
+        if (complex) mSamplingSeek.setProgress(frequency / Constants.SAMPLING_COMPLEX);
+        else mSamplingSeek.setProgress(frequency - minimum);
 
         mSamplingSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int frequency, boolean fromUser) {
-                final int freq = Storage.instance().saveFrequency(mMeaning, mType,
-                        frequency + (mType == PHONE ? SAMPLING_PHONE_MIN : SAMPLING_WATCH_MIN));
+                final int freq = Storage.instance().saveFrequency(mMeaning, mType, frequency + minimum);
                 if (mType == WATCH)
                     EventBus.getDefault().post(new Constants.WatchSamplingUpdate(mMeaning, freq));
                 setFrequency(freq, complex);
@@ -123,8 +121,6 @@ public class SamplingDialog extends LinearLayout {
                 if (UiHelper.isCloudConnected()) {
                     Storage.instance().saveActivity(mMeaning, mType, isChecked);
                     setSwitchInfo(isChecked);
-                    if (mMeaning.equals("acceleration") || mMeaning.equals("angularSpeed"))
-                        showAccelerometerWarning();
                 } else {
                     Toast.makeText(getContext(), getContext().getResources().getString(R.string.cloud_establish_connection), LENGTH_LONG).show();
                 }
@@ -142,21 +138,5 @@ public class SamplingDialog extends LinearLayout {
     private void setSwitchInfo(boolean uploading) {
         mCloudLocal.setTextColor(ContextCompat.getColor(getContext(), uploading ? R.color.text_color : R.color.accent));
         mCloudUploading.setTextColor(ContextCompat.getColor(getContext(), uploading ? R.color.accent : R.color.text_color));
-    }
-
-    private void showAccelerometerWarning() {
-        if (Storage.instance().isWarningShown())
-            Toast.makeText(getContext(), getContext().getResources().getString(R.string.sv_warning_toast), LENGTH_LONG).show();
-        else
-            new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
-                    .setTitle(getContext().getResources().getString(R.string.sv_warning_dialog_title))
-                    .setIcon(R.drawable.ic_warning)
-                    .setMessage(getContext().getResources().getString(R.string.sv_warning_dialog_text))
-                    .setPositiveButton(getContext().getResources().getString(R.string.ok), new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int i) {
-                            Storage.instance().warningShown();
-                            dialog.dismiss();
-                        }
-                    }).show();
     }
 }

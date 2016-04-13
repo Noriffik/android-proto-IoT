@@ -45,7 +45,7 @@
         <View
             android:id="@+id/cloud_connection"
             android:layout_width="@dimen/default_padding_half"
-            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_height="@dimen/graph_height"
             android:layout_below="@+id/cloud"
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/cloud_connected_radius"
@@ -99,7 +99,7 @@
         <View
             android:id="@+id/watch_connection"
             android:layout_width="@dimen/default_padding_half"
-            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_height="@dimen/graph_height"
             android:layout_below="@id/phone"
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/cloud_connected_radius"

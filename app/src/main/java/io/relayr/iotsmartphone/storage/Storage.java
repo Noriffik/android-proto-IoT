@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.utils.ReadingUtils;
@@ -44,13 +46,13 @@ public class Storage {
     private static List<DeviceReading> sReadingsPhone = new ArrayList<>();
     private static List<DeviceReading> sReadingsWatch = new ArrayList<>();
 
-    private static String sPhoneId;
-    private static String sWatchId;
     private static Device sPhoneDevice;
     private static Device sWatchDevice;
 
     private final static Storage singleton = new Storage();
     private final SharedPreferences PREFS;
+    private String sPhoneId;
+    private String sWatchId;
 
     private Storage() {
         PREFS = IotApplication.context().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -140,6 +142,7 @@ public class Storage {
 
     public int loadFrequency(String meaning, Constants.DeviceType type) {
         int sampling = ReadingUtils.isComplex(meaning) ? Constants.SAMPLING_COMPLEX : Constants.SAMPLING_SIMPLE;
+        sampling *= type == PHONE ? Constants.SAMPLING_PHONE_MIN : Constants.SAMPLING_WATCH_MIN;
         return PREFS.getInt((type == PHONE ? FREQUENCY_PHONE : FREQUENCY_WATCH) + meaning, sampling);
     }
 
@@ -183,10 +186,10 @@ public class Storage {
 
     public String getDeviceId(Constants.DeviceType type) {
         if (type == PHONE) {
-            sPhoneId = PREFS.getString(PHONE_ID, null);
+            if (sPhoneId == null) sPhoneId = PREFS.getString(PHONE_ID, null);
             return sPhoneId;
         } else {
-            sWatchId = PREFS.getString(WATCH_ID, null);
+            if (sWatchId == null) sWatchId = PREFS.getString(WATCH_ID, null);
             return sWatchId;
         }
     }
@@ -196,7 +199,6 @@ public class Storage {
         else return PREFS.getInt(WATCH_SDK, 0);
     }
 
-    //DEVICE MODEL DATA
     public void savePhoneReadings(List<DeviceReading> readings) {
         sReadingsPhone.clear();
         sReadingsPhone.addAll(readings);
@@ -222,10 +224,18 @@ public class Storage {
         });
     }
 
-    public void logOut() {
-        sPhoneId = null;
-        sWatchId = null;
+    public void activate(Constants.DeviceType type) {
+        Set<String> meanings;
+        if (type == PHONE) {
+            meanings = new HashSet<>(ACTIVITY_PHONE.keySet());
+            for (String meaning : meanings) saveActivity(meaning, PHONE, true);
+        } else {
+            meanings = new HashSet<>(ACTIVITY_WATCH.keySet());
+            for (String meaning : meanings) saveActivity(meaning, WATCH, true);
+        }
+    }
 
+    public void logOut() {
         PREFS.edit().remove(PHONE_ID).apply();
         PREFS.edit().remove(WATCH_ID).apply();
         PREFS.edit().remove(PREFS_WARNING).apply();

@@ -21,7 +21,6 @@ public class UiHelper {
             activity.getPackageManager().getPackageInfo(WEAR_APP, PackageManager.GET_META_DATA);
             return true;
         } catch (PackageManager.NameNotFoundException e) {
-            showSnackBar(activity, R.string.srv_no_wearable);
             return false;
         }
     }

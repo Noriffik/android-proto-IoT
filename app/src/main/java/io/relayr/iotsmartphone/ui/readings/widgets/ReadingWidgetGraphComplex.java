@@ -20,6 +20,7 @@ import java.util.List;
 
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.utils.LimitedQueue;
 import io.relayr.iotsmartphone.utils.ReadingUtils;
 import io.relayr.java.model.AccelGyroscope;
@@ -112,9 +113,9 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         long mDiff;
         long mFirstPoint;
 
-        calculateFrame();
-        mFirstPoint = System.currentTimeMillis() - defaultFrame;
-        mDiff = (long) (defaultFrame / mMaxPoints);
+        final int frame = calculateFrame();
+        mFirstPoint = System.currentTimeMillis() - frame;
+        mDiff = (long) (frame / mMaxPoints);
 
         List<Entry> valuesX = new ArrayList<>();
         List<Entry> valuesY = new ArrayList<>();
@@ -150,10 +151,10 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         mChart.invalidate();
     }
 
-    private void calculateFrame() {
-        final int places = ReadingUtils.defaultSizes.get(mMeaning);
+    private int calculateFrame() {
+        final int places = Constants.defaultSizes.get(mMeaning);
         final int frequency = mType == PHONE ? FREQS_PHONE.get(mMeaning) : FREQS_WATCH.get(mMeaning);
-        defaultFrame = (int) (places * frequency / 3f);
+        return (int) (places * frequency / 3f);
     }
 
     private LineDataSet createDataSet(String name, List<Entry> entrys, int dotColor, int lineColor) {
