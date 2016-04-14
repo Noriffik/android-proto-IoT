@@ -1,14 +1,44 @@
 <resources>
 
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimaryDark">@color/primaryDark</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorAccent">@color/accent</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
+        <item name="colorPrimaryDark">@color/primaryDark</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorAccent">@color/accent</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.ButtonActive" parent="android:Widget.Button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/button_active</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/background</item>
+        <item name="android:textSize">@dimen/normal_text</item>
+        <item name="android:minHeight">@dimen/big_padding</item>
+        <item name="android:minWidth">@dimen/big_padding</item>
+        <item name="android:paddingTop">@dimen/default_padding</item>
+        <item name="android:paddingBottom">@dimen/default_padding</item>
+        <item name="android:paddingRight">@dimen/big_padding</item>
+        <item name="android:paddingLeft">@dimen/big_padding</item>
+    </style>
+
+    <style name="AppTheme.DialogOverlay" parent="ThemeOverlay.AppCompat.Dark">
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:background">@color/primaryDark</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+        <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
@@ -21,7 +51,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">@dimen/title_text</item>
         <item name="android:gravity">left</item>
-        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textColor">@color/text_color</item>
         <item name="android:layout_marginTop">@dimen/default_padding</item>
     </style>
 
@@ -33,7 +63,6 @@
 
     <style name="NormalText" parent="SubtitleText">
         <item name="android:textSize">@dimen/normal_text</item>
-        <item name="android:singleLine">true</item>
     </style>
 
     <style name="SmallText" parent="NormalText">
@@ -50,6 +79,20 @@
         <item name="android:minWidth">@dimen/settings_switch_width</item>
         <item name="android:layout_width">@dimen/settings_switch_width</item>
         <item name="android:width">@dimen/settings_switch_width</item>
+    </style>
+
+    <style name="CardViewReading" parent="MatchWrap">
+        <item name="cardPreventCornerOverlap">false</item>
+        <item name="cardUseCompatPadding">true</item>
+        <item name="cardCornerRadius">@dimen/cardview_default_radius</item>
+        <item name="cardElevation">@dimen/cardview_default_elevation</item>
+        <item name="cardBackgroundColor">@color/background</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/default_padding</item>
+    </style>
+
+    <style name="CardViewReadingEmpty" parent="CardViewReading">
+        <item name="android:minHeight">100dp</item>
     </style>
 
     <!--WIDGET-->

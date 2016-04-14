@@ -14,5 +14,16 @@
     <dimen name="device_name_text">14sp</dimen>
     <dimen name="settings_switch_width">250dp</dimen>
     <dimen name="settings_padding">20dp</dimen>
+    <dimen name="toolbar_height">60dp</dimen>
+    <dimen name="default_padding_half">4dp</dimen>
+    <dimen name="cloud_icon_size">100dp</dimen>
+    <dimen name="graph_height">150dp</dimen>
+    <dimen name="dotted_line_gap">4dp</dimen>
+    <dimen name="dotted_line_dash">8dp</dimen>
+    <dimen name="dotted_line_padding">-4dp</dimen>
+    <dimen name="dotted_line_width">4dp</dimen>
+    <dimen name="cloud_connected_radius">60dp</dimen>
+    <dimen name="cloud_connected_size">120dp</dimen>
+    <dimen name="dialog_item_height">70dp</dimen>
 
 </resources>

@@ -21,27 +21,18 @@ import static android.media.RingtoneManager.TYPE_ALARM;
 
 public class SoundHelper {
 
+    private static final int DURATION = 3000;
+
     private static boolean mIsPlaying;
     private Ringtone mRingManager;
     private Vibrator mVibrator;
 
-    public void playMusic(Context context, String seconds) {
+    public void playMusic(Context context) {
         if (mIsPlaying) return;
         mIsPlaying = true;
 
-        int sec;
-        try {
-            sec = Integer.parseInt(seconds);
-            if (sec > 10) sec = sec % 10;
-        } catch (Exception e) {
-            mIsPlaying = false;
-            Crashlytics.log(Log.ERROR, "SoundH", "Seconds can't be parsed: " + seconds);
-            return;
-        }
-
         Uri alarm = RingtoneManager.getDefaultUri(TYPE_ALARM);
         if (mRingManager == null) mRingManager = RingtoneManager.getRingtone(context, alarm);
-        vibrate(context, sec * 1000);
         mRingManager.play();
 
         Observable
@@ -53,7 +44,7 @@ public class SoundHelper {
                     }
                 })
                 .observeOn(AndroidSchedulers.mainThread())
-                .delaySubscription(sec, TimeUnit.SECONDS)
+                .delaySubscription(DURATION, TimeUnit.MILLISECONDS)
                 .subscribe(new Action1<Void>() {
                     @Override public void call(Void aVoid) {
                         mIsPlaying = false;
@@ -65,6 +56,7 @@ public class SoundHelper {
                 });
     }
 
+
     public void close() {
         if (mVibrator != null && mVibrator.hasVibrator()) mVibrator.cancel();
         if (mRingManager != null && mRingManager.isPlaying()) mRingManager.stop();
@@ -72,10 +64,9 @@ public class SoundHelper {
         mRingManager = null;
     }
 
-    //time in milliseconds
-    private void vibrate(Context context, int time) {
+    public void vibrate(Context context) {
         if (mVibrator == null) mVibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
         if (mVibrator.hasVibrator())
-            mVibrator.vibrate(time);
+            mVibrator.vibrate(DURATION);
     }
 }

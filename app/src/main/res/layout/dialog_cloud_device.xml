@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.relayr.iotsmartphone.ui.cloud.CloudDeviceDialog
+    style="@style/MatchWrap"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_margin="@dimen/big_padding"
+    android:padding="@dimen/default_padding">
+
+    <LinearLayout
+        style="@style/MatchWrapHor"
+        android:layout_height="@dimen/dialog_item_height"
+        android:layout_marginTop="@dimen/default_padding">
+
+        <TextView
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="15"
+            android:gravity="right"
+            android:paddingRight="@dimen/default_padding_double"
+            android:text="Id"
+            android:textColor="@color/accent"
+            android:textStyle="bold"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/graph_blue"/>
+
+        <TextView
+            android:id="@+id/cloud_device_id"
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="40"
+            android:background="@color/primary"
+            android:gravity="center_vertical"
+            android:paddingLeft="@dimen/default_padding"
+            android:paddingRight="@dimen/default_padding"
+            android:singleLine="true"
+            android:text="Id"
+            android:textColor="@color/accent"/>
+    </LinearLayout>
+
+    <LinearLayout
+        style="@style/MatchWrapHor"
+        android:layout_height="@dimen/dialog_item_height"
+        android:layout_gravity="center_vertical"
+        android:layout_marginTop="@dimen/default_padding">
+
+        <TextView
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="15"
+            android:gravity="right"
+            android:paddingRight="@dimen/default_padding_double"
+            android:text="Name"
+            android:textColor="@color/accent"
+            android:textStyle="bold"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/graph_red"/>
+
+        <EditText
+            android:id="@+id/cloud_device_name"
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="40"
+            android:background="@color/primary"
+            android:gravity="center_vertical"
+            android:imeOptions="actionDone"
+            android:paddingLeft="@dimen/default_padding"
+            android:paddingRight="@dimen/default_padding"
+            android:singleLine="true"
+            android:text="Name"
+            android:textColor="@color/accent"/>
+    </LinearLayout>
+
+    <LinearLayout
+        style="@style/MatchWrapHor"
+        android:layout_height="@dimen/dialog_item_height"
+        android:layout_gravity="center_vertical"
+        android:layout_marginTop="@dimen/default_padding">
+
+        <TextView
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="15"
+            android:gravity="right"
+            android:paddingRight="@dimen/default_padding_double"
+            android:text="Description"
+            android:textColor="@color/accent"
+            android:textStyle="bold"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/graph_yellow"/>
+
+        <EditText
+            android:id="@+id/cloud_device_description"
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="40"
+            android:background="@color/primary"
+            android:gravity="center_vertical"
+            android:imeOptions="actionDone"
+            android:paddingLeft="@dimen/default_padding"
+            android:paddingRight="@dimen/default_padding"
+            android:singleLine="true"
+            android:text="Description"
+            android:textColor="@color/accent"/>
+    </LinearLayout>
+</io.relayr.iotsmartphone.ui.cloud.CloudDeviceDialog>

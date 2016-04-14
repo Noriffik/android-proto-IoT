@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.relayr.iotsmartphone.ui.SettingsDialog
+    style="@style/MatchWrap"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_margin="@dimen/big_padding"
+    android:padding="@dimen/default_padding">
+
+    <LinearLayout
+        style="@style/MatchWrapHor"
+        android:layout_height="@dimen/dialog_item_height"
+        android:layout_marginTop="@dimen/default_padding"
+        android:gravity="center_vertical">
+
+        <TextView
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="15"
+            android:gravity="right"
+            android:paddingRight="@dimen/default_padding_double"
+            android:text="Data"
+            android:textColor="@color/accent"
+            android:textStyle="bold"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/graph_red"/>
+
+        <LinearLayout
+            style="@style/MatchMatchHor"
+            android:layout_width="0dp"
+            android:layout_weight="40"
+            android:background="@color/primary"
+            android:gravity="center_vertical|center_horizontal"
+            android:paddingLeft="@dimen/default_padding"
+            android:paddingRight="@dimen/default_padding">
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/cloud_upload"
+                style="@style/NormalText"
+                android:gravity="center_vertical"/>
+
+            <TextView
+                android:id="@+id/cloud_uploading"
+                style="@style/NormalText"
+                android:text="@string/dialog_background_send"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</io.relayr.iotsmartphone.ui.SettingsDialog>

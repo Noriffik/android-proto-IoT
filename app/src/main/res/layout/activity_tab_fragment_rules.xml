@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    style="@style/MatchMatch"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/background"
+    android:padding="@dimen/default_padding">
+
+    <TextView
+        style="@style/TitleText"
+        android:text="SOON..."
+        android:textColor="@color/accent"/>
+
+    <!--<TextView-->
+    <!--style="@style/TitleText"-->
+    <!--android:text="Conditions"-->
+    <!--android:textColor="@color/accent"/>-->
+
+    <!--<include-->
+    <!--android:id="@+id/condition_one"-->
+    <!--layout="@layout/widget_rules_condition"/>-->
+
+    <!--<include-->
+    <!--android:id="@+id/condition_two"-->
+    <!--layout="@layout/widget_rules_condition"/>-->
+
+    <!--<TextView-->
+    <!--style="@style/TitleText"-->
+    <!--android:text="Outcomes"-->
+    <!--android:textColor="@color/accent"/>-->
+
+    <!--<include-->
+    <!--android:id="@+id/outcome_one"-->
+    <!--layout="@layout/widget_rules_condition"/>-->
+
+    <!--<include-->
+    <!--android:id="@+id/outcome_two"-->
+    <!--layout="@layout/widget_rules_condition"/>-->
+
+</LinearLayout>

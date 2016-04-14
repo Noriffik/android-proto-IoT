@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    style="@style/MatchWrapHor"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="@dimen/cloud_connected_size"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/rule_widget_prefix"
+        style="@style/NormalText"
+        android:layout_width="0dp"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="10"
+        android:gravity="right"
+        android:paddingRight="@dimen/default_padding_double"
+        android:text="@string/rules_if"
+        android:textColor="@color/accent"
+        android:textStyle="bold"/>
+
+    <View
+        android:id="@+id/rule_widget_color"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@color/graph_yellow"/>
+
+    <RelativeLayout
+        style="@style/MatchMatchHor"
+        android:layout_width="0dp"
+        android:layout_weight="44"
+        android:background="@color/primary"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/rule_widget_icon"
+            android:layout_width="@dimen/cloud_icon_size"
+            android:layout_height="@dimen/cloud_icon_size"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/default_padding"
+            android:background="@drawable/cloud_circle"
+            android:padding="@dimen/default_padding_double"
+            android:src="@drawable/ic_add_dark"/>
+
+        <TextView
+            android:id="@+id/rule_widget_meaning"
+            style="@style/TitleText"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/rule_widget_icon"
+            android:paddingLeft="@dimen/default_padding"
+            android:paddingTop="@dimen/default_padding"
+            android:text="Meaning"
+            android:textColor="@color/accent"/>
+
+        <TextView
+            android:id="@+id/rule_widget_info"
+            style="@style/NormalText"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@id/rule_widget_icon"
+            android:paddingBottom="@dimen/default_padding"
+            android:paddingLeft="@dimen/default_padding"
+            android:text="when"/>
+
+        <TextView
+            android:id="@+id/rule_widget_condition"
+            style="@style/NormalText"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@id/rule_widget_info"
+            android:paddingBottom="@dimen/default_padding"
+            android:paddingLeft="@dimen/default_padding"
+            android:text=">"/>
+
+        <TextView
+            android:id="@+id/rule_widget_value"
+            style="@style/NormalText"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@id/rule_widget_condition"
+            android:paddingBottom="@dimen/default_padding"
+            android:paddingLeft="@dimen/default_padding"
+            android:text="1000"/>
+
+    </RelativeLayout>
+</LinearLayout>

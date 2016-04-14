@@ -1,0 +1,34 @@
+<resources>
+
+    <dimen name="default_padding_half">6dp</dimen>
+    <dimen name="default_padding">12dp</dimen>
+    <dimen name="big_padding">40dp</dimen>
+
+    <dimen name="fab_margin">20dp</dimen>
+
+    <dimen name="title_text">20sp</dimen>
+    <dimen name="subtitle_text">18sp</dimen>
+    <dimen name="normal_text">16sp</dimen>
+    <dimen name="small_text">14sp</dimen>
+    <dimen name="tiny_text">12sp</dimen>
+
+    <dimen name="device_name_text">16sp</dimen>
+    <dimen name="settings_switch_width">250dp</dimen>
+    <dimen name="settings_padding">30dp</dimen>
+
+    <dimen name="toolbar_height">60dp</dimen>
+
+    <dimen name="cloud_icon_size">90dp</dimen>
+    <dimen name="cloud_icon_radius">45dp</dimen>
+    <dimen name="graph_height">150dp</dimen>
+
+    <dimen name="dotted_line_gap">4dp</dimen>
+    <dimen name="dotted_line_dash">8dp</dimen>
+    <dimen name="dotted_line_padding">-4dp</dimen>
+    <dimen name="dotted_line_width">4dp</dimen>
+
+    <dimen name="cloud_connected_radius">55dp</dimen>
+    <dimen name="cloud_connected_size">110dp</dimen>
+    <dimen name="dialog_item_height">70dp</dimen>
+
+</resources>
