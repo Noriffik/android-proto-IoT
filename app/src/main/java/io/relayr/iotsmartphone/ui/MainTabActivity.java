@@ -474,8 +474,8 @@ public class MainTabActivity extends AppCompatActivity implements
         if (Storage.instance().locationGranted()) {
             new Handler().postDelayed(new Runnable() {
                 @Override public void run() {
-                    if (mLocationManager == null)
-                        mLocationManager = (LocationManager) MainTabActivity.this.getSystemService(LOCATION_SERVICE);
+                    if (mLocationManager != null) return;
+                    mLocationManager = (LocationManager) MainTabActivity.this.getSystemService(LOCATION_SERVICE);
                     if (ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
                         try {
                             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, MainTabActivity.this);

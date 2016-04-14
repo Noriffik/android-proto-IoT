@@ -29,5 +29,6 @@
     <dimen name="cloud_connected_radius">60dp</dimen>
     <dimen name="cloud_connected_size">120dp</dimen>
     <dimen name="dialog_item_height">70dp</dimen>
+    <dimen name="rule_icon_size">60dp</dimen>
 
 </resources>

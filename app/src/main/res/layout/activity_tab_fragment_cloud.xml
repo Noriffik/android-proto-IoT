@@ -18,9 +18,9 @@
             android:layout_width="@dimen/cloud_connected_size"
             android:layout_height="@dimen/cloud_connected_size"
             android:layout_gravity="center_horizontal"
-            android:background="@drawable/cloud_connected_circle"
-            android:elevation="@dimen/default_padding_double"
-            android:padding="@dimen/default_padding_double"
+            android:background="@drawable/cloud_disconnected_circle"
+            android:elevation="@dimen/default_padding_half"
+            android:padding="@dimen/big_padding"
             android:src="@drawable/ic_graphic_cloud"/>
 
         <TextView
@@ -45,7 +45,7 @@
         <View
             android:id="@+id/cloud_connection"
             android:layout_width="@dimen/default_padding_half"
-            android:layout_height="@dimen/graph_height"
+            android:layout_height="@dimen/cloud_connected_size"
             android:layout_below="@+id/cloud"
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/cloud_connected_radius"
@@ -71,7 +71,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/default_padding"
             android:background="@drawable/cloud_circle"
-            android:elevation="@dimen/default_padding"
+            android:elevation="@dimen/default_padding_half"
             android:padding="@dimen/default_padding_double"
             android:src="@drawable/ic_graphic_phone"/>
 
@@ -99,7 +99,7 @@
         <View
             android:id="@+id/watch_connection"
             android:layout_width="@dimen/default_padding_half"
-            android:layout_height="@dimen/graph_height"
+            android:layout_height="@dimen/cloud_connected_size"
             android:layout_below="@id/phone"
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/cloud_connected_radius"
@@ -125,7 +125,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/default_padding"
             android:background="@drawable/cloud_circle"
-            android:elevation="@dimen/default_padding"
+            android:elevation="@dimen/default_padding_half"
             android:padding="@dimen/default_padding_double"
             android:src="@drawable/ic_graphic_watch"/>
 

@@ -31,5 +31,6 @@
     <dimen name="dotted_line_width">4dp</dimen>
 
     <dimen name="dialog_item_height">65dp</dimen>
+    <dimen name="rule_icon_size">60dp</dimen>
 
 </resources>

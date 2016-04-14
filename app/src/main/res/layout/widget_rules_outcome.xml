@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<io.relayr.iotsmartphone.ui.rules.RuleCondition
+<io.relayr.iotsmartphone.ui.rules.RuleOutcome
     style="@style/MatchWrapHor"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="@dimen/cloud_connected_size"
@@ -49,7 +49,7 @@
             android:layout_centerVertical="true"
             android:layout_toRightOf="@id/rule_widget_icon"
             android:paddingLeft="@dimen/default_padding"
-            android:text="Add condition"/>
+            android:text="Add outcome"/>
 
         <LinearLayout
             android:id="@+id/rule_widget_container"
@@ -92,4 +92,4 @@
             </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
-</io.relayr.iotsmartphone.ui.rules.RuleCondition>
+</io.relayr.iotsmartphone.ui.rules.RuleOutcome>

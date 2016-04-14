@@ -7,15 +7,16 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 
 public class FragmentRules extends Fragment {
 
-//    @InjectView(R.id.condition_one) View mConditionOne;
-//    @InjectView(R.id.condition_two) View mConditionTwo;
-//
-//    @InjectView(R.id.outcome_one) View mOutcomeOne;
-//    @InjectView(R.id.outcome_two) View mOutcomeTwo;
+    @InjectView(R.id.condition_one) RuleCondition mConditionOne;
+    @InjectView(R.id.condition_two) RuleCondition mConditionTwo;
+
+    @InjectView(R.id.outcome_one) RuleOutcome mOutcomeOne;
+    @InjectView(R.id.outcome_two) RuleOutcome mOutcomeTwo;
 
     public FragmentRules() {}
 
@@ -24,9 +25,18 @@ public class FragmentRules extends Fragment {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_rules, container, false);
         ButterKnife.inject(this, view);
 
-//        mConditionTwo.setVisibility(View.GONE);
-//        mOutcomeTwo.setVisibility(View.GONE);
+        setUpConditions();
 
         return view;
+    }
+
+    private void setUpConditions() {
+        mConditionOne.setUp(R.color.graph_yellow);
+        mConditionTwo.setUp(R.color.graph_blue);
+        mOutcomeOne.setUp(R.color.graph_green);
+        mOutcomeTwo.setUp(R.color.graph_red);
+
+        mConditionTwo.setVisibility(View.GONE);
+        mOutcomeTwo.setVisibility(View.GONE);
     }
 }

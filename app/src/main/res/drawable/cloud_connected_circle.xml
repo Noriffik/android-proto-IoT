@@ -65,6 +65,11 @@
                 android:height="@dimen/cloud_connected_size"/>
             <solid android:color="@color/background"/>
         </shape>
+        <padding
+            android:bottom="@dimen/default_padding_double"
+            android:left="@dimen/default_padding_double"
+            android:right="@dimen/default_padding_double"
+            android:top="@dimen/default_padding_double"/>
     </item>
 
     <item
