@@ -143,7 +143,7 @@ public class FragmentReadings extends Fragment {
             final String meaning = mReadings.get(position).getMeaning();
             return meaning.equals("angularSpeed") || meaning.equals("acceleration") ? R.layout.widget_reading_graph :
                     meaning.equals("rssi") || meaning.equals("batteryLevel") || meaning.equals("luminosity") ? R.layout.widget_reading_graph_simple :
-                            meaning.equals("touch") ? R.layout.widget_reading_graph_bar : R.layout.widget_reading_default;
+                            meaning.equals("touch") ? R.layout.widget_reading_graph_bar : R.layout.widget_reading_map;
         }
 
         @Override
@@ -160,6 +160,7 @@ public class FragmentReadings extends Fragment {
             mType = type;
             mReadings.clear();
             mReadings.addAll(readings);
+
             notifyDataSetChanged();
         }
     }

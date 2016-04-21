@@ -6,6 +6,8 @@
     <color name="accent">#d8d7dc</color>
     <color name="background">#2d313d</color>
 
+    <color name="axis">#515259</color>
+
     <color name="text_color">#7b7d85</color>
 
     <color name="graph_green">#2ea883</color>

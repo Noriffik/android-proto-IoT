@@ -18,7 +18,7 @@ import java.util.List;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
-import io.relayr.iotsmartphone.utils.LimitedQueue;
+import io.relayr.iotsmartphone.handler.LimitedQueue;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.java.model.action.Reading;
 
@@ -26,7 +26,7 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 
 public class ReadingWidgetGraphBar extends ReadingWidget {
 
-    @InjectView(R.id.history_chart) BarChart mChart;
+    @InjectView(R.id.chart) BarChart mChart;
 
     public ReadingWidgetGraphBar(Context context) {
         this(context, null);
@@ -69,7 +69,6 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
 
         mChart.getLegend().setEnabled(false);
         mChart.getAxisRight().setEnabled(true);
-
         initAxis(mChart.getAxisLeft(), min, max);
         initAxis(mChart.getAxisRight(), min, max);
 
@@ -77,7 +76,8 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
     }
 
     private void initAxis(YAxis axis, int min, int max) {
-        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.secondary));
+        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.axis));
+        axis.setAxisLineColor(ContextCompat.getColor(getContext(), R.color.axis));
         axis.setAxisMaxValue(max);
         axis.setAxisMinValue(min);
         axis.setStartAtZero(min == 0);

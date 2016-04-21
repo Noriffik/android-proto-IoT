@@ -10,7 +10,7 @@ import java.util.List;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.storage.Constants;
-import io.relayr.iotsmartphone.utils.LimitedQueue;
+import io.relayr.iotsmartphone.handler.LimitedQueue;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.ValueSchema;

@@ -22,7 +22,7 @@ import java.util.List;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
-import io.relayr.iotsmartphone.utils.LimitedQueue;
+import io.relayr.iotsmartphone.handler.LimitedQueue;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
@@ -35,7 +35,7 @@ import static io.relayr.iotsmartphone.storage.Storage.FREQS_WATCH;
 
 public class ReadingWidgetGraphComplex extends ReadingWidget {
 
-    @InjectView(R.id.history_chart) LineChart mChart;
+    @InjectView(R.id.chart) LineChart mChart;
 
     public ReadingWidgetGraphComplex(Context context) {
         this(context, null);
@@ -103,7 +103,8 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
     }
 
     private void initAxis(YAxis axis, int min, int max) {
-        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.secondary));
+        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.axis));
+        axis.setAxisLineColor(ContextCompat.getColor(getContext(), R.color.axis));
         axis.setAxisMaxValue(max);
         axis.setAxisMinValue(min);
         axis.setStartAtZero(min == 0);
@@ -166,7 +167,7 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         set.setDrawCircleHole(false);
         set.setDrawValues(false);
         set.setCircleRadius(2);
-        set.setValueTextColor(ContextCompat.getColor(getContext(), R.color.secondary));
+        set.setValueTextColor(ContextCompat.getColor(getContext(), R.color.axis));
         set.setFillColor(ContextCompat.getColor(getContext(), dotColor));
         return set;
     }

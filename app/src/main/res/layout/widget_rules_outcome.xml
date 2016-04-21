@@ -60,7 +60,7 @@
             android:visibility="gone">
 
             <TextView
-                android:id="@+id/rule_widget_meaning"
+                android:id="@+id/rule_widget_name"
                 style="@style/TitleText"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
@@ -81,7 +81,7 @@
             <LinearLayout
                 style="@style/MatchWrapHor"
                 android:layout_alignParentLeft="true"
-                android:layout_below="@id/rule_widget_meaning"
+                android:layout_below="@id/rule_widget_name"
                 android:layout_marginTop="@dimen/default_padding"
                 android:gravity="center_vertical">
 
@@ -90,7 +90,7 @@
                     android:text="turn"/>
 
                 <android.support.v7.widget.SwitchCompat
-                    android:id="@+id/rule_widget_value"
+                    android:id="@+id/rule_widget_switch"
                     style="@style/SubtitleText"
                     android:layout_marginLeft="@dimen/default_padding_double"
                     android:padding="@dimen/default_padding_half"/>

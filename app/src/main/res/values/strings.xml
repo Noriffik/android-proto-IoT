@@ -8,8 +8,6 @@
     <string name="sv_flashlight_not_available">Flashlight not available.</string>
     <string name="sv_location_off_title">Location is OFF</string>
     <string name="sv_location_off_message">Would you like to turn it on?</string>
-    <string name="srv_flash_status">Flashlight turned %s</string>
-    <string name="srv_turn_off_flash">Turn off flash</string>
 
     <string name="ok">OK</string>
     <string name="yes">Yes</string>
@@ -64,8 +62,8 @@
     <string name="rule_operator_hint">\?</string>
     <string name="save">Save</string>
     <string name="rule_widget_select_operation">Select operation</string>
-    <string name="rule_widget_invalid_value">Invalid value</string>
-    <string name="rule_widget_invalid_out_of_bounds">Value out of bounds</string>
+    <string name="rule_value_invalid">Invalid value</string>
+    <string name="rule_valu_out_of_bounds">Value out of bounds</string>
     <string name="rule_widget_add_condition">Add condition</string>
     <string name="rules_conditions">Conditions</string>
     <string name="rules_outcomes">Outcomes</string>
@@ -78,5 +76,13 @@
     <string name="rule_update_problem">Update problem</string>
     <string name="rule_widget_add_outcome">Add outcome</string>
 
+    <string name="vibration_not_supported">Vibration not supported</string>
+
+    <string name="notification_music">Playing sound</string>
+    <string name="notification_music_off">Stop playing</string>
+    <string name="notification_flash">Flashlight turned ON</string>
+    <string name="notification_flash_off">Turn off flash</string>
+    <string name="notification_vibration">Device is vibrating</string>
+    <string name="notification_vibration_off">Stop vibration</string>
 
 </resources>

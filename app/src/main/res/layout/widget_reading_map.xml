@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidgetMap
+    style="@style/MatchWrap"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_margin="@dimen/default_padding_half">
+
+    <LinearLayout
+        style="@style/MatchWrap"
+        android:padding="@dimen/default_padding">
+
+        <include layout="@layout/widget_reading_header"/>
+
+        <RelativeLayout
+            style="@style/MatchWrap"
+            android:layout_marginLeft="@dimen/default_padding_double"
+            android:layout_marginRight="@dimen/default_padding_double"
+            android:layout_marginTop="@dimen/default_padding">
+
+            <ImageView
+                android:id="@+id/map_image"
+                style="@style/MatchMatch"
+                android:adjustViewBounds="true"
+                android:src="@drawable/map"/>
+
+            <LinearLayout
+                android:id="@+id/map_pin_container"
+                style="@style/MatchMatch"/>
+        </RelativeLayout>
+    </LinearLayout>
+</io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidgetMap>
