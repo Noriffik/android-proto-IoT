@@ -29,7 +29,7 @@ import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.utils.UiHelper;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.CreateDevice;
@@ -61,6 +61,7 @@ public class FragmentCloud extends Fragment {
 
     private ProgressDialog mProgress;
     private TimerTask mSpeedTimer;
+    private AlertDialog mWarningDialog;
 
     public FragmentCloud() {}
 
@@ -75,7 +76,7 @@ public class FragmentCloud extends Fragment {
 
         setSpeedTimer();
 
-        if (UiHelper.isCloudConnected()) loadUserInfo();
+        if (UiHelper.isCloudConnected()) loadDevices();
 
         return view;
     }
@@ -84,6 +85,9 @@ public class FragmentCloud extends Fragment {
         super.onDestroyView();
         if (mSpeedTimer != null) mSpeedTimer.cancel();
         mSpeedTimer = null;
+
+        if (mWarningDialog != null) mWarningDialog.dismiss();
+        mWarningDialog = null;
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.cloud_button)
@@ -137,11 +141,11 @@ public class FragmentCloud extends Fragment {
         if (mSpeedTimer != null) mSpeedTimer.cancel();
         mSpeedTimer = new TimerTask() {
             @Override public void run() {
-                ReadingUtils.calculateSpeeds();
+                ReadingHandler.calculateSpeeds();
                 getActivity().runOnUiThread(new TimerTask() {
                     @Override public void run() {
-                        mWatchSpeed.setText(getSpeed(ReadingUtils.sWatchSpeed));
-                        mCloudSpeed.setText(getSpeed(ReadingUtils.sPhoneSpeed + ReadingUtils.sWatchSpeed));
+                        mWatchSpeed.setText(getSpeed(ReadingHandler.sWatchSpeed));
+                        mCloudSpeed.setText(getSpeed(ReadingHandler.sPhoneSpeed + ReadingHandler.sWatchSpeed));
                     }
                 });
             }
@@ -231,70 +235,40 @@ public class FragmentCloud extends Fragment {
                     }
 
                     @Override public void success(User user) {
-                        loadUserInfo();
+                        loadDevices();
                         setUpCloud();
-                        EventBus.getDefault().post(new Constants.LoggedIn());
                     }
                 });
     }
 
-    private void loadUserInfo() {
-        RelayrSdk.getUser()
-                .timeout(5, TimeUnit.SECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SimpleObserver<User>() {
-                    @Override public void error(Throwable e) {
-                        UiHelper.showSnackBar(getActivity(), R.string.cloud_error_user_data);
-
-                        Crashlytics.log(Log.DEBUG, TAG, "Failed to load user info.");
-                        if (e instanceof TimeoutException) loadUserInfo();
-                        else Crashlytics.logException(e);
-                    }
-
-                    @Override public void success(User user) {
-                        loadDevices(user);
-                    }
-                });
-    }
-
-    private void loadDevices(User user) {
-        showProgress(R.string.cloud_progress_loading_devices);
-
-        if (Storage.instance().getDeviceId(PHONE) != null)
-            getDeviceFromCloud(user, PHONE);
-        else
-            createDevice(PHONE);
+    private void loadDevices() {
+        if (Storage.instance().getDeviceId(PHONE) != null) getDeviceFromCloud(PHONE);
+        else createDevice(PHONE);
 
         if (!UiHelper.isWearableConnected(getActivity())) return;
-        if (Storage.instance().getDeviceId(WATCH) != null)
-            getDeviceFromCloud(user, WATCH);
-        else
-            createDevice(WATCH);
+        if (Storage.instance().getDeviceId(WATCH) != null) getDeviceFromCloud(WATCH);
+        else createDevice(WATCH);
     }
 
-    private void getDeviceFromCloud(User user, final Constants.DeviceType type) {
+    private void getDeviceFromCloud(final Constants.DeviceType type) {
         Crashlytics.log(Log.DEBUG, TAG, "Fetch " + Storage.instance().getDeviceId(type));
 
-        user.getDevice(Storage.instance().getDeviceId(type))
+        RelayrSdk.getDeviceApi().getDevice(Storage.instance().getDeviceId(type))
                 .timeout(5, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SimpleObserver<Device>() {
                     @Override public void error(Throwable e) {
-                        hideProgress();
-                        UiHelper.showSnackBar(getActivity(), R.string.cloud_error_device_data);
                         Crashlytics.log(Log.DEBUG, TAG, "Failed to load " + type.name() + " device.");
                         if (!(e instanceof TimeoutException)) Crashlytics.logException(e);
                     }
 
                     @Override public void success(Device device) {
-                        refreshDevice(device, type);
+                        setUpDevice(device, type);
                     }
                 });
     }
 
     private void createDevice(final Constants.DeviceType type) {
-        showProgress(R.string.cloud_progress_creating_device);
-
         final String name = Storage.instance().getDeviceName(type);
         final String modelId = type == PHONE ? Storage.MODEL_PHONE : Storage.MODEL_WATCH;
         final String description = type == PHONE ? getString(R.string.app_title_phone) : getString(R.string.app_title_watch);
@@ -310,8 +284,6 @@ public class FragmentCloud extends Fragment {
                         if (e instanceof TimeoutException) {
                             createDevice(type);
                         } else {
-                            hideProgress();
-                            UiHelper.showSnackBar(getActivity(), R.string.cloud_error_create_device);
                             Crashlytics.log(Log.DEBUG, TAG, "Failed to create " + type.name() + " device.");
                             Crashlytics.logException(e);
                         }
@@ -319,20 +291,20 @@ public class FragmentCloud extends Fragment {
 
                     @Override public void success(Device device) {
                         Crashlytics.log(Log.DEBUG, TAG, "Created device " + device.getId());
-                        refreshDevice(device, type);
+                        setUpDevice(device, type);
                         Storage.instance().activate(type);
                         showWarning();
                     }
                 });
     }
 
-    private void refreshDevice(Device device, Constants.DeviceType type) {
-        hideProgress();
+    private void setUpDevice(Device device, Constants.DeviceType type) {
         Storage.instance().saveDevice(device, type);
         if (type == PHONE) setUpPhone();
         else setUpWearable();
 
         UiHelper.showSnackBar(getActivity(), R.string.cloud_device_success);
+        EventBus.getDefault().post(new Constants.CloudConnected());
     }
 
     private void logOut() {
@@ -341,27 +313,16 @@ public class FragmentCloud extends Fragment {
         setUpCloud();
     }
 
-    private void showProgress(int stringId) {
-        if (mProgress == null)
-            mProgress = ProgressDialog.show(getActivity(), getActivity().getString(R.string.cloud_progress_title),
-                    getActivity().getString(stringId), true);
-        else mProgress.setMessage(getActivity().getString(stringId));
-    }
-
-    private void hideProgress() {
-        if (mProgress != null) mProgress.dismiss();
-        mProgress = null;
-    }
-
     private void showWarning() {
-        new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
-                .setTitle(getContext().getResources().getString(R.string.cloud_upload_warning_title))
-                .setIcon(R.drawable.ic_warning)
-                .setMessage(getContext().getResources().getString(R.string.cloud_upload_warning_message))
-                .setPositiveButton(getContext().getResources().getString(R.string.ok), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int i) {
-                        dialog.dismiss();
-                    }
-                }).show();
+        if (mWarningDialog == null)
+            mWarningDialog = new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+                    .setTitle(getContext().getResources().getString(R.string.cloud_upload_warning_title))
+                    .setIcon(R.drawable.ic_warning)
+                    .setMessage(getContext().getResources().getString(R.string.cloud_upload_warning_message))
+                    .setPositiveButton(getContext().getResources().getString(R.string.ok), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int i) {
+                            dialog.dismiss();
+                        }
+                    }).show();
     }
 }

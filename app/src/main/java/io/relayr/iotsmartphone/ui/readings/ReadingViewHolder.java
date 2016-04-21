@@ -7,20 +7,16 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidget;
+import io.relayr.iotsmartphone.utils.UiHelper;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 public class ReadingViewHolder extends RecyclerView.ViewHolder {
-
-    private static final Map<String, String> sNameMap = new HashMap<>();
 
     @InjectView(R.id.reading_title) TextView mMeaningTv;
 
@@ -38,16 +34,6 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
         this.mContext = context;
 
         ButterKnife.inject(this, widget);
-
-        if (sNameMap.isEmpty()) {
-            sNameMap.put("acceleration", context.getString(R.string.reading_title_acceleration));
-            sNameMap.put("angularSpeed", context.getString(R.string.reading_title_gyro));
-            sNameMap.put("batteryLevel", context.getString(R.string.reading_title_battery));
-            sNameMap.put("luminosity", context.getString(R.string.reading_title_light));
-            sNameMap.put("location", context.getString(R.string.reading_title_location));
-            sNameMap.put("rssi", context.getString(R.string.reading_title_rssi));
-            sNameMap.put("touch", context.getString(R.string.reading_title_touch));
-        }
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.reading_settings)
@@ -61,7 +47,8 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
         new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay)
                 .setView(view)
-                .setTitle(mContext.getString(R.string.reading_settings_dialog_title, sNameMap.get(mMeaning)))
+                .setTitle(mContext.getString(R.string.reading_settings_dialog_title,
+                        UiHelper.getNameForMeaning(mContext, mMeaning)))
                 .setPositiveButton(mContext.getString(R.string.close), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -75,9 +62,9 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
         mType = type;
         mPath = reading.getPath();
         mMeaning = reading.getMeaning();
-        mUnit = reading.getValueSchema().isObjectSchema() ? "G" : reading.getValueSchema().getUnit();
+        mUnit = reading.getValueSchema().isObjectSchema() ? mContext.getString(R.string.acceleration_unit) : reading.getValueSchema().getUnit();
 
-        mMeaningTv.setText(sNameMap.get(mMeaning));
+        mMeaningTv.setText(UiHelper.getNameForMeaning(mContext, mMeaning));
 
         widget.setUp(reading.getPath(), reading.getMeaning(), reading.getValueSchema(), mType);
     }

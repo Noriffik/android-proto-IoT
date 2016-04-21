@@ -7,7 +7,7 @@ import android.widget.TextView;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.utils.LimitedQueue;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.java.model.action.Reading;
 
 public class ReadingWidgetDefault extends ReadingWidget {
@@ -30,7 +30,7 @@ public class ReadingWidgetDefault extends ReadingWidget {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-        final LimitedQueue<Reading> readings = ReadingUtils.readingsPhone.get(mMeaning);
+        final LimitedQueue<Reading> readings = ReadingHandler.readingsPhone.get(mMeaning);
         if (readings == null || readings.isEmpty()) return;
         final Reading last = readings.getLast();
         if (last == null) return;

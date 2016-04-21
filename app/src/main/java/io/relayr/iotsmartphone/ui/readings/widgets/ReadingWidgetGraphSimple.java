@@ -19,7 +19,7 @@ import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.utils.LimitedQueue;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
 
@@ -83,7 +83,7 @@ public class ReadingWidgetGraphSimple extends ReadingWidget {
         initAxis(mChart.getAxisLeft(), min, max);
         initAxis(mChart.getAxisRight(), min, max);
 
-        refresh(mType == PHONE ? ReadingUtils.readingsPhone.get(mMeaning) : ReadingUtils.readingsWatch.get(mMeaning));
+        refresh(mType == PHONE ? ReadingHandler.readingsPhone.get(mMeaning) : ReadingHandler.readingsWatch.get(mMeaning));
     }
 
     private void initAxis(YAxis axis, int min, int max) {

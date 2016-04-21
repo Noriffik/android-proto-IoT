@@ -13,6 +13,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.utils.LimitedQueue;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
@@ -48,7 +49,7 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         super(context, attrs, defStyle);
     }
 
-    private Gson mGson = new Gson();
+    private Gson mGson = new GsonBuilder().disableHtmlEscaping().create();
     private int[] mColors = new int[]{R.color.graph_green, R.color.graph_blue, R.color.graph_red};
 
     @Override
@@ -98,7 +99,7 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         initAxis(mChart.getAxisLeft(), min, max);
         initAxis(mChart.getAxisRight(), min, max);
 
-        refresh(mType == PHONE ? ReadingUtils.readingsPhone.get(mMeaning) : ReadingUtils.readingsWatch.get(mMeaning));
+        refresh(mType == PHONE ? ReadingHandler.readingsPhone.get(mMeaning) : ReadingHandler.readingsWatch.get(mMeaning));
     }
 
     private void initAxis(YAxis axis, int min, int max) {

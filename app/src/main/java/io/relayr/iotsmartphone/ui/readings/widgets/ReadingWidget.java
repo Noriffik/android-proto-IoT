@@ -11,11 +11,9 @@ import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.utils.LimitedQueue;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.ValueSchema;
-
-import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 
 public abstract class ReadingWidget extends LinearLayout {
 
@@ -59,7 +57,7 @@ public abstract class ReadingWidget extends LinearLayout {
     @SuppressWarnings("unused")
     public void onEvent(final Constants.ReadingRefresh reading) {
         if (reading.getMeaning().equals(mMeaning) && reading.getType() == mType)
-            refresh(mType == PHONE ? ReadingUtils.readingsPhone.get(mMeaning) : ReadingUtils.readingsWatch.get(mMeaning));
+            refresh(ReadingHandler.readings(mType).get(mMeaning));
     }
 
     public void setUp(String path, String meaning, ValueSchema schema, Constants.DeviceType type) {

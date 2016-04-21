@@ -1,12 +1,9 @@
 package io.relayr.iotsmartphone.ui.readings;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -18,7 +15,7 @@ import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.utils.UiHelper;
 
@@ -33,8 +30,8 @@ public class SamplingDialog extends LinearLayout {
     @InjectView(R.id.dialog_unit) TextView mUnitTv;
     @InjectView(R.id.dialog_identifier) TextView mIdentifierTv;
 
-    @InjectView(R.id.sampling_low) TextView mSamplingLow;
     @InjectView(R.id.sampling_high) TextView mSamplingHigh;
+    @InjectView(R.id.sampling_low) TextView mSamplingLow;
     @InjectView(R.id.sampling_seek) SeekBar mSamplingSeek;
     @InjectView(R.id.sampling_info) TextView mSamplingInfo;
 
@@ -81,14 +78,14 @@ public class SamplingDialog extends LinearLayout {
     }
 
     private void setSampling() {
-        final boolean complex = ReadingUtils.isComplex(mMeaning);
+        final boolean complex = ReadingHandler.isComplex(mMeaning);
         int frequency = Storage.instance().loadFrequency(mMeaning, mType);
         setFrequency(frequency, complex);
 
         final int minimum = mType == PHONE ? SAMPLING_PHONE_MIN : SAMPLING_WATCH_MIN;
 
-        mSamplingLow.setText(complex ? getContext().getString(R.string.dialog_low) : (minimum + " s"));
-        mSamplingHigh.setText(complex ? getContext().getString(R.string.dialog_high) : ((Constants.SAMPLING_MAX + minimum) + " s"));
+        mSamplingHigh.setText(complex ? getContext().getString(R.string.dialog_high) : (minimum + " s"));
+        mSamplingLow.setText(complex ? getContext().getString(R.string.dialog_low) : ((Constants.SAMPLING_MAX + minimum) + " s"));
 
         mSamplingSeek.setMax(Constants.SAMPLING_MAX);
         if (complex) mSamplingSeek.setProgress(frequency / Constants.SAMPLING_COMPLEX);
