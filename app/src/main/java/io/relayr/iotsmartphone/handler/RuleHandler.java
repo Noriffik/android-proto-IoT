@@ -11,7 +11,6 @@ import io.relayr.android.RelayrSdk;
 import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.ui.rules.RuleBuilder;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.rules.AppliedTemplate;
 import io.relayr.java.model.rules.TemplateParameters;

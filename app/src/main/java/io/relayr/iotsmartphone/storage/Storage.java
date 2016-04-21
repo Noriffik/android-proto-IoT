@@ -2,6 +2,7 @@ package io.relayr.iotsmartphone.storage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +64,17 @@ public class Storage {
         PREFS = IotApplication.context().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
+    public static Map<String, Integer> READINGS_PRIORITY = new HashMap<String, Integer>() {
+        {
+            put("acceleration", 1);
+            put("angularSpeed", 2);
+            put("luminosity", 3);
+            put("location", 4);
+            put("touch", 5);
+            put("batteryLevel", 6);
+            put("rssi", 7);
+        }
+    };
     public static Map<String, Integer> FREQS_PHONE = new HashMap<String, Integer>() {
         {
             put("acceleration", Storage.instance().loadFrequency("acceleration", PHONE));
@@ -216,7 +228,7 @@ public class Storage {
         sReadingsPhone.addAll(readings);
         Collections.sort(sReadingsPhone, new Comparator<DeviceReading>() {
             @Override public int compare(DeviceReading lhs, DeviceReading rhs) {
-                return lhs.getMeaning().compareTo(rhs.getMeaning());
+                return READINGS_PRIORITY.get(lhs.getMeaning()) - READINGS_PRIORITY.get(rhs.getMeaning());
             }
         });
     }
@@ -231,7 +243,7 @@ public class Storage {
         sCommandsPhone.addAll(commands);
         Collections.sort(sCommandsPhone, new Comparator<DeviceCommand>() {
             @Override public int compare(DeviceCommand lhs, DeviceCommand rhs) {
-                return lhs.getName().compareTo(rhs.getName());
+                return lhs.getName().compareToIgnoreCase(rhs.getName());
             }
         });
     }

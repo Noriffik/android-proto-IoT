@@ -63,9 +63,10 @@ public class SoundHelper {
         mRingManager = null;
     }
 
-    public void vibrate(Context context) {
+    public boolean vibrate(Context context) {
         if (mVibrator == null) mVibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
         if (mVibrator.hasVibrator()) mVibrator.vibrate(DURATION);
+        return (mVibrator != null && mVibrator.hasVibrator());
     }
 
     public void stopVibration() {

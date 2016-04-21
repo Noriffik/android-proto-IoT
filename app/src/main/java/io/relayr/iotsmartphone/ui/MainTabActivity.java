@@ -68,6 +68,7 @@ import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
@@ -76,7 +77,6 @@ import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.ui.cloud.FragmentCloud;
 import io.relayr.iotsmartphone.ui.readings.FragmentReadings;
 import io.relayr.iotsmartphone.ui.rules.FragmentRules;
-import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.utils.UiHelper;
 import io.relayr.java.helper.observer.SuccessObserver;
 import io.relayr.java.model.action.Command;
@@ -95,6 +95,8 @@ import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.hardware.Sensor.TYPE_GYROSCOPE;
 import static android.hardware.Sensor.TYPE_LIGHT;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
+import static android.location.LocationManager.GPS_PROVIDER;
+import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.os.BatteryManager.EXTRA_LEVEL;
 import static android.os.BatteryManager.EXTRA_SCALE;
@@ -240,7 +242,12 @@ public class MainTabActivity extends AppCompatActivity implements
 
     public class MessageReceiver extends BroadcastReceiver {
         @Override public void onReceive(Context context, Intent intent) {
-            toggleFlash(false);
+            final String extra = intent.getStringExtra(DemandIntentReceiver.EXTRA_MESSAGE);
+            Log.e("MessageReceiver", extra);
+            if (extra == null) return;
+            else if (extra.equals(Constants.NOTIFICATION_FLASH)) toggleFlash(false);
+            else if (extra.equals(Constants.NOTIFICATION_SOUND)) toggleSound(false);
+            else if (extra.equals(Constants.NOTIFICATION_VIBRATION)) toggleVibration(false);
         }
     }
 
@@ -256,7 +263,9 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
 
-    @Override public void onLocationChanged(Location location) {}
+    @Override public void onLocationChanged(Location location) {
+        ReadingHandler.publishLocation(location);
+    }
 
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -332,12 +341,13 @@ public class MainTabActivity extends AppCompatActivity implements
                         @Override public void onCompleted() {}
 
                         @Override public void onError(Throwable e) {
-                            Log.e("MTA", "Failed while refreshing");
-                            e.printStackTrace();
+                            Crashlytics.log(Log.ERROR, "MTA", "Failed while refreshing");
+                            Crashlytics.logException(e);
                         }
 
                         @Override public void onNext(Long num) {
                             if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
+                            if (num % FREQS_PHONE.get("location") == 0) monitorLocation();
                             if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
                             if (num % FREQS_PHONE.get("touch") == 0)
                                 ReadingHandler.publishTouch(false);
@@ -501,15 +511,15 @@ public class MainTabActivity extends AppCompatActivity implements
                     mLocationManager = (LocationManager) MainTabActivity.this.getSystemService(LOCATION_SERVICE);
                     if (ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
                         try {
-                            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, MainTabActivity.this);
+                            mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, MainTabActivity.this);
                             monitorLocation();
                         } catch (Exception e) {
-                            Crashlytics.log(Log.ERROR, "SRV", "GPS_PROVIDER doesn't exist.");
+                            Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
                             try {
-                                mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, MainTabActivity.this);
+                                mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, MainTabActivity.this);
                                 monitorLocation();
                             } catch (Exception e1) {
-                                Crashlytics.log(Log.ERROR, "SRV", "NETWORK_PROVIDER doesn't exist.");
+                                Crashlytics.log(Log.ERROR, "MTA", "NETWORK_PROVIDER doesn't exist.");
                             }
                         }
                     }
@@ -524,12 +534,14 @@ public class MainTabActivity extends AppCompatActivity implements
             @Override public void run() {
                 if (ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
                         ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED) {
-                    Location location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    Location location = mLocationManager.getLastKnownLocation(GPS_PROVIDER);
                     if (location == null)
-                        location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    if (location != null)
-                        ReadingHandler.publishLocation(MainTabActivity.this, location);
-                    else showLocationDialog();
+                        location = mLocationManager.getLastKnownLocation(NETWORK_PROVIDER);
+                    if (location != null) ReadingHandler.publishLocation(location);
+
+                    if (location == null && !mLocationManager.isProviderEnabled(GPS_PROVIDER) &&
+                            !mLocationManager.isProviderEnabled(NETWORK_PROVIDER))
+                        showLocationDialog();
                 }
             }
         });
@@ -579,10 +591,10 @@ public class MainTabActivity extends AppCompatActivity implements
                                     toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
                                     break;
                                 case "playSound":
-                                    playMusic(Boolean.parseBoolean(String.valueOf(action.getValue())));
+                                    toggleSound(Boolean.parseBoolean(String.valueOf(action.getValue())));
                                     break;
                                 case "vibration":
-                                    vibrate(Boolean.parseBoolean(String.valueOf(action.getValue())));
+                                    toggleVibration(Boolean.parseBoolean(String.valueOf(action.getValue())));
                                     break;
                             }
                         }
@@ -594,11 +606,9 @@ public class MainTabActivity extends AppCompatActivity implements
         try {
             mFlash.open(MainTabActivity.this.getApplicationContext());
             mFlash.on();
-            showNotification();
+            showNotification(R.string.notification_flash, R.string.notification_flash_off, Constants.NOTIFICATION_FLASH);
         } catch (Exception e) {
             Crashlytics.log(Log.ERROR, "MTA", "Failed to create FlashHelper.");
-            e.printStackTrace();
-
             Toast.makeText(MainTabActivity.this, R.string.sv_err_using_flash, Toast.LENGTH_SHORT).show();
             mFlash.close();
             mFlash = null;
@@ -613,7 +623,7 @@ public class MainTabActivity extends AppCompatActivity implements
             else {
                 if (on) {
                     mFlash.on();
-                    showNotification();
+                    showNotification(R.string.notification_flash, R.string.notification_flash_off, Constants.NOTIFICATION_FLASH);
                 } else {
                     mFlash.off();
                 }
@@ -621,34 +631,41 @@ public class MainTabActivity extends AppCompatActivity implements
         }
     }
 
-    private void playMusic(boolean start) {
+    private void toggleSound(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
-        if (start) mSound.playMusic(MainTabActivity.this);
-        else mSound.stopMusic();
+        if (start) {
+            showNotification(R.string.notification_music, R.string.notification_music_off, Constants.NOTIFICATION_SOUND);
+            mSound.playMusic(MainTabActivity.this);
+        } else mSound.stopMusic();
     }
 
-    private void vibrate(boolean start) {
+    private void toggleVibration(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
-        if (start) mSound.vibrate(MainTabActivity.this);
-        else mSound.stopVibration();
+        if (start) {
+            final boolean started = mSound.vibrate(MainTabActivity.this);
+            if (!started) UiHelper.showSnackBar(this, R.string.vibration_not_supported);
+        } else {
+            mSound.stopVibration();
+        }
     }
 
-    public void showNotification() {
+    public void showNotification(int titleId, int textId, String extra) {
         Intent demandIntent = new Intent(this, DemandIntentReceiver.class)
-                .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, false)
+                .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, extra)
                 .setAction(DemandIntentReceiver.ACTION_DEMAND);
-        PendingIntent demandPendingIntent = PendingIntent.getBroadcast(this, 0, demandIntent, 0);
+        PendingIntent demandPendingIntent = PendingIntent.getBroadcast(this, 0, demandIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
         NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
-                this.getString(R.string.srv_turn_off_flash), demandPendingIntent).build();
-        showNotification(action);
+                this.getString(textId), demandPendingIntent).build();
+        showNotification(action, titleId, textId);
     }
 
-    private void showNotification(NotificationCompat.Action action) {
+    private void showNotification(NotificationCompat.Action action, int titleId, int textId) {
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.notification)
                 .setDefaults(Notification.DEFAULT_ALL)
-                .setContentTitle(this.getString(R.string.app_name))
-                .setContentText(this.getString(R.string.srv_flash_status, "ON"));
+                .setContentTitle(getString(titleId))
+                .setContentText(getString(textId));
 
         if (UiHelper.isWearableConnected(this)) {
             Bitmap bg = BitmapFactory.decodeResource(getResources(), R.color.primary);
@@ -657,7 +674,7 @@ public class MainTabActivity extends AppCompatActivity implements
         builder.addAction(action);
 
         final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(this);
-        managerCompat.notify(2376, builder.build());
+        managerCompat.notify(Constants.NOTIFICATION_ID, builder.build());
     }
 
     private void sendToWearable() {

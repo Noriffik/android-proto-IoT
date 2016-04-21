@@ -7,6 +7,8 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import io.relayr.iotsmartphone.storage.Constants;
+
 public class DemandIntentReceiver extends BroadcastReceiver {
 
     public static final String ACTION_DEMAND = "io.relayr.iots.ACTION_DEMAND";
@@ -16,13 +18,13 @@ public class DemandIntentReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals(ACTION_DEMAND)) {
             try {
-                boolean message = intent.getBooleanExtra(EXTRA_MESSAGE, false);
+                Log.e("DemandIntentReceiver", intent.getStringExtra(EXTRA_MESSAGE));
                 Intent messageIntent = new Intent(Intent.ACTION_SEND);
-                messageIntent.putExtra(EXTRA_MESSAGE, message);
+                messageIntent.putExtra(EXTRA_MESSAGE, intent.getStringExtra(EXTRA_MESSAGE));
                 LocalBroadcastManager.getInstance(context).sendBroadcast(messageIntent);
 
                 final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(context);
-                managerCompat.cancel(2376);
+                managerCompat.cancel(Constants.NOTIFICATION_ID);
             } catch (Exception e) {
                 Log.v("DemandIntentReceiver", "Failed to get extras");
             }

@@ -1,8 +1,5 @@
 package io.relayr.iotsmartphone.handler;
 
-import android.content.Context;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.util.Log;
 
@@ -12,10 +9,7 @@ import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.gson.Gson;
 
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import de.greenrobot.event.EventBus;
@@ -23,7 +17,6 @@ import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.utils.LimitedQueue;
 import io.relayr.java.helper.observer.ErrorObserver;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.AccelGyroscope;
@@ -94,7 +87,6 @@ public class ReadingHandler {
                                     final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
                                     Storage.instance().savePhoneReadings(transport.getReadings());
                                     Storage.instance().savePhoneCommands(transport.getCommands());
-                                    EventBus.getDefault().post(new Constants.DeviceModelEvent());
                                 } catch (DeviceModelsException e) {
                                     e.printStackTrace();
                                 }
@@ -107,7 +99,6 @@ public class ReadingHandler {
                                 try {
                                     final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
                                     Storage.instance().saveWatchReadings(transport.getReadings());
-                                    EventBus.getDefault().post(new Constants.DeviceModelEvent());
                                 } catch (DeviceModelsException e) {
                                     e.printStackTrace();
                                 }
@@ -123,6 +114,7 @@ public class ReadingHandler {
                             }
 
                             @Override public void success(DeviceModel o) {
+                                EventBus.getDefault().post(new Constants.DeviceModelEvent());
                                 subscriber.onNext(true);
                             }
                         });
@@ -209,23 +201,9 @@ public class ReadingHandler {
         }
     }
 
-    public static void publishLocation(Context context, Location location) {
-        try {
-            Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-            List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-            if (addresses.isEmpty()) return;
-
-            Address obj = addresses.get(0);
-            String address = obj.getCountryName() + ", ";
-            address += obj.getAddressLine(1) + ", ";
-            address += obj.getAddressLine(0);
-
-            publish(new Reading(0, System.currentTimeMillis(), "location", "/", address));
-        } catch (IOException e) {
-            publish(new Reading(0, System.currentTimeMillis(), "location", "/", "Unresolved"));
-            Crashlytics.log(Log.DEBUG, TAG, "Failed to get location.");
-            e.printStackTrace();
-        }
+    public static void publishLocation(Location loc) {
+        final LocationReading reading = new LocationReading(loc.getLatitude(), loc.getLongitude(), loc.getAltitude());
+        publish(new Reading(0, System.currentTimeMillis(), "location", "/", reading));
     }
 
     public static void calculateSpeeds() {
@@ -245,5 +223,29 @@ public class ReadingHandler {
 
     public static void publishTouch(boolean active) {
         ReadingHandler.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", active));
+    }
+
+    public static class LocationReading {
+        private double latitude;
+        private double longitude;
+        private double altitude;
+
+        public LocationReading(double latitude, double longitude, double altitude) {
+            this.latitude = latitude;
+            this.longitude = longitude;
+            this.altitude = altitude;
+        }
+
+        public double latitude() {
+            return latitude;
+        }
+
+        public double longitude() {
+            return longitude;
+        }
+
+        public double altitude() {
+            return altitude;
+        }
     }
 }

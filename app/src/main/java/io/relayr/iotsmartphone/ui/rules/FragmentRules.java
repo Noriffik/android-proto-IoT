@@ -1,6 +1,5 @@
 package io.relayr.iotsmartphone.ui.rules;
 
-import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -14,6 +13,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.handler.RuleHandler;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.utils.UiHelper;
@@ -50,8 +50,6 @@ public class FragmentRules extends Fragment {
     @InjectView(R.id.outcome_one) RuleOutcome mOutcomeOne;
     @InjectView(R.id.outcome_two) RuleOutcome mOutcomeTwo;
 
-    private ProgressDialog mInitialiseDialog;
-
     public FragmentRules() {}
 
     @Override
@@ -75,31 +73,23 @@ public class FragmentRules extends Fragment {
     @Override public void onResume() {
         super.onResume();
 
-        setUpConditions(null);
+        if (UiHelper.isCloudConnected()) loadRule();
+        else setUpConditions(null);
 
         mLoggedInView.setVisibility(UiHelper.isCloudConnected() ? VISIBLE : GONE);
         mNotLoggedInView.setVisibility(UiHelper.isCloudConnected() ? GONE : VISIBLE);
-
-        if (UiHelper.isCloudConnected()) loadRule();
     }
 
     private void loadRule() {
-        if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
-        if (!RuleHandler.hasRule())
-            mInitialiseDialog = ProgressDialog.show(getContext(), getString(R.string.initializing),
-                    getString(R.string.loading_rules), true);
-
         RuleHandler.loadRule()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SimpleObserver<RuleBuilder>() {
                     @Override public void error(Throwable e) {
-                        if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
                         if (e instanceof TimeoutException) loadRule();
                         else setUpConditions(null);
                     }
 
                     @Override public void success(RuleBuilder rule) {
-                        if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
                         setUpConditions(rule);
                     }
                 });
@@ -121,8 +111,8 @@ public class FragmentRules extends Fragment {
                         if (reading != null) {
                             mConditionOperator.setVisibility(VISIBLE);
                             mConditionTwo.setVisibility(VISIBLE);
+                            RuleHandler.setCondition(0, type, reading.getMeaning(), operation, value);
                         }
-                        RuleHandler.setCondition(0, type, reading.getMeaning(), operation, value);
                     }
 
                     @Override public void removeCondition() {
@@ -148,8 +138,10 @@ public class FragmentRules extends Fragment {
 
         mOutcomeOne.setUp(R.color.graph_green, rule, 0, new OutcomeListener() {
             @Override public void outcomeChanged(DeviceCommand command, boolean value) {
-                if (command != null) mOutcomeTwo.setVisibility(VISIBLE);
-                RuleHandler.setOutcome(0, PHONE, command.getName(), value);
+                if (command != null) {
+                    mOutcomeTwo.setVisibility(VISIBLE);
+                    RuleHandler.setOutcome(0, PHONE, command.getName(), value);
+                }
             }
 
             @Override public void removeOutcome() {

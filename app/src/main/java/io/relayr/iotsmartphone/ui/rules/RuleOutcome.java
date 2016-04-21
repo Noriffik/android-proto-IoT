@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -16,6 +15,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.java.model.models.transport.DeviceCommand;
@@ -30,8 +30,8 @@ public class RuleOutcome extends LinearLayout {
     @InjectView(R.id.rule_widget_empty_text) TextView mEmptyTv;
     @InjectView(R.id.rule_widget_container) View mContainer;
 
-    @InjectView(R.id.rule_widget_meaning) TextView mMeaningTv;
-    @InjectView(R.id.rule_widget_value) SwitchCompat mValueSwitch;
+    @InjectView(R.id.rule_widget_name) TextView mMeaningTv;
+    @InjectView(R.id.rule_widget_switch) SwitchCompat mValueSwitch;
 
     private int mColor;
 
@@ -56,12 +56,11 @@ public class RuleOutcome extends LinearLayout {
         mColor = color;
         mListener = listener;
 
-        if (rule == null) return;
-
-        mValue = rule.getOutcomeValue(position);
-        if (mValue == null) return;
+        if (isShown()) mColorView.setBackgroundResource(mColor);
+        if (rule == null || rule.getOutcomeValue(position) == null) return;
 
         mType = PHONE;
+        mValue = rule.getOutcomeValue(position);
         for (DeviceCommand cmd : Storage.instance().loadCommands(mType))
             if (cmd.getName().equals(rule.getOutcomeName(position)))
                 mCommand = cmd;

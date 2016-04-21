@@ -1,6 +1,5 @@
 package io.relayr.iotsmartphone.ui.cloud;
 
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -27,9 +26,9 @@ import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.utils.UiHelper;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.CreateDevice;
@@ -59,7 +58,6 @@ public class FragmentCloud extends Fragment {
     @InjectView(R.id.watch_info_name) TextView mWatchName;
     @InjectView(R.id.watch_info_version) TextView mWatchVersion;
 
-    private ProgressDialog mProgress;
     private TimerTask mSpeedTimer;
     private AlertDialog mWarningDialog;
 
@@ -235,6 +233,8 @@ public class FragmentCloud extends Fragment {
                     }
 
                     @Override public void success(User user) {
+                        Storage.instance().activate(PHONE);
+                        Storage.instance().activate(WATCH);
                         loadDevices();
                         setUpCloud();
                     }

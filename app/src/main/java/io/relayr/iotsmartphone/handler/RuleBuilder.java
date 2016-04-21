@@ -1,4 +1,4 @@
-package io.relayr.iotsmartphone.ui.rules;
+package io.relayr.iotsmartphone.handler;
 
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;

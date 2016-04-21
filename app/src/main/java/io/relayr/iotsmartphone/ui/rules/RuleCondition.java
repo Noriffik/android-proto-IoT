@@ -6,7 +6,6 @@ import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -27,7 +26,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.handler.RuleHandler;
+import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.utils.UiHelper;
@@ -77,6 +76,8 @@ public class RuleCondition extends LinearLayout {
     public void setUp(int color, RuleBuilder rule, int position, FragmentRules.ConditionListener listener) {
         mColor = color;
         mListener = listener;
+
+        if (isShown()) mColorView.setBackgroundResource(mColor);
 
         if (rule == null) return;
 
@@ -183,11 +184,12 @@ public class RuleCondition extends LinearLayout {
                 if (s.length() <= 0) return;
                 try {
                     final int value = Integer.parseInt(s.toString());
-                    if (value > mMax || value < mMin)
-                        mValueEt.setError(getContext().getString(R.string.rule_widget_invalid_out_of_bounds));
+                    if (mReading != null && value > mMax || value < mMin)
+                        mValueEt.setError(getContext().getString(R.string.rule_valu_out_of_bounds));
                     else mValue = value;
                 } catch (NumberFormatException e) {
-                    mValueEt.setError(getContext().getString(R.string.rule_widget_invalid_value));
+                    if (mReading != null)
+                        mValueEt.setError(getContext().getString(R.string.rule_value_invalid));
                 }
             }
 
