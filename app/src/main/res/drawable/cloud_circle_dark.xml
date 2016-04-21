@@ -3,8 +3,8 @@
     <solid android:color="@color/secondary"/>
     <corners android:radius="@dimen/cloud_icon_radius"/>
     <padding
-        android:bottom="@dimen/default_padding_double"
-        android:left="@dimen/default_padding_double"
-        android:right="@dimen/default_padding_double"
-        android:top="@dimen/default_padding_double"/>
+        android:bottom="@dimen/cloud_circle_padding"
+        android:left="@dimen/cloud_circle_padding"
+        android:right="@dimen/cloud_circle_padding"
+        android:top="@dimen/cloud_circle_padding"/>
 </shape>
