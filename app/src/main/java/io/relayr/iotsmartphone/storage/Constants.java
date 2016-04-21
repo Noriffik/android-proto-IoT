@@ -46,7 +46,6 @@ public class Constants {
         defaultSizes.put("batteryLevel", GRAPH_FRAME / SAMPLING_PHONE_MIN);
         defaultSizes.put("rssi", GRAPH_FRAME / SAMPLING_PHONE_MIN);
         defaultSizes.put("location", 1);
-        defaultSizes.put("message", 1);
     }
 
     public enum DeviceType {PHONE, WATCH}

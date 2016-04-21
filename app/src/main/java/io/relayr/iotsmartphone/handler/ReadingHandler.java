@@ -66,7 +66,6 @@ public class ReadingHandler {
         readingsPhone.put("touch", new LimitedQueue<Reading>(Constants.defaultSizes.get("touch")));
         readingsPhone.put("rssi", new LimitedQueue<Reading>(Constants.defaultSizes.get("rssi")));
         readingsPhone.put("location", new LimitedQueue<Reading>(Constants.defaultSizes.get("location")));
-        readingsPhone.put("message", new LimitedQueue<Reading>(Constants.defaultSizes.get("message")));
 
         readingsWatch.clear();
         readingsWatch.put("acceleration", new LimitedQueue<Reading>(Constants.defaultSizes.get("acceleration")));

@@ -100,8 +100,8 @@ public class ConditionDialog extends LinearLayout {
 
         if (mCondition)
             for (DeviceReading reading : Storage.instance().loadReadings(mType)) {
-                if (reading.getMeaning().equals("location") || reading.getMeaning().equals("message") ||
-                        reading.getMeaning().equals("touch")) continue;
+                if (reading.getMeaning().equals("location") || reading.getMeaning().equals("touch"))
+                    continue;
                 mReadings.add(reading);
                 mListItems.add(UiHelper.getNameForMeaning(getContext(), reading.getMeaning()));
             }
@@ -112,7 +112,6 @@ public class ConditionDialog extends LinearLayout {
             }
 
         if (mSelected == null) mSelected = mCondition ? mReadings.get(0) : mCommands.get(0);
-        Log.e("DIALOG", mCondition ? mReadings.toString() : mCommands.toString());
         setListAdapter();
     }
 

@@ -70,7 +70,6 @@ public class Storage {
             put("batteryLevel", Storage.instance().loadFrequency("batteryLevel", PHONE));
             put("luminosity", Storage.instance().loadFrequency("luminosity", PHONE));
             put("location", Storage.instance().loadFrequency("location", PHONE));
-            put("message", Storage.instance().loadFrequency("message", PHONE));
             put("touch", Storage.instance().loadFrequency("touch", PHONE));
             put("rssi", Storage.instance().loadFrequency("rssi", PHONE));
         }
@@ -92,7 +91,6 @@ public class Storage {
             put("batteryLevel", Storage.instance().loadActivity("batteryLevel", PHONE));
             put("luminosity", Storage.instance().loadActivity("luminosity", PHONE));
             put("location", Storage.instance().loadActivity("location", PHONE));
-            put("message", Storage.instance().loadActivity("message", PHONE));
             put("touch", Storage.instance().loadActivity("touch", PHONE));
             put("rssi", Storage.instance().loadActivity("rssi", PHONE));
         }
