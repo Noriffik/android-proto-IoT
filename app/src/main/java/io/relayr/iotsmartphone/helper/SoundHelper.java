@@ -11,6 +11,7 @@ import com.crashlytics.android.Crashlytics;
 
 import java.util.concurrent.TimeUnit;
 
+import io.relayr.java.helper.observer.SimpleObserver;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -21,7 +22,7 @@ import static android.media.RingtoneManager.TYPE_ALARM;
 
 public class SoundHelper {
 
-    private static final int DURATION = 3000;
+    private static final int DURATION = 10000;
 
     private static boolean mIsPlaying;
     private Ringtone mRingManager;
@@ -38,35 +39,42 @@ public class SoundHelper {
         Observable
                 .create(new Observable.OnSubscribe<Void>() {
                     @Override public void call(Subscriber<? super Void> subscriber) {
-                        mIsPlaying = false;
-                        if (mRingManager != null) mRingManager.stop();
-                        if (mVibrator != null) mVibrator.cancel();
+                        stopMusic();
                     }
                 })
                 .observeOn(AndroidSchedulers.mainThread())
                 .delaySubscription(DURATION, TimeUnit.MILLISECONDS)
-                .subscribe(new Action1<Void>() {
-                    @Override public void call(Void aVoid) {
+                .subscribe(new SimpleObserver<Void>() {
+                    @Override public void error(Throwable e) {
                         mIsPlaying = false;
                     }
-                }, new Action1<Throwable>() {
-                    @Override public void call(Throwable throwable) {
+
+                    @Override public void success(Void o) {
                         mIsPlaying = false;
                     }
                 });
     }
 
-
     public void close() {
-        if (mVibrator != null && mVibrator.hasVibrator()) mVibrator.cancel();
-        if (mRingManager != null && mRingManager.isPlaying()) mRingManager.stop();
+        stopVibration();
+        stopMusic();
+
         mVibrator = null;
         mRingManager = null;
     }
 
     public void vibrate(Context context) {
         if (mVibrator == null) mVibrator = (Vibrator) context.getSystemService(VIBRATOR_SERVICE);
-        if (mVibrator.hasVibrator())
-            mVibrator.vibrate(DURATION);
+        if (mVibrator.hasVibrator()) mVibrator.vibrate(DURATION);
     }
+
+    public void stopVibration() {
+        if (mVibrator != null && mVibrator.hasVibrator()) mVibrator.cancel();
+    }
+
+    public void stopMusic() {
+        mIsPlaying = false;
+        if (mRingManager != null && mRingManager.isPlaying()) mRingManager.stop();
+    }
+
 }

@@ -3,6 +3,7 @@ package io.relayr.iotsmartphone.ui;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -75,8 +76,9 @@ import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.ui.cloud.FragmentCloud;
 import io.relayr.iotsmartphone.ui.readings.FragmentReadings;
 import io.relayr.iotsmartphone.ui.rules.FragmentRules;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.java.helper.observer.SuccessObserver;
 import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
 import rx.Observable;
@@ -89,9 +91,9 @@ import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.Intent.ACTION_BATTERY_CHANGED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.hardware.Sensor.TYPE_GYROSCOPE;
 import static android.hardware.Sensor.TYPE_LIGHT;
-import static android.hardware.Sensor.TYPE_LINEAR_ACCELERATION;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
 import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.os.BatteryManager.EXTRA_LEVEL;
@@ -130,6 +132,8 @@ public class MainTabActivity extends AppCompatActivity implements
     private final Fragment[] mFragments = new Fragment[3];
     private boolean mResolvingError;
 
+    private ProgressDialog mInitialiseDialog;
+
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_tab_main);
@@ -143,19 +147,24 @@ public class MainTabActivity extends AppCompatActivity implements
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
 
-        ReadingUtils.getReadings();
-
-        startReadings();
+        initialise();
     }
 
     @Override protected void onResume() {
         super.onResume();
         EventBus.getDefault().register(this);
-        if (!Storage.instance().isActiveInBackground()) startReadings();
+        if (!Storage.instance().isActiveInBackground()) initialise();
     }
 
     @Override protected void onPause() {
         super.onPause();
+
+        if (mFlash != null) mFlash.off();
+        if (mSound != null) {
+            mSound.stopMusic();
+            mSound.stopVibration();
+        }
+
         EventBus.getDefault().unregister(this);
         if (!Storage.instance().isActiveInBackground()) stopReadings();
     }
@@ -179,8 +188,8 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) ReadingUtils.publishTouch(true);
-        else if (ev.getAction() == MotionEvent.ACTION_UP) ReadingUtils.publishTouch(false);
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) ReadingHandler.publishTouch(true);
+        else if (ev.getAction() == MotionEvent.ACTION_UP) ReadingHandler.publishTouch(false);
         return super.dispatchTouchEvent(ev);
     }
 
@@ -189,8 +198,8 @@ public class MainTabActivity extends AppCompatActivity implements
         if (event.getType() == WATCH) sendToWearable();
     }
 
-    @SuppressWarnings("unused") public void onEvent(Constants.LoggedIn event) {
-        if (UiHelper.isCloudConnected()) subscribeToCommands();
+    @SuppressWarnings("unused") public void onEvent(Constants.CloudConnected event) {
+        subscribeToCommands();
     }
 
     @SuppressWarnings("unused") public void onEvent(Constants.WatchSamplingUpdate event) {
@@ -226,7 +235,7 @@ public class MainTabActivity extends AppCompatActivity implements
     public void onDataChanged(DataEventBuffer dataEvents) {
         for (DataEvent event : FreezableUtils.freezeIterable(dataEvents))
             if (event.getType() == DataEvent.TYPE_CHANGED)
-                ReadingUtils.publishWatch(event.getDataItem());
+                ReadingHandler.publishWatch(event.getDataItem());
     }
 
     public class MessageReceiver extends BroadcastReceiver {
@@ -253,17 +262,17 @@ public class MainTabActivity extends AppCompatActivity implements
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     public void onSensorChanged(SensorEvent e) {
         final long millis = System.currentTimeMillis();
-        if (e.sensor.getType() == TYPE_LINEAR_ACCELERATION &&
+        if (e.sensor.getType() == TYPE_ACCELEROMETER &&
                 millis - FREQS_PHONE.get("acceleration") > mAccelerationChange) {
             mAccelerationChange = millis;
-            ReadingUtils.publish(ReadingUtils.createAccelReading(e.values[0], e.values[1], e.values[2]));
+            ReadingHandler.publish(ReadingHandler.createAccelReading(e.values[0], e.values[1], e.values[2]));
         } else if (e.sensor.getType() == TYPE_GYROSCOPE &&
                 millis - FREQS_PHONE.get("angularSpeed") > mGyroscopeChange) {
-            ReadingUtils.publish(ReadingUtils.createGyroReading(e.values[0], e.values[1], e.values[2]));
+            ReadingHandler.publish(ReadingHandler.createGyroReading(e.values[0], e.values[1], e.values[2]));
             mGyroscopeChange = millis;
         } else if (e.sensor.getType() == TYPE_LIGHT &&
                 millis - FREQS_PHONE.get("luminosity") > mLightChange) {
-            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
+            ReadingHandler.publish(new Reading(0, System.currentTimeMillis(), "luminosity", "/", e.values[0]));
             mLightChange = millis;
         }
     }
@@ -280,7 +289,7 @@ public class MainTabActivity extends AppCompatActivity implements
             case R.id.action_settings:
                 new AlertDialog.Builder(this, R.style.AppTheme_DialogOverlay)
                         .setView(View.inflate(this, R.layout.dialog_settings, null))
-                        .setTitle(getString(R.string.cloud_device_dialog_title))
+                        .setTitle(getString(R.string.dialog_global_settings))
                         .setPositiveButton(getString(R.string.close), new DialogInterface.OnClickListener() {
                             @Override public void onClick(DialogInterface dialog, int which) {
                                 dialog.dismiss();
@@ -291,6 +300,21 @@ public class MainTabActivity extends AppCompatActivity implements
                 break;
         }
         return true;
+    }
+
+    private void initialise() {
+        if (mInitialiseDialog == null)
+            mInitialiseDialog = ProgressDialog.show(this, getString(R.string.initializing),
+                    getString(R.string.preparing_cloud), true);
+
+        ReadingHandler.getReadings()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SuccessObserver<Boolean>() {
+                    @Override public void success(Boolean success) {
+                        if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
+                        if (success) startReadings();
+                    }
+                });
     }
 
     private void startReadings() {
@@ -316,7 +340,7 @@ public class MainTabActivity extends AppCompatActivity implements
                             if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
                             if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
                             if (num % FREQS_PHONE.get("touch") == 0)
-                                ReadingUtils.publishTouch(false);
+                                ReadingHandler.publishTouch(false);
                         }
                     });
 
@@ -365,7 +389,6 @@ public class MainTabActivity extends AppCompatActivity implements
 
     private void setUpTabs() {
         mTabView.setupWithViewPager(mViewPager);
-        mTabView.setSelectedTabIndicatorHeight(getResources().getDimensionPixelSize(R.dimen.default_padding));
         mTabView.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override public void onTabSelected(TabLayout.Tab tab) {
                 final int position = tab.getPosition();
@@ -390,9 +413,9 @@ public class MainTabActivity extends AppCompatActivity implements
 
     private void setupTabIcons() {
         if (mTabView == null) return;
-        mTabView.getTabAt(0).setIcon(R.drawable.ic_tab_hardware);
-        mTabView.getTabAt(1).setIcon(R.drawable.ic_tab_cloud);
-        mTabView.getTabAt(2).setIcon(R.drawable.ic_tab_rule);
+        mTabView.getTabAt(0).setIcon(R.drawable.tab_device);
+        mTabView.getTabAt(1).setIcon(R.drawable.tab_cloud);
+        mTabView.getTabAt(2).setIcon(R.drawable.tab_rules);
     }
 
     private void initReadings() {
@@ -412,7 +435,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mSensorManager == null)
             mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        final Sensor acceleration = mSensorManager.getDefaultSensor(TYPE_LINEAR_ACCELERATION);
+        final Sensor acceleration = mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         if (acceleration != null)
             mSensorManager.registerListener(this, acceleration, SENSOR_DELAY_NORMAL);
 
@@ -440,7 +463,7 @@ public class MainTabActivity extends AppCompatActivity implements
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
-            ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "rssi", "wifi", wifiInfo.getRssi()));
+            ReadingHandler.publish(new Reading(0, System.currentTimeMillis(), "rssi", "wifi", wifiInfo.getRssi()));
     }
 
     private boolean checkWifi(ConnectivityManager cm) {
@@ -467,7 +490,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (level == -1 || scale == -1) bat = 50.0f;
         else bat = ((float) level / (float) scale) * 100.0f;
 
-        ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "batteryLevel", "/", bat));
+        ReadingHandler.publish(new Reading(0, System.currentTimeMillis(), "batteryLevel", "/", bat));
     }
 
     private void initLocationManager() {
@@ -505,7 +528,7 @@ public class MainTabActivity extends AppCompatActivity implements
                     if (location == null)
                         location = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (location != null)
-                        ReadingUtils.publishLocation(MainTabActivity.this, location);
+                        ReadingHandler.publishLocation(MainTabActivity.this, location);
                     else showLocationDialog();
                 }
             }
@@ -556,10 +579,10 @@ public class MainTabActivity extends AppCompatActivity implements
                                     toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
                                     break;
                                 case "playSound":
-                                    playMusic();
+                                    playMusic(Boolean.parseBoolean(String.valueOf(action.getValue())));
                                     break;
                                 case "vibration":
-                                    vibrate();
+                                    vibrate(Boolean.parseBoolean(String.valueOf(action.getValue())));
                                     break;
                             }
                         }
@@ -598,14 +621,16 @@ public class MainTabActivity extends AppCompatActivity implements
         }
     }
 
-    private void playMusic() {
+    private void playMusic(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
-        mSound.playMusic(MainTabActivity.this);
+        if (start) mSound.playMusic(MainTabActivity.this);
+        else mSound.stopMusic();
     }
 
-    private void vibrate() {
+    private void vibrate(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
-        mSound.vibrate(MainTabActivity.this);
+        if (start) mSound.vibrate(MainTabActivity.this);
+        else mSound.stopVibration();
     }
 
     public void showNotification() {
