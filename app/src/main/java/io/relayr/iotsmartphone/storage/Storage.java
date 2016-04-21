@@ -13,8 +13,9 @@ import java.util.Map;
 import java.util.Set;
 
 import io.relayr.iotsmartphone.IotApplication;
-import io.relayr.iotsmartphone.utils.ReadingUtils;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.java.model.Device;
+import io.relayr.java.model.models.transport.DeviceCommand;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
@@ -44,9 +45,11 @@ public class Storage {
     private static final String WATCH_SDK = "watch_sdk";
 
     private static final String BACKGROUND_UPLOAD = "background";
+    private static final String RULE_ID = "rule_id";
 
     private static List<DeviceReading> sReadingsPhone = new ArrayList<>();
     private static List<DeviceReading> sReadingsWatch = new ArrayList<>();
+    private static List<DeviceCommand> sCommandsPhone = new ArrayList<>();
 
     private static Device sPhoneDevice;
     private static Device sWatchDevice;
@@ -136,7 +139,7 @@ public class Storage {
     }
 
     public int saveFrequency(String meaning, Constants.DeviceType type, int freq) {
-        int frequency = ReadingUtils.isComplex(meaning) ? freq * Constants.SAMPLING_COMPLEX : freq;
+        int frequency = ReadingHandler.isComplex(meaning) ? freq * Constants.SAMPLING_COMPLEX : freq;
         if (type == PHONE) FREQS_PHONE.put(meaning, frequency);
         else FREQS_WATCH.put(meaning, frequency);
 
@@ -145,7 +148,7 @@ public class Storage {
     }
 
     public int loadFrequency(String meaning, Constants.DeviceType type) {
-        int sampling = ReadingUtils.isComplex(meaning) ? Constants.SAMPLING_COMPLEX : Constants.SAMPLING_SIMPLE;
+        int sampling = ReadingHandler.isComplex(meaning) ? Constants.SAMPLING_COMPLEX : Constants.SAMPLING_SIMPLE;
         sampling *= type == PHONE ? Constants.SAMPLING_PHONE_MIN : Constants.SAMPLING_WATCH_MIN;
         return PREFS.getInt((type == PHONE ? FREQUENCY_PHONE : FREQUENCY_WATCH) + meaning, sampling);
     }
@@ -156,14 +159,6 @@ public class Storage {
 
     public boolean locationGranted() {
         return PREFS.getBoolean(PREFS_SETTINGS_LOCATION, true);
-    }
-
-    public void warningShown() {
-        PREFS.edit().putBoolean(PREFS_WARNING, true).apply();
-    }
-
-    public boolean isWarningShown() {
-        return PREFS.getBoolean(PREFS_WARNING, false);
     }
 
     public void savePhoneData(String manufacturer, String model, int sdk) {
@@ -198,6 +193,21 @@ public class Storage {
         }
     }
 
+    public Constants.DeviceType getDeviceType(String deviceId) {
+        if (deviceId == null) return null;
+        if (deviceId.equals(PREFS.getString(PHONE_ID, null))) return PHONE;
+        else if (deviceId.equals(PREFS.getString(WATCH_ID, null))) return WATCH;
+        else return null;
+    }
+
+    public void saveRule(String id) {
+        PREFS.edit().putString(RULE_ID, id).apply();
+    }
+
+    public String loadRule() {
+        return PREFS.getString(RULE_ID, null);
+    }
+
     public int getDeviceSdk(Constants.DeviceType type) {
         if (type == PHONE) return PREFS.getInt(PHONE_SDK, 0);
         else return PREFS.getInt(WATCH_SDK, 0);
@@ -216,6 +226,21 @@ public class Storage {
     public List<DeviceReading> loadReadings(Constants.DeviceType type) {
         if (type == PHONE) return sReadingsPhone;
         else return sReadingsWatch;
+    }
+
+    public void savePhoneCommands(List<DeviceCommand> commands) {
+        sCommandsPhone.clear();
+        sCommandsPhone.addAll(commands);
+        Collections.sort(sCommandsPhone, new Comparator<DeviceCommand>() {
+            @Override public int compare(DeviceCommand lhs, DeviceCommand rhs) {
+                return lhs.getName().compareTo(rhs.getName());
+            }
+        });
+    }
+
+    public List<DeviceCommand> loadCommands(Constants.DeviceType type) {
+        if (type == PHONE) return sCommandsPhone;
+        else return new ArrayList<>();
     }
 
     public void saveWatchReadings(List<DeviceReading> readings) {
@@ -261,3 +286,4 @@ public class Storage {
 
     }
 }
+

@@ -1,11 +1,10 @@
-package io.relayr.iotsmartphone.utils;
+package io.relayr.iotsmartphone.handler;
 
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.wearable.DataItem;
@@ -24,6 +23,7 @@ import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.utils.LimitedQueue;
 import io.relayr.java.helper.observer.ErrorObserver;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.AccelGyroscope;
@@ -31,14 +31,18 @@ import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.DeviceModel;
 import io.relayr.java.model.models.error.DeviceModelsException;
 import io.relayr.java.model.models.transport.Transport;
+import rx.Observable;
+import rx.Subscriber;
+import rx.functions.Func1;
 import rx.schedulers.Schedulers;
+import rx.subjects.ReplaySubject;
 
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
-public class ReadingUtils {
+public class ReadingHandler {
 
-    private static final String TAG = "ReadingUtils";
+    private static final String TAG = "ReadingHandler";
 
     private static float sWatchData;
     private static float sPhoneData;
@@ -71,50 +75,60 @@ public class ReadingUtils {
         readingsWatch.put("touch", new LimitedQueue<Reading>(Constants.defaultSizes.get("touch")));
     }
 
+    public static Map<String, LimitedQueue<Reading>> readings(Constants.DeviceType mType) {
+        return mType == PHONE ? readingsPhone : readingsWatch;
+    }
+
     public static boolean isComplex(String meaning) {
         return meaning.equals("acceleration") || meaning.equals("angularSpeed") || meaning.equals("luminosity");
     }
 
-    public static void getReadings() {
-        RelayrSdk.getDeviceModelsApi()
-                .getDeviceModelById(Storage.MODEL_PHONE)
-                .subscribeOn(Schedulers.io())
-                .subscribe(new SimpleObserver<DeviceModel>() {
-                    @Override public void error(Throwable e) {
-                        Log.e(TAG, "PHONE model error");
-                        e.printStackTrace();
-                    }
+    public static Observable<Boolean> getReadings() {
+        return ReplaySubject.create(new Observable.OnSubscribe<Boolean>() {
+            @Override public void call(final Subscriber<? super Boolean> subscriber) {
+                RelayrSdk.getDeviceModelsApi()
+                        .getDeviceModelById(Storage.MODEL_PHONE)
+                        .subscribeOn(Schedulers.io())
+                        .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
+                            @Override public Observable<DeviceModel> call(DeviceModel deviceModel) {
+                                try {
+                                    final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
+                                    Storage.instance().savePhoneReadings(transport.getReadings());
+                                    Storage.instance().savePhoneCommands(transport.getCommands());
+                                    EventBus.getDefault().post(new Constants.DeviceModelEvent());
+                                } catch (DeviceModelsException e) {
+                                    e.printStackTrace();
+                                }
 
-                    @Override public void success(DeviceModel deviceModel) {
-                        try {
-                            final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                            Storage.instance().savePhoneReadings(transport.getReadings());
-                            EventBus.getDefault().post(new Constants.DeviceModelEvent());
-                        } catch (DeviceModelsException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
+                                return RelayrSdk.getDeviceModelsApi().getDeviceModelById(Storage.MODEL_WATCH);
+                            }
+                        })
+                        .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
+                            @Override public Observable<DeviceModel> call(DeviceModel deviceModel) {
+                                try {
+                                    final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
+                                    Storage.instance().saveWatchReadings(transport.getReadings());
+                                    EventBus.getDefault().post(new Constants.DeviceModelEvent());
+                                } catch (DeviceModelsException e) {
+                                    e.printStackTrace();
+                                }
 
-        RelayrSdk.getDeviceModelsApi()
-                .getDeviceModelById(Storage.MODEL_WATCH)
-                .subscribeOn(Schedulers.io())
-                .subscribe(new SimpleObserver<DeviceModel>() {
-                    @Override public void error(Throwable e) {
-                        Log.e(TAG, "WATCH model error");
-                        e.printStackTrace();
-                    }
+                                return Observable.just(deviceModel);
+                            }
+                        })
+                        .subscribe(new SimpleObserver<DeviceModel>() {
+                            @Override public void error(Throwable e) {
+                                Log.e("RHandler", "Loading models ERROR.");
+                                e.printStackTrace();
+                                subscriber.onNext(false);
+                            }
 
-                    @Override public void success(DeviceModel deviceModel) {
-                        try {
-                            final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                            Storage.instance().saveWatchReadings(transport.getReadings());
-                            EventBus.getDefault().post(new Constants.DeviceModelEvent());
-                        } catch (DeviceModelsException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
+                            @Override public void success(DeviceModel o) {
+                                subscriber.onNext(true);
+                            }
+                        });
+            }
+        });
     }
 
     public static Reading createAccelReading(float x, float y, float z) {
@@ -134,7 +148,7 @@ public class ReadingUtils {
     }
 
     public static void publish(Reading reading) {
-        ReadingUtils.readingsPhone.get(reading.meaning).add(reading);
+        ReadingHandler.readingsPhone.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(PHONE))
             EventBus.getDefault().post(new Constants.ReadingRefresh(PHONE, reading.meaning));
         if (Storage.ACTIVITY_PHONE.get(reading.meaning)) {
@@ -178,12 +192,12 @@ public class ReadingUtils {
     }
 
     private static void publishWatch(Reading reading) {
-        ReadingUtils.readingsWatch.get(reading.meaning).add(reading);
+        sWatchData += new Gson().toJson(reading.value).getBytes().length;
+        ReadingHandler.readingsWatch.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(WATCH))
             EventBus.getDefault().post(new Constants.ReadingRefresh(WATCH, reading.meaning));
         if (Storage.ACTIVITY_WATCH.get(reading.meaning)) {
             if (Storage.instance().getDeviceId(WATCH) == null) return;
-            sWatchData += new Gson().toJson(reading.value).getBytes().length;
             RelayrSdk.getWebSocketClient()
                     .publish(Storage.instance().getDeviceId(WATCH), reading)
                     .subscribeOn(Schedulers.io())
@@ -231,6 +245,6 @@ public class ReadingUtils {
     }
 
     public static void publishTouch(boolean active) {
-        ReadingUtils.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", active));
+        ReadingHandler.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", active));
     }
 }

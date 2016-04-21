@@ -103,7 +103,7 @@ public class Constants {
         }
     }
 
-    public static class LoggedIn {
-        public LoggedIn() {}
+    public static class CloudConnected {
+        public CloudConnected() {}
     }
 }

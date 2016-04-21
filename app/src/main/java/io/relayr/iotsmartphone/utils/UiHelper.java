@@ -9,12 +9,16 @@ import android.net.Uri;
 import android.support.design.widget.Snackbar;
 import android.view.View;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
 
 public class UiHelper {
 
     private static final String WEAR_APP = "com.google.android.wearable.app";
+    private static final Map<String, String> sNameMap = new HashMap<>();
 
     public static boolean isWearableConnected(Activity activity) {
         try {
@@ -73,5 +77,18 @@ public class UiHelper {
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
+    }
+
+    public static String getNameForMeaning(Context context, String meaning) {
+        if (sNameMap.isEmpty()) {
+            sNameMap.put("acceleration", context.getString(R.string.reading_title_acceleration));
+            sNameMap.put("angularSpeed", context.getString(R.string.reading_title_gyro));
+            sNameMap.put("batteryLevel", context.getString(R.string.reading_title_battery));
+            sNameMap.put("luminosity", context.getString(R.string.reading_title_light));
+            sNameMap.put("location", context.getString(R.string.reading_title_location));
+            sNameMap.put("rssi", context.getString(R.string.reading_title_rssi));
+            sNameMap.put("touch", context.getString(R.string.reading_title_touch));
+        }
+        return sNameMap.get(meaning);
     }
 }
