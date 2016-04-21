@@ -17,6 +17,7 @@
             android:layout_weight="15"
             android:gravity="right"
             android:paddingRight="@dimen/default_padding_double"
+            android:singleLine="true"
             android:text="Id"
             android:textColor="@color/accent"
             android:textStyle="bold"/>
@@ -56,6 +57,7 @@
             android:layout_weight="15"
             android:gravity="right"
             android:paddingRight="@dimen/default_padding_double"
+            android:singleLine="true"
             android:text="Username"
             android:textColor="@color/accent"
             android:textStyle="bold"/>
@@ -96,6 +98,7 @@
             android:layout_weight="15"
             android:gravity="right"
             android:paddingRight="@dimen/default_padding_double"
+            android:singleLine="true"
             android:text="Email"
             android:textColor="@color/accent"
             android:textStyle="bold"/>

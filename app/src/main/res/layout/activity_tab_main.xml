@@ -13,7 +13,6 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/toolbar_height"
             android:background="?attr/colorPrimary"
-            android:elevation="@dimen/default_padding_half"
             android:minHeight="@dimen/toolbar_height"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
@@ -23,8 +22,10 @@
             android:layout_height="@dimen/toolbar_height"
             android:elevation="@dimen/default_padding_half"
             android:minHeight="@dimen/toolbar_height"
+            app:paddingEnd="@dimen/default_padding"
+            app:paddingStart="@dimen/default_padding"
             app:tabGravity="fill"
-            app:tabIndicatorHeight="@dimen/default_padding_half"
+            app:tabIndicatorHeight="@dimen/indicator_height"
             app:tabMode="fixed"/>
     </android.support.design.widget.AppBarLayout>
 

@@ -31,5 +31,7 @@
     <dimen name="cloud_connected_size">110dp</dimen>
     <dimen name="dialog_item_height">70dp</dimen>
     <dimen name="rule_icon_size">60dp</dimen>
+    <dimen name="indicator_height">4dp</dimen>
+    <dimen name="cloud_circle_padding">20dp</dimen>
 
 </resources>

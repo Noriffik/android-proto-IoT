@@ -17,7 +17,7 @@
     <dimen name="settings_switch_width">250dp</dimen>
     <dimen name="settings_padding">20dp</dimen>
 
-    <dimen name="toolbar_height">60dp</dimen>
+    <dimen name="toolbar_height">55dp</dimen>
     <dimen name="graph_height">130dp</dimen>
 
     <dimen name="cloud_connected_size">96dp</dimen>
@@ -32,5 +32,7 @@
 
     <dimen name="dialog_item_height">65dp</dimen>
     <dimen name="rule_icon_size">60dp</dimen>
+    <dimen name="indicator_height">4dp</dimen>
+    <dimen name="cloud_circle_padding">20dp</dimen>
 
 </resources>

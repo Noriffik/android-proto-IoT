@@ -2,11 +2,12 @@
 <io.relayr.iotsmartphone.ui.rules.RuleCondition
     style="@style/MatchWrapHor"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_height="@dimen/cloud_connected_size"
-    android:gravity="center_vertical">
+    android:layout_height="@dimen/cloud_icon_size"
+    android:layout_margin="0dp"
+    android:gravity="center_vertical"
+    android:padding="0dp">
 
     <TextView
-        android:id="@+id/rule_widget_prefix"
         style="@style/NormalText"
         android:layout_width="0dp"
         android:layout_gravity="center_vertical"
@@ -27,7 +28,7 @@
     <RelativeLayout
         style="@style/MatchMatchHor"
         android:layout_width="0dp"
-        android:layout_weight="44"
+        android:layout_weight="50"
         android:background="@color/primary"
         android:gravity="center_vertical">
 
@@ -47,13 +48,14 @@
             android:id="@+id/rule_widget_empty_text"
             style="@style/NormalText"
             android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/default_padding_double"
             android:layout_toRightOf="@id/rule_widget_icon"
-            android:paddingLeft="@dimen/default_padding"
-            android:text="Add condition"/>
+            android:text="@string/rule_widget_add_condition"/>
 
-        <LinearLayout
+        <RelativeLayout
             android:id="@+id/rule_widget_container"
-            style="@style/WrapWrap"
+            style="@style/MatchMatch"
+            android:layout_centerVertical="true"
             android:layout_marginLeft="@dimen/default_padding_double"
             android:layout_toRightOf="@id/rule_widget_icon"
             android:visibility="gone">
@@ -61,35 +63,57 @@
             <TextView
                 android:id="@+id/rule_widget_meaning"
                 style="@style/TitleText"
-                android:text="Meaning"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
                 android:textColor="@color/accent"/>
 
+            <ImageView
+                android:id="@+id/rule_widget_remove_btn"
+                android:layout_width="@dimen/cloud_icon_radius"
+                android:layout_height="@dimen/cloud_icon_radius"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:paddingBottom="@dimen/default_padding"
+                android:paddingLeft="@dimen/default_padding"
+                android:paddingRight="@dimen/default_padding_half"
+                android:paddingTop="@dimen/default_padding_half"
+                android:src="@drawable/ic_clear"/>
+
             <LinearLayout
-                style="@style/WrapWrapHor"
-                android:layout_marginTop="@dimen/default_padding_half"
+                style="@style/MatchWrapHor"
+                android:layout_alignParentLeft="true"
+                android:layout_below="@id/rule_widget_meaning"
+                android:layout_marginTop="@dimen/default_padding"
                 android:gravity="center_vertical">
 
                 <TextView
-                    android:id="@+id/rule_widget_info"
                     style="@style/SubtitleText"
                     android:text="when"/>
 
                 <TextView
-                    android:id="@+id/rule_widget_condition"
+                    android:id="@+id/rule_widget_operator"
                     style="@style/SubtitleText"
                     android:layout_marginLeft="@dimen/default_padding_double"
                     android:background="@drawable/button_active"
-                    android:padding="@dimen/default_padding_half"
-                    android:text=">"/>
+                    android:hint="@string/rule_operator_hint"
+                    android:paddingBottom="@dimen/default_padding_half"
+                    android:paddingLeft="@dimen/default_padding"
+                    android:paddingRight="@dimen/default_padding"
+                    android:paddingTop="@dimen/default_padding_half"/>
 
-                <TextView
+                <EditText
                     android:id="@+id/rule_widget_value"
                     style="@style/SubtitleText"
                     android:layout_marginLeft="@dimen/default_padding_double"
                     android:background="@drawable/button_active"
-                    android:padding="@dimen/default_padding_half"
-                    android:text="1000"/>
+                    android:digits="0123456789-"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:paddingBottom="@dimen/default_padding_half"
+                    android:paddingLeft="@dimen/default_padding"
+                    android:paddingRight="@dimen/default_padding"
+                    android:paddingTop="@dimen/default_padding_half"/>
             </LinearLayout>
-        </LinearLayout>
+        </RelativeLayout>
     </RelativeLayout>
 </io.relayr.iotsmartphone.ui.rules.RuleCondition>

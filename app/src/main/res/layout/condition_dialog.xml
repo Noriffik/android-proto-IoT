@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<io.relayr.iotsmartphone.ui.rules.ConditionDialog
+    style="@style/MatchMatch"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_marginTop="@dimen/default_padding_double"
+    android:paddingTop="@dimen/big_padding">
+
+    <LinearLayout
+        style="@style/MatchWrapHor">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_horizontal">
+
+            <ImageView
+                android:id="@+id/condition_dialog_phone"
+                android:layout_width="@dimen/rule_icon_size"
+                android:layout_height="@dimen/rule_icon_size"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/cloud_circle"
+                android:elevation="@dimen/default_padding_half"
+                android:padding="@dimen/default_padding_double"
+                android:src="@drawable/ic_graphic_phone"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/condition_dialog_watch_container"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/condition_dialog_watch"
+                android:layout_width="@dimen/rule_icon_size"
+                android:layout_height="@dimen/rule_icon_size"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/cloud_circle"
+                android:elevation="@dimen/default_padding_half"
+                android:padding="@dimen/default_padding_double"
+                android:src="@drawable/ic_graphic_watch"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/condition_dialog_list"
+        style="@style/MatchWrap"
+        android:layout_below="@id/condition_dialog_phone"
+        android:layout_marginTop="@dimen/default_padding_double"/>
+</io.relayr.iotsmartphone.ui.rules.ConditionDialog>

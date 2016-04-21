@@ -29,7 +29,10 @@
     <dimen name="dotted_line_dash">8dp</dimen>
     <dimen name="dotted_line_padding">-4dp</dimen>
     <dimen name="dotted_line_width">4dp</dimen>
+
     <dimen name="dialog_item_height">70dp</dimen>
     <dimen name="rule_icon_size">60dp</dimen>
+    <dimen name="indicator_height">2dp</dimen>
+    <dimen name="cloud_circle_padding">20dp</dimen>
 
 </resources>

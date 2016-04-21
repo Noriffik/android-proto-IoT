@@ -30,12 +30,13 @@
             android:layout_alignTop="@+id/cloud"
             android:layout_marginLeft="@dimen/big_padding"
             android:layout_toRightOf="@+id/cloud"
-            android:gravity="center_vertical|center_horizontal"
+            android:gravity="center_vertical|left"
             android:text="@string/cloud_establish_connection"/>
 
         <Button
             android:id="@+id/cloud_button"
             style="@style/AppTheme.ButtonActive"
+            android:layout_alignLeft="@id/cloud_info"
             android:layout_below="@id/cloud_info"
             android:layout_marginLeft="@dimen/big_padding"
             android:layout_toRightOf="@id/cloud"
@@ -50,6 +51,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/cloud_connected_radius"
             android:background="@drawable/cloud_dotted_vertical_line"
+            android:elevation="@dimen/default_padding_half"
             android:paddingLeft="@dimen/dotted_line_padding"/>
 
         <TextView
@@ -72,7 +74,7 @@
             android:layout_marginLeft="@dimen/default_padding"
             android:background="@drawable/cloud_circle"
             android:elevation="@dimen/default_padding_half"
-            android:padding="@dimen/default_padding_double"
+            android:padding="@dimen/cloud_circle_padding"
             android:src="@drawable/ic_graphic_phone"/>
 
         <LinearLayout
@@ -104,6 +106,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="@dimen/cloud_connected_radius"
             android:background="@drawable/cloud_dotted_vertical_line"
+            android:elevation="@dimen/default_padding_half"
             android:paddingLeft="@dimen/dotted_line_padding"/>
 
         <TextView
@@ -126,7 +129,7 @@
             android:layout_marginLeft="@dimen/default_padding"
             android:background="@drawable/cloud_circle"
             android:elevation="@dimen/default_padding_half"
-            android:padding="@dimen/default_padding_double"
+            android:padding="@dimen/cloud_circle_padding"
             android:src="@drawable/ic_graphic_watch"/>
 
         <LinearLayout

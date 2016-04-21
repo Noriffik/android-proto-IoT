@@ -18,6 +18,7 @@
             android:layout_weight="15"
             android:gravity="right"
             android:paddingRight="@dimen/default_padding_double"
+            android:singleLine="true"
             android:text="Data"
             android:textColor="@color/accent"
             android:textStyle="bold"/>

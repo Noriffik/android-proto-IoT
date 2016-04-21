@@ -1,36 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     style="@style/MatchMatch"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@color/background"
-    android:padding="@dimen/default_padding">
+    android:background="@color/background">
 
     <TextView
+        android:id="@+id/rules_not_logged_in"
         style="@style/TitleText"
-        android:layout_marginBottom="@dimen/default_padding"
-        android:text="Conditions"
+        android:layout_centerInParent="true"
+        android:text="@string/have_to_be_logged_in"
         android:textColor="@color/accent"/>
 
-    <include
-        android:id="@+id/condition_one"
-        layout="@layout/widget_rules_condition"/>
+    <LinearLayout
+        android:id="@+id/rules_logged_in"
+        style="@style/MatchMatch"
+        android:padding="@dimen/default_padding">
 
-    <include
-        android:id="@+id/condition_two"
-        layout="@layout/widget_rules_condition"/>
+        <TextView
+            style="@style/TitleText"
+            android:layout_marginBottom="@dimen/default_padding"
+            android:text="@string/rules_conditions"
+            android:textColor="@color/accent"/>
 
-    <TextView
-        style="@style/TitleText"
-        android:layout_marginBottom="@dimen/default_padding"
-        android:text="Outcomes"
-        android:textColor="@color/accent"/>
+        <include
+            android:id="@+id/condition_one"
+            layout="@layout/widget_rules_condition"/>
 
-    <include
-        android:id="@+id/outcome_one"
-        layout="@layout/widget_rules_outcome"/>
+        <TextView
+            android:id="@+id/condition_operator"
+            style="@style/TitleText"
+            android:layout_gravity="center_horizontal"
+            android:layout_margin="0dp"
+            android:background="@drawable/button_active"
+            android:elevation="@dimen/default_padding_half"
+            android:paddingBottom="@dimen/default_padding"
+            android:paddingLeft="@dimen/default_padding_double"
+            android:paddingRight="@dimen/default_padding_double"
+            android:paddingTop="@dimen/default_padding"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:text="@string/global_condition"
+            android:visibility="gone"/>
 
-    <include
-        android:id="@+id/outcome_two"
-        layout="@layout/widget_rules_outcome"/>
+        <include
+            android:id="@+id/condition_two"
+            layout="@layout/widget_rules_condition"
+            android:visibility="gone"/>
 
-</LinearLayout>
+        <TextView
+            style="@style/TitleText"
+            android:text="@string/rules_outcomes"
+            android:textColor="@color/accent"/>
+
+        <include
+            android:id="@+id/outcome_one"
+            layout="@layout/widget_rules_outcome"/>
+
+        <include
+            android:id="@+id/outcome_two"
+            layout="@layout/widget_rules_outcome"
+            android:visibility="gone"/>
+    </LinearLayout>
+</RelativeLayout>
