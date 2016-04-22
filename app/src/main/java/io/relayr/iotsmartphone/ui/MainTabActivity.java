@@ -324,7 +324,27 @@ public class MainTabActivity extends AppCompatActivity implements
                 .subscribe(new SuccessObserver<Boolean>() {
                     @Override public void success(Boolean success) {
                         if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
-                        if (success) startReadings();
+                        if (success)
+                            startReadings();
+                        else
+                            new AlertDialog.Builder(MainTabActivity.this, R.style.AppTheme_DialogOverlay)
+                                    .setTitle(getString(R.string.seomthing_went_wrong))
+                                    .setNegativeButton(getString(R.string.close), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                            finish();
+                                        }
+                                    })
+                                    .setPositiveButton(getString(R.string.retry), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                            initialise();
+                                        }
+                                    })
+                                    .create()
+                                    .show();
                     }
                 });
     }

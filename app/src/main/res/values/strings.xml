@@ -83,5 +83,6 @@
     <string name="rule_updated">Rule updated successfully</string>
     <string name="rule_update_problem">Update problem</string>
     <string name="rule_widget_add_outcome">Add outcome</string>
+    <string name="seomthing_went_wrong">Something went wrong</string>
 
 </resources>

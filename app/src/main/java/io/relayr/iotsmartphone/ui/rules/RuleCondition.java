@@ -129,11 +129,11 @@ public class RuleCondition extends LinearLayout {
             else if (last.value instanceof AccelGyroscope.Acceleration) {
                 AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) last.value;
                 double vector = calculateVector(accel.x, accel.y, accel.z);
-                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, vector));
+                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", vector)));
             } else if (last.value instanceof AccelGyroscope.AngularSpeed) {
                 AccelGyroscope.AngularSpeed gyro = (AccelGyroscope.AngularSpeed) last.value;
                 double vector = calculateVector(gyro.x, gyro.y, gyro.z);
-                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, vector));
+                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", vector)));
             }
         }
     }

@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
@@ -76,50 +77,55 @@ public class ReadingHandler {
     }
 
     public static Observable<Boolean> getReadings() {
-        return ReplaySubject.create(new Observable.OnSubscribe<Boolean>() {
-            @Override public void call(final Subscriber<? super Boolean> subscriber) {
-                RelayrSdk.getDeviceModelsApi()
-                        .getDeviceModelById(Storage.MODEL_PHONE)
-                        .subscribeOn(Schedulers.io())
-                        .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
-                            @Override public Observable<DeviceModel> call(DeviceModel deviceModel) {
-                                try {
-                                    final Transport transport = deviceModel.getFirmwareByVersion("1.0.0").getDefaultTransport();
-                                    Storage.instance().savePhoneReadings(transport.getReadings());
-                                    Storage.instance().savePhoneCommands(transport.getCommands());
-                                } catch (DeviceModelsException e) {
-                                    e.printStackTrace();
+        if (Storage.instance().loadReadings(PHONE).isEmpty())
+            return ReplaySubject.create(new Observable.OnSubscribe<Boolean>() {
+                @Override public void call(final Subscriber<? super Boolean> subscriber) {
+                    RelayrSdk.getDeviceModelsApi()
+                            .getDeviceModelById(Storage.MODEL_PHONE)
+                            .subscribeOn(Schedulers.io())
+                            .timeout(5, TimeUnit.SECONDS)
+                            .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
+                                @Override
+                                public Observable<DeviceModel> call(DeviceModel deviceModel) {
+                                    try {
+                                        final Transport transport = deviceModel.getFirmwareByVersion("1.0.0").getDefaultTransport();
+                                        Storage.instance().savePhoneReadings(transport.getReadings());
+                                        Storage.instance().savePhoneCommands(transport.getCommands());
+                                    } catch (DeviceModelsException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    return RelayrSdk.getDeviceModelsApi().getDeviceModelById(Storage.MODEL_WATCH);
+                                }
+                            })
+                            .timeout(5, TimeUnit.SECONDS)
+                            .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
+                                @Override
+                                public Observable<DeviceModel> call(DeviceModel deviceModel) {
+                                    try {
+                                        final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
+                                        Storage.instance().saveWatchReadings(transport.getReadings());
+                                    } catch (DeviceModelsException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    return Observable.just(deviceModel);
+                                }
+                            })
+                            .subscribe(new SimpleObserver<DeviceModel>() {
+                                @Override public void error(Throwable e) {
+                                    Log.e("RHandler", "Loading models ERROR.");
+                                    subscriber.onNext(false);
                                 }
 
-                                return RelayrSdk.getDeviceModelsApi().getDeviceModelById(Storage.MODEL_WATCH);
-                            }
-                        })
-                        .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
-                            @Override public Observable<DeviceModel> call(DeviceModel deviceModel) {
-                                try {
-                                    final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
-                                    Storage.instance().saveWatchReadings(transport.getReadings());
-                                } catch (DeviceModelsException e) {
-                                    e.printStackTrace();
+                                @Override public void success(DeviceModel o) {
+                                    EventBus.getDefault().post(new Constants.DeviceModelEvent());
+                                    subscriber.onNext(true);
                                 }
-
-                                return Observable.just(deviceModel);
-                            }
-                        })
-                        .subscribe(new SimpleObserver<DeviceModel>() {
-                            @Override public void error(Throwable e) {
-                                Log.e("RHandler", "Loading models ERROR.");
-                                e.printStackTrace();
-                                subscriber.onNext(false);
-                            }
-
-                            @Override public void success(DeviceModel o) {
-                                EventBus.getDefault().post(new Constants.DeviceModelEvent());
-                                subscriber.onNext(true);
-                            }
-                        });
-            }
-        });
+                            });
+                }
+            });
+        else return Observable.just(true);
     }
 
     public static Reading createAccelReading(float x, float y, float z) {
