@@ -151,7 +151,7 @@ public class ReadingHandler {
                     .subscribe(new ErrorObserver<Void>() {
                         @Override public void error(Throwable e) {
                             Crashlytics.log(Log.ERROR, TAG, "publish phone reading - error");
-                            e.printStackTrace();
+                            RelayrSdk.getWebSocketClient().restart();
                         }
                     });
         }
@@ -223,6 +223,16 @@ public class ReadingHandler {
 
     public static void publishTouch(boolean active) {
         ReadingHandler.publish(new Reading(0, System.currentTimeMillis(), "touch", "/", active));
+    }
+
+    public static void clearAfterLogOut() {
+        sWatchData = 0;
+        sPhoneData = 0;
+        sTimestamp = 0;
+        sWatchSpeed = 0;
+        sPhoneSpeed = 0;
+        readingsPhone.clear();
+        readingsWatch.clear();
     }
 
     public static class LocationReading {

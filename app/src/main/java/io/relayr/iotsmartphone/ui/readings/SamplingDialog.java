@@ -129,6 +129,8 @@ public class SamplingDialog extends LinearLayout {
 
         mSwitch.setChecked(uploading);
         setSwitchInfo(uploading);
+
+        mSwitch.setEnabled(UiHelper.isCloudConnected());
     }
 
     private void setSwitchInfo(boolean uploading) {

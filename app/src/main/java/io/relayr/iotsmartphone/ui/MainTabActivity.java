@@ -60,6 +60,7 @@ import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
@@ -83,7 +84,6 @@ import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
 import rx.Observable;
 import rx.Observer;
-import rx.Subscriber;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 
@@ -243,11 +243,10 @@ public class MainTabActivity extends AppCompatActivity implements
     public class MessageReceiver extends BroadcastReceiver {
         @Override public void onReceive(Context context, Intent intent) {
             final String extra = intent.getStringExtra(DemandIntentReceiver.EXTRA_MESSAGE);
-            Log.e("MessageReceiver", extra);
             if (extra == null) return;
-            else if (extra.equals(Constants.NOTIFICATION_FLASH)) toggleFlash(false);
-            else if (extra.equals(Constants.NOTIFICATION_SOUND)) toggleSound(false);
-            else if (extra.equals(Constants.NOTIFICATION_VIBRATION)) toggleVibration(false);
+            else if (extra.equals(Constants.NOTIF_FLASH)) toggleFlash(false);
+            else if (extra.equals(Constants.NOTIF_SOUND)) toggleSound(false);
+            else if (extra.equals(Constants.NOTIF_VIBRATION)) toggleVibration(false);
         }
     }
 
@@ -355,7 +354,6 @@ public class MainTabActivity extends AppCompatActivity implements
                     });
 
         initReadings();
-        if (UiHelper.isCloudConnected()) subscribeToCommands();
     }
 
     private void stopReadings() {
@@ -439,6 +437,7 @@ public class MainTabActivity extends AppCompatActivity implements
         } else {
             initLocationManager();
         }
+        if (UiHelper.isCloudConnected()) subscribeToCommands();
     }
 
     private void initSensorManager() {
@@ -572,8 +571,11 @@ public class MainTabActivity extends AppCompatActivity implements
             mCommandsSubscription = RelayrSdk.getWebSocketClient()
                     .subscribeToCommands(Storage.instance().getDeviceId(PHONE))
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Subscriber<Command>() {
-                        @Override public void onCompleted() {}
+                    .subscribe(new Observer<Command>() {
+                        @Override public void onCompleted() {
+                            mCommandsSubscription = null;
+                            subscribeToCommands();
+                        }
 
                         @Override public void onError(Throwable e) {
                             Crashlytics.log(Log.ERROR, "MTA", "subscribeToCommands - error");
@@ -583,19 +585,24 @@ public class MainTabActivity extends AppCompatActivity implements
                             subscribeToCommands();
                         }
 
-                        @Override public void onNext(Command action) {
-                            final String cmd = action.getName();
-                            Crashlytics.log(Log.DEBUG, "MTA", "CMD - " + cmd);
-                            switch (cmd) {
-                                case "flashlight":
-                                    toggleFlash(Boolean.parseBoolean(String.valueOf(action.getValue())));
-                                    break;
-                                case "playSound":
-                                    toggleSound(Boolean.parseBoolean(String.valueOf(action.getValue())));
-                                    break;
-                                case "vibration":
-                                    toggleVibration(Boolean.parseBoolean(String.valueOf(action.getValue())));
-                                    break;
+                        @Override public void onNext(Command command) {
+                            final String commandName = command.getName();
+                            Crashlytics.log(Log.DEBUG, "MTA", "CMD - " + commandName);
+                            try {
+                                final boolean cmd = Boolean.parseBoolean(String.valueOf(command.getValue()));
+                                switch (commandName) {
+                                    case "flashlight":
+                                        toggleFlash(cmd);
+                                        break;
+                                    case "playSound":
+                                        toggleSound(cmd);
+                                        break;
+                                    case "vibration":
+                                        toggleVibration(cmd);
+                                        break;
+                                }
+                            } catch (Exception e) {
+                                Crashlytics.log(Log.ERROR, "MTA", "CMD - parsing failed");
                             }
                         }
                     });
@@ -606,7 +613,7 @@ public class MainTabActivity extends AppCompatActivity implements
         try {
             mFlash.open(MainTabActivity.this.getApplicationContext());
             mFlash.on();
-            showNotification(R.string.notification_flash, R.string.notification_flash_off, Constants.NOTIFICATION_FLASH);
+            showNotification(R.string.notif_flash, R.string.notif_flash_off, Constants.NOTIF_FLASH);
         } catch (Exception e) {
             Crashlytics.log(Log.ERROR, "MTA", "Failed to create FlashHelper.");
             Toast.makeText(MainTabActivity.this, R.string.sv_err_using_flash, Toast.LENGTH_SHORT).show();
@@ -623,7 +630,7 @@ public class MainTabActivity extends AppCompatActivity implements
             else {
                 if (on) {
                     mFlash.on();
-                    showNotification(R.string.notification_flash, R.string.notification_flash_off, Constants.NOTIFICATION_FLASH);
+                    showNotification(R.string.notif_flash, R.string.notif_flash_off, Constants.NOTIF_FLASH);
                 } else {
                     mFlash.off();
                 }
@@ -634,7 +641,7 @@ public class MainTabActivity extends AppCompatActivity implements
     private void toggleSound(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
         if (start) {
-            showNotification(R.string.notification_music, R.string.notification_music_off, Constants.NOTIFICATION_SOUND);
+            showNotification(R.string.notif_music, R.string.notif_music_off, Constants.NOTIF_SOUND);
             mSound.playMusic(MainTabActivity.this);
         } else mSound.stopMusic();
     }
@@ -642,8 +649,20 @@ public class MainTabActivity extends AppCompatActivity implements
     private void toggleVibration(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
         if (start) {
-            final boolean started = mSound.vibrate(MainTabActivity.this);
-            if (!started) UiHelper.showSnackBar(this, R.string.vibration_not_supported);
+            showNotification(R.string.notif_vib, R.string.notif_vib_off, Constants.NOTIF_VIBRATION);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    runOnUiThread(new TimerTask() {
+                        @Override public void run() {
+                            final boolean started = mSound.vibrate(MainTabActivity.this);
+                            if (!started)
+                                UiHelper.showSnackBar(MainTabActivity.this,
+                                        R.string.vibration_not_supported);
+                        }
+                    });
+                }
+            }, 1000);
         } else {
             mSound.stopVibration();
         }

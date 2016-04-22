@@ -2,6 +2,7 @@ package io.relayr.iotsmartphone.handler;
 
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 
@@ -13,6 +14,7 @@ import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.rules.AppliedTemplate;
+import io.relayr.java.model.rules.TemplateInfo;
 import io.relayr.java.model.rules.TemplateParameters;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
@@ -25,8 +27,9 @@ public class RuleHandler {
     private static final String TEMPLATE_ID = "6f214bdd-5f6c-4451-b9e3-2a489c9e472b";
     private static final String TEMPLATE_VERSION = "640bb689-5dc4-4b09-8481-3b30fa6b518b";
 
-    private static AppliedTemplate sAppliedTemplate;
     private static RuleBuilder sRule;
+    private static AppliedTemplate sAppliedTemplate;
+    private static String templateVersion = TEMPLATE_VERSION;
 
     private static SimpleObserver<Boolean> mObserver;
 
@@ -37,11 +40,29 @@ public class RuleHandler {
     public static Observable<RuleBuilder> loadRule() {
         if (sRule != null) return Observable.just(sRule);
 
+        if (templateVersion == null) return getLatestTemplate();
+        else return fetchTemplateInstallation();
+    }
+
+    private static Observable<RuleBuilder> getLatestTemplate() {
+        return RelayrSdk.getRuleTemplateApi().getTemplate(PROJECT_ID, TEMPLATE_ID)
+                .timeout(7, TimeUnit.SECONDS)
+                .flatMap(new Func1<TemplateInfo, Observable<RuleBuilder>>() {
+                    @Override public Observable<RuleBuilder> call(TemplateInfo templateInfo) {
+                        if (templateInfo != null && templateInfo.getLatestVersion() != null)
+                            templateVersion = templateInfo.getLatestVersion().getId();
+                        Crashlytics.log(Log.INFO, "RuleHandler", "Template version " + templateVersion);
+                        return fetchTemplateInstallation();
+                    }
+                });
+    }
+
+    private static Observable<RuleBuilder> fetchTemplateInstallation() {
         if (!Strings.isNullOrEmpty(DataStorage.getUserId()) &&
                 !Strings.isNullOrEmpty(Storage.instance().loadRule()))
             return RelayrSdk.getRuleTemplateApi()
                     .getAppliedTemplate(DataStorage.getUserId(), Storage.instance().loadRule())
-                    .timeout(5, TimeUnit.SECONDS)
+                    .timeout(7, TimeUnit.SECONDS)
                     .observeOn(AndroidSchedulers.mainThread())
                     .flatMap(new Func1<AppliedTemplate, Observable<RuleBuilder>>() {
                         @Override
@@ -92,7 +113,7 @@ public class RuleHandler {
 
         if (sAppliedTemplate == null)
             RelayrSdk.getRuleTemplateApi()
-                    .applyTemplate(params, PROJECT_ID, TEMPLATE_ID, TEMPLATE_VERSION)
+                    .applyTemplate(params, PROJECT_ID, TEMPLATE_ID, templateVersion)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new SimpleObserver<AppliedTemplate>() {
@@ -102,7 +123,8 @@ public class RuleHandler {
                             if (mObserver != null) mObserver.onNext(false);
                         }
 
-                        @Override public void success(AppliedTemplate appliedTemplate) {
+                        @Override
+                        public void success(AppliedTemplate appliedTemplate) {
                             sAppliedTemplate = appliedTemplate;
                             Storage.instance().saveRule(appliedTemplate.getId());
                             Log.i("FRules - APPLIED", appliedTemplate.toString());
@@ -121,7 +143,8 @@ public class RuleHandler {
                             if (mObserver != null) mObserver.onNext(false);
                         }
 
-                        @Override public void success(AppliedTemplate appliedTemplate) {
+                        @Override
+                        public void success(AppliedTemplate appliedTemplate) {
                             sAppliedTemplate = appliedTemplate;
                             Log.i("FRules - UPDATED", appliedTemplate.toString());
                             if (mObserver != null) mObserver.onNext(true);
@@ -129,7 +152,8 @@ public class RuleHandler {
                     });
     }
 
-    public static boolean hasRule() {
-        return sRule != null;
+    public static void clearAfterLogOut() {
+        sRule = null;
+        sAppliedTemplate = null;
     }
 }

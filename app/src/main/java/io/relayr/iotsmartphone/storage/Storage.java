@@ -15,6 +15,7 @@ import java.util.Set;
 
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
+import io.relayr.iotsmartphone.handler.RuleHandler;
 import io.relayr.java.model.Device;
 import io.relayr.java.model.models.transport.DeviceCommand;
 import io.relayr.java.model.models.transport.DeviceReading;
@@ -285,6 +286,10 @@ public class Storage {
         PREFS.edit().remove(PHONE_ID).apply();
         PREFS.edit().remove(WATCH_ID).apply();
         PREFS.edit().remove(PREFS_WARNING).apply();
+
+        RuleHandler.clearAfterLogOut();
+        ReadingHandler.clearAfterLogOut();
+        System.gc();
     }
 
     public boolean isActiveInBackground() {

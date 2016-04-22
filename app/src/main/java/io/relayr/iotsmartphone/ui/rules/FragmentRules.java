@@ -2,10 +2,13 @@ package io.relayr.iotsmartphone.ui.rules;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.crashlytics.android.Crashlytics;
 
 import java.util.concurrent.TimeoutException;
 
@@ -85,6 +88,7 @@ public class FragmentRules extends Fragment {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SimpleObserver<RuleBuilder>() {
                     @Override public void error(Throwable e) {
+                        Crashlytics.log(Log.WARN, "RuleHandler", "Failed to load current rule.");
                         if (e instanceof TimeoutException) loadRule();
                         else setUpConditions(null);
                     }

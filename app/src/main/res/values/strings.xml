@@ -78,11 +78,11 @@
 
     <string name="vibration_not_supported">Vibration not supported</string>
 
-    <string name="notification_music">Playing sound</string>
-    <string name="notification_music_off">Stop playing</string>
-    <string name="notification_flash">Flashlight turned ON</string>
-    <string name="notification_flash_off">Turn off flash</string>
-    <string name="notification_vibration">Device is vibrating</string>
-    <string name="notification_vibration_off">Stop vibration</string>
+    <string name="notif_music">Playing sound</string>
+    <string name="notif_music_off">Stop playing</string>
+    <string name="notif_flash">Flashlight turned ON</string>
+    <string name="notif_flash_off">Turn off flash</string>
+    <string name="notif_vib">Device is vibrating</string>
+    <string name="notif_vib_off">Stop vibration</string>
 
 </resources>

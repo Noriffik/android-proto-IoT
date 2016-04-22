@@ -28,7 +28,7 @@
             style="@style/NormalText"
             android:layout_height="@dimen/cloud_icon_size"
             android:layout_alignTop="@+id/cloud"
-            android:layout_marginLeft="@dimen/big_padding"
+            android:layout_marginLeft="@dimen/default_padding_double"
             android:layout_toRightOf="@+id/cloud"
             android:gravity="center_vertical|left"
             android:text="@string/cloud_establish_connection"/>
@@ -40,7 +40,7 @@
             android:layout_below="@id/cloud_info"
             android:layout_marginLeft="@dimen/big_padding"
             android:layout_toRightOf="@id/cloud"
-            android:elevation="@dimen/default_padding"
+            android:elevation="@dimen/default_padding_half"
             android:text="@string/cloud_log_in"/>
 
         <View

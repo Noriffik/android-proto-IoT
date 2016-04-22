@@ -26,21 +26,39 @@
             android:id="@+id/condition_one"
             layout="@layout/widget_rules_condition"/>
 
-        <TextView
-            android:id="@+id/condition_operator"
-            style="@style/TitleText"
-            android:layout_gravity="center_horizontal"
-            android:layout_margin="0dp"
-            android:background="@drawable/button_active"
-            android:elevation="@dimen/default_padding_half"
-            android:paddingBottom="@dimen/default_padding"
-            android:paddingLeft="@dimen/default_padding_double"
-            android:paddingRight="@dimen/default_padding_double"
-            android:paddingTop="@dimen/default_padding"
-            android:textColor="@color/primary"
-            android:textStyle="bold"
-            android:text="@string/global_condition"
-            android:visibility="gone"/>
+        <LinearLayout
+            style="@style/MatchWrapHor">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="@dimen/default_padding_half"
+                android:layout_weight="7"/>
+
+            <TextView
+                android:id="@+id/condition_operator"
+                style="@style/TitleText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_margin="0dp"
+                android:layout_weight="6"
+                android:background="@drawable/button_active"
+                android:elevation="@dimen/default_padding_half"
+                android:paddingBottom="@dimen/default_padding"
+                android:paddingLeft="@dimen/default_padding_double"
+                android:paddingRight="@dimen/default_padding_double"
+                android:paddingTop="@dimen/default_padding"
+                android:text="@string/global_condition"
+                android:textColor="@color/primary"
+                android:textStyle="bold"
+                android:visibility="gone"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="@dimen/default_padding_half"
+                android:layout_weight="45"/>
+
+        </LinearLayout>
 
         <include
             android:id="@+id/condition_two"

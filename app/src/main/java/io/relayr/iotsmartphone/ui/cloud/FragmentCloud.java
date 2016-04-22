@@ -193,6 +193,7 @@ public class FragmentCloud extends Fragment {
             mCloudConnection.setBackgroundResource(R.drawable.cloud_line);
             mCloudInfoText.setText(R.string.cloud_connection_established);
             mCloudInfoBtn.setText(R.string.cloud_log_out);
+            EventBus.getDefault().post(new Constants.CloudConnected());
         } else {
             mCloudImg.setBackgroundResource(R.drawable.cloud_disconnected_circle);
             mCloudConnection.setBackgroundResource(R.drawable.cloud_dotted_vertical_line);
