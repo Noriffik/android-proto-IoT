@@ -84,7 +84,7 @@ public class ReadingHandler {
                         .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
                             @Override public Observable<DeviceModel> call(DeviceModel deviceModel) {
                                 try {
-                                    final Transport transport = deviceModel.getLatestFirmware().getDefaultTransport();
+                                    final Transport transport = deviceModel.getFirmwareByVersion("1.0.0").getDefaultTransport();
                                     Storage.instance().savePhoneReadings(transport.getReadings());
                                     Storage.instance().savePhoneCommands(transport.getCommands());
                                 } catch (DeviceModelsException e) {
@@ -148,10 +148,10 @@ public class ReadingHandler {
             RelayrSdk.getWebSocketClient()
                     .publish(Storage.instance().getDeviceId(PHONE), reading)
                     .subscribeOn(Schedulers.io())
-                    .subscribe(new ErrorObserver<Void>() {
+                    .subscribe(new ErrorObserver<Boolean>() {
                         @Override public void error(Throwable e) {
                             Crashlytics.log(Log.ERROR, TAG, "publish phone reading - error");
-                            RelayrSdk.getWebSocketClient().restart();
+                            e.printStackTrace();
                         }
                     });
         }
@@ -192,7 +192,7 @@ public class ReadingHandler {
             RelayrSdk.getWebSocketClient()
                     .publish(Storage.instance().getDeviceId(WATCH), reading)
                     .subscribeOn(Schedulers.io())
-                    .subscribe(new ErrorObserver<Void>() {
+                    .subscribe(new ErrorObserver<Boolean>() {
                         @Override public void error(Throwable e) {
                             Crashlytics.log(Log.ERROR, TAG, "publish watch reading - error");
                             e.printStackTrace();
@@ -231,8 +231,6 @@ public class ReadingHandler {
         sTimestamp = 0;
         sWatchSpeed = 0;
         sPhoneSpeed = 0;
-        readingsPhone.clear();
-        readingsWatch.clear();
     }
 
     public static class LocationReading {

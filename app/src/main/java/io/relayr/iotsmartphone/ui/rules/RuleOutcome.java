@@ -39,6 +39,7 @@ public class RuleOutcome extends LinearLayout {
     private DeviceCommand mCommand;
     private Constants.DeviceType mType;
     private FragmentRules.OutcomeListener mListener;
+    private AlertDialog mCommandsDialog;
 
     public RuleOutcome(Context context) {
         this(context, null);
@@ -88,9 +89,15 @@ public class RuleOutcome extends LinearLayout {
     @SuppressWarnings("unused") @OnClick(R.id.rule_widget_icon)
     public void onIconClicked() {
         final ConditionDialog view = (ConditionDialog) View.inflate(getContext(), R.layout.condition_dialog, null);
-        view.setUp(mType, mCommand, false);
+        view.setUp(mType, mCommand, false, new OnClickListener() {
+            @Override public void onClick(View v) {
+                if (mCommandsDialog != null) mCommandsDialog.dismiss();
+                getSelectedData(view);
+            }
+        });
 
-        new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+        if (mCommandsDialog != null) mCommandsDialog.dismiss();
+        mCommandsDialog = new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
                 .setView(view)
                 .setTitle(getResources().getString(R.string.cloud_device_dialog_title))
                 .setNegativeButton(getResources().getString(R.string.close), new DialogInterface.OnClickListener() {
@@ -101,18 +108,23 @@ public class RuleOutcome extends LinearLayout {
                 .setPositiveButton(getResources().getString(R.string.save), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-                        if ((mType == null || mCommand == null) || !mCommand.equals(view.getSelected()) || mType != view.getType()) {
-                            mCommand = (DeviceCommand) view.getSelected();
-                            mType = view.getType();
-                            mValue = true;
-                            toggleControls(true);
-                            setOutcomeValues();
-                            mListener.outcomeChanged(mCommand, mValue);
-                        }
+                        getSelectedData(view);
                     }
                 })
-                .create()
-                .show();
+                .create();
+        mCommandsDialog.show();
+    }
+
+    private void getSelectedData(ConditionDialog view) {
+        if (view == null) return;
+        if ((mType == null || mCommand == null) || !mCommand.equals(view.getSelected()) || mType != view.getType()) {
+            mCommand = (DeviceCommand) view.getSelected();
+            mType = view.getType();
+            mValue = true;
+            toggleControls(true);
+            setOutcomeValues();
+            mListener.outcomeChanged(mCommand, mValue);
+        }
     }
 
     private void toggleControls(boolean show) {

@@ -52,7 +52,6 @@ public class FragmentReadings extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle saved) {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_readings, container, false);
         ButterKnife.inject(this, view);
-        EventBus.getDefault().register(this);
 
         final int columns = getResources().getInteger(R.integer.num_columns);
 
@@ -65,11 +64,14 @@ public class FragmentReadings extends Fragment {
         return view;
     }
 
-    @Override public void onDestroyView() {
-        super.onDestroyView();
+    @Override public void onResume() {
+        super.onResume();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override public void onPause() {
+        super.onPause();
         EventBus.getDefault().unregister(this);
-        IotApplication.visible(PHONE, false);
-        IotApplication.visible(WATCH, false);
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.fab)
@@ -101,7 +103,8 @@ public class FragmentReadings extends Fragment {
     }
 
     private void onPhoneClicked() {
-        IotApplication.visible(PHONE, true);
+        IotApplication.sCurrent = PHONE;
+        IotApplication.visible(true, false);
         EventBus.getDefault().post(new Constants.DeviceChange(PHONE));
         mFab.setImageResource(R.drawable.ic_graphic_watch);
 
@@ -113,7 +116,8 @@ public class FragmentReadings extends Fragment {
     }
 
     private void onWatchClicked() {
-        IotApplication.visible(WATCH, true);
+        IotApplication.sCurrent = WATCH;
+        IotApplication.visible(false, true);
         EventBus.getDefault().post(new Constants.DeviceChange(WATCH));
         mFab.setImageResource(R.drawable.ic_graphic_phone);
 

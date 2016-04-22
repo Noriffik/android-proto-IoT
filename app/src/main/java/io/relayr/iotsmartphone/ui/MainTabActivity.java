@@ -70,6 +70,7 @@ import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
+import io.relayr.iotsmartphone.handler.RuleHandler;
 import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.helper.FlashHelper;
 import io.relayr.iotsmartphone.helper.SoundHelper;
@@ -160,6 +161,9 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override protected void onPause() {
         super.onPause();
+
+        if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
+        mInitialiseDialog = null;
 
         if (mFlash != null) mFlash.off();
         if (mSound != null) {
@@ -402,6 +406,7 @@ public class MainTabActivity extends AppCompatActivity implements
                 final int position = tab.getPosition();
                 mViewPager.setCurrentItem(position);
                 setToolbarTitle(position);
+                setVisibility(position);
             }
 
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
@@ -417,6 +422,14 @@ public class MainTabActivity extends AppCompatActivity implements
             setTitle(IotApplication.isVisible(PHONE) ? R.string.app_title_phone : R.string.app_title_watch);
         else if (position == 1) setTitle(R.string.cloud_title);
         else if (position == 2) setTitle(R.string.rules_title);
+    }
+
+    private void setVisibility(int position) {
+        if (position == 0)
+            IotApplication.visible(IotApplication.sCurrent == PHONE, IotApplication.sCurrent == WATCH);
+        else if (position == 1) IotApplication.visible(false, false);
+        else if (position == 2 && RuleHandler.hasRule()) IotApplication.visible(true, true);
+        else IotApplication.visible(false, false);
     }
 
     private void setupTabIcons() {
@@ -468,7 +481,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mConnectivityManager == null || mWifiManager == null) return;
 
         if (!checkWifi(mConnectivityManager))
-            Toast.makeText(MainTabActivity.this, R.string.sv_no_wifi, LENGTH_SHORT).show();
+            Toast.makeText(MainTabActivity.this, R.string.warning_no_wifi, LENGTH_SHORT).show();
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
@@ -548,9 +561,9 @@ public class MainTabActivity extends AppCompatActivity implements
 
     private void showLocationDialog() {
         new AlertDialog.Builder(this, R.style.AppTheme_DialogOverlay)
-                .setTitle(this.getString(R.string.sv_location_off_title))
+                .setTitle(this.getString(R.string.warning_location_off_title))
                 .setIcon(R.drawable.ic_warning)
-                .setMessage(MainTabActivity.this.getString(R.string.sv_location_off_message))
+                .setMessage(MainTabActivity.this.getString(R.string.warning_location_off_message))
                 .setPositiveButton(MainTabActivity.this.getString(R.string.ok), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int i) {
                         dialog.dismiss();
@@ -616,7 +629,7 @@ public class MainTabActivity extends AppCompatActivity implements
             showNotification(R.string.notif_flash, R.string.notif_flash_off, Constants.NOTIF_FLASH);
         } catch (Exception e) {
             Crashlytics.log(Log.ERROR, "MTA", "Failed to create FlashHelper.");
-            Toast.makeText(MainTabActivity.this, R.string.sv_err_using_flash, Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainTabActivity.this, R.string.error_using_flash, Toast.LENGTH_SHORT).show();
             mFlash.close();
             mFlash = null;
         }
@@ -624,7 +637,7 @@ public class MainTabActivity extends AppCompatActivity implements
 
     private void toggleFlash(boolean on) {
         if (mFlash != null && !mFlash.hasFlash(MainTabActivity.this)) {
-            Toast.makeText(MainTabActivity.this, R.string.sv_flashlight_not_available, LENGTH_SHORT).show();
+            Toast.makeText(MainTabActivity.this, R.string.warning_flashlight_not_available, LENGTH_SHORT).show();
         } else {
             if (mFlash == null) createFlashHelper();
             else {
@@ -632,6 +645,7 @@ public class MainTabActivity extends AppCompatActivity implements
                     mFlash.on();
                     showNotification(R.string.notif_flash, R.string.notif_flash_off, Constants.NOTIF_FLASH);
                 } else {
+                    hideNotification();
                     mFlash.off();
                 }
             }
@@ -643,29 +657,40 @@ public class MainTabActivity extends AppCompatActivity implements
         if (start) {
             showNotification(R.string.notif_music, R.string.notif_music_off, Constants.NOTIF_SOUND);
             mSound.playMusic(MainTabActivity.this);
-        } else mSound.stopMusic();
+        } else {
+            mSound.stopMusic();
+            hideNotification();
+        }
     }
 
     private void toggleVibration(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
         if (start) {
             showNotification(R.string.notif_vib, R.string.notif_vib_off, Constants.NOTIF_VIBRATION);
+            //Postpone vibration because of notification
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     runOnUiThread(new TimerTask() {
                         @Override public void run() {
                             final boolean started = mSound.vibrate(MainTabActivity.this);
-                            if (!started)
-                                UiHelper.showSnackBar(MainTabActivity.this,
-                                        R.string.vibration_not_supported);
+                            if (!started) {
+                                UiHelper.showSnackBar(MainTabActivity.this, R.string.vibration_not_supported);
+                                hideNotification();
+                            }
                         }
                     });
                 }
             }, 1000);
         } else {
+            hideNotification();
             mSound.stopVibration();
         }
+    }
+
+    private void hideNotification() {
+        final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(this);
+        managerCompat.cancel(Constants.NOTIFICATION_ID);
     }
 
     public void showNotification(int titleId, int textId, String extra) {
@@ -722,6 +747,7 @@ public class MainTabActivity extends AppCompatActivity implements
         }
 
         public void run() {
+            if (mGoogleApiClient == null) return;
             PutDataMapRequest putDMR = PutDataMapRequest.create(path);
             putDMR.getDataMap().putAll(dataMap);
             PutDataRequest request = putDMR.asPutDataRequest();

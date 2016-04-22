@@ -25,11 +25,16 @@ import java.util.List;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
+import de.greenrobot.event.EventBus;
+import io.relayr.iotsmartphone.IotApplication;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.java.model.AccelGyroscope;
+import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
 import io.relayr.java.model.models.schema.ObjectSchema;
 import io.relayr.java.model.models.schema.ValueSchema;
@@ -47,6 +52,7 @@ public class RuleCondition extends LinearLayout {
     @InjectView(R.id.rule_widget_container) View mContainer;
 
     @InjectView(R.id.rule_widget_meaning) TextView mMeaningTv;
+    @InjectView(R.id.rule_widget_live) TextView mLiveTv;
     @InjectView(R.id.rule_widget_operator) TextView mOperationTv;
     @InjectView(R.id.rule_widget_value) EditText mValueEt;
 
@@ -60,6 +66,7 @@ public class RuleCondition extends LinearLayout {
     private String mOperation;
     private DeviceReading mReading;
     private Constants.DeviceType mType;
+    private AlertDialog mMeaningsDialog;
 
     public RuleCondition(Context context) {
         this(context, null);
@@ -101,6 +108,38 @@ public class RuleCondition extends LinearLayout {
 
         initValueControls();
         if (mType != null) setConditionValues();
+
+        EventBus.getDefault().register(this);
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @SuppressWarnings("unused")
+    public void onEvent(final Constants.ReadingRefresh refresh) {
+        if (mReading == null || mType == null || mLiveTv == null) return;
+        if (refresh.getMeaning().equals(mReading.getMeaning()) && refresh.getType() == mType) {
+            final Reading last = ReadingHandler.readings(mType).get(mReading.getMeaning()).getLast();
+            if (last == null) return;
+
+            if (mReading.getValueSchema().isNumberSchema() || mReading.getValueSchema().isIntegerSchema())
+                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, ((Number) last.value).intValue()));
+            else if (last.value instanceof AccelGyroscope.Acceleration) {
+                AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) last.value;
+                double vector = calculateVector(accel.x, accel.y, accel.z);
+                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, vector));
+            } else if (last.value instanceof AccelGyroscope.AngularSpeed) {
+                AccelGyroscope.AngularSpeed gyro = (AccelGyroscope.AngularSpeed) last.value;
+                double vector = calculateVector(gyro.x, gyro.y, gyro.z);
+                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, vector));
+            }
+        }
+    }
+
+    private double calculateVector(float a, float b, float c) {
+        return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2) + Math.pow(c, 2));
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.rule_widget_remove_btn)
@@ -114,9 +153,15 @@ public class RuleCondition extends LinearLayout {
     @SuppressWarnings("unused") @OnClick(R.id.rule_widget_icon)
     public void onIconClicked() {
         final ConditionDialog view = (ConditionDialog) View.inflate(getContext(), R.layout.condition_dialog, null);
-        view.setUp(mType, mReading, true);
+        view.setUp(mType, mReading, true, new OnClickListener() {
+            @Override public void onClick(View v) {
+                if (mMeaningsDialog != null) mMeaningsDialog.dismiss();
+                getSelectedData(view);
+            }
+        });
 
-        new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+        if (mMeaningsDialog != null) mMeaningsDialog.dismiss();
+        mMeaningsDialog = new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
                 .setView(view)
                 .setNegativeButton(getResources().getString(R.string.close), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
@@ -126,20 +171,27 @@ public class RuleCondition extends LinearLayout {
                 .setPositiveButton(getResources().getString(R.string.save), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-                        if ((mType == null || mReading == null) || !mReading.equals(view.getSelected()) || mType != view.getType()) {
-                            mType = view.getType();
-                            mReading = (DeviceReading) view.getSelected();
-
-                            toggleControls(true);
-                            setInitialValues();
-                            setDefaultValues();
-                            setConditionValues();
-                            mListener.conditionChanged(mType, mReading, mOperation, mValue);
-                        }
+                        getSelectedData(view);
                     }
                 })
-                .create()
-                .show();
+                .create();
+        mMeaningsDialog.show();
+    }
+
+    private void getSelectedData(ConditionDialog view) {
+        if (view == null) return;
+        if ((mType == null || mReading == null) || !mReading.equals(view.getSelected()) || mType != view.getType()) {
+            mType = view.getType();
+            mReading = (DeviceReading) view.getSelected();
+
+            IotApplication.visible(true, true);
+
+            toggleControls(true);
+            setInitialValues();
+            setDefaultValues();
+            setConditionValues();
+            mListener.conditionChanged(mType, mReading, mOperation, mValue);
+        }
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.rule_widget_operator)
@@ -157,10 +209,10 @@ public class RuleCondition extends LinearLayout {
                             }
                         })
                 .setAdapter(
-                        arrayAdapter,
-                        new DialogInterface.OnClickListener() {
+                        arrayAdapter, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
                                 mOperation = mOperations.get(which);
                                 mOperationTv.setText(mOperation);
                                 mListener.conditionChanged(mType, mReading, mOperation, mValue);

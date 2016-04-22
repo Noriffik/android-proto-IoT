@@ -67,6 +67,14 @@
                 android:layout_alignParentTop="true"
                 android:textColor="@color/accent"/>
 
+            <TextView
+                android:id="@+id/rule_widget_live"
+                style="@style/SubtitleText"
+                android:layout_alignTop="@id/rule_widget_meaning"
+                android:layout_marginLeft="@dimen/default_padding_double"
+                android:layout_toRightOf="@id/rule_widget_meaning"
+                android:textColor="@color/accent"/>
+
             <ImageView
                 android:id="@+id/rule_widget_remove_btn"
                 android:layout_width="@dimen/cloud_icon_radius"

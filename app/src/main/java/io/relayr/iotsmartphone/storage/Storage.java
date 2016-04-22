@@ -2,7 +2,6 @@ package io.relayr.iotsmartphone.storage;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +29,6 @@ public class Storage {
 
     private static final String PREFS_NAME = "io.relayr.iotsp.settings";
 
-    private static final String PREFS_WARNING = "io.relayr.warning";
     private static final String PREFS_SETTINGS_LOCATION = "io.relayr.iotsp.permission.location";
 
     private static final String ACTIVE_PHONE = "active_p";
@@ -280,13 +278,7 @@ public class Storage {
     }
 
     public void logOut() {
-        changeActivity(PHONE, false);
-        changeActivity(WATCH, false);
-
-        PREFS.edit().remove(PHONE_ID).apply();
-        PREFS.edit().remove(WATCH_ID).apply();
-        PREFS.edit().remove(PREFS_WARNING).apply();
-
+        PREFS.edit().clear().apply();
         RuleHandler.clearAfterLogOut();
         ReadingHandler.clearAfterLogOut();
         System.gc();

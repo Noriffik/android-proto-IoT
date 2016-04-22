@@ -156,4 +156,8 @@ public class RuleHandler {
         sRule = null;
         sAppliedTemplate = null;
     }
+
+    public static boolean hasRule() {
+        return sRule != null;
+    }
 }

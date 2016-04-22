@@ -2,22 +2,21 @@ package io.relayr.iotsmartphone;
 
 import android.app.Application;
 import android.content.Context;
+import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import io.fabric.sdk.android.Fabric;
 import io.relayr.iotsmartphone.storage.Constants;
 
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class IotApplication extends Application {
 
     private static Context mContext;
-    private static Map<Constants.DeviceType, Boolean> sVisible = new HashMap<>();
+    private static boolean sPhoneVisibility = true;
+    private static boolean swatchVisibility = false;
+    public static Constants.DeviceType sCurrent = PHONE;
 
     @Override
     public void onCreate() {
@@ -32,13 +31,13 @@ public class IotApplication extends Application {
         return mContext;
     }
 
-    public static void visible(Constants.DeviceType type, boolean visible) {
-        sVisible.put(type, visible);
-        sVisible.put(type == WATCH ? PHONE : WATCH, false);
+    public static void visible(boolean phone, boolean watch) {
+        sPhoneVisibility = phone;
+        swatchVisibility = watch;
     }
 
     public static boolean isVisible(Constants.DeviceType type) {
-        final Boolean status = sVisible.get(type);
-        return status == null ? false : status;
+        if (type == null || type == PHONE) return sPhoneVisibility;
+        else return swatchVisibility;
     }
 }

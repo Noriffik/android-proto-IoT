@@ -45,6 +45,7 @@ public class ConditionDialog extends LinearLayout {
 
     private Object mSelected;
     private Constants.DeviceType mType;
+    private OnClickListener mClickListener;
 
     public ConditionDialog(Context context) {
         this(context, null);
@@ -58,10 +59,11 @@ public class ConditionDialog extends LinearLayout {
         super(context, attrs, defStyleAttr);
     }
 
-    public void setUp(Constants.DeviceType type, Object selectedReading, boolean condition) {
+    public void setUp(Constants.DeviceType type, Object selectedReading, boolean condition, OnClickListener clickListener) {
         this.mType = type;
         this.mSelected = selectedReading;
         this.mCondition = condition;
+        this.mClickListener = clickListener;
     }
 
     @Override protected void onAttachedToWindow() {
@@ -136,6 +138,7 @@ public class ConditionDialog extends LinearLayout {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 mSelected = mCondition ? mReadings.get(position) : mCommands.get(position);
                 adapter.notifyDataSetChanged();
+                if (mClickListener != null) mClickListener.onClick(null);
             }
         });
     }
