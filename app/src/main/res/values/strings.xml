@@ -55,9 +55,8 @@
     <string name="dialog_background_send">send in background</string>
 
     <string name="dialog_global_settings">Global settings</string>
-    <string name="acceleration_unit">m/s2\t</string>
     <string name="have_to_be_logged_in">You have to be logged in to create rules.</string>
-    <string name="global_condition"><![CDATA[&]]></string>
+    <string name="global_condition">\u0026</string>
 
     <string name="notif_music">Playing sound</string>
     <string name="notif_music_off">Stop playing</string>
@@ -71,7 +70,6 @@
     <string name="rules_if">If</string>
     <string name="rules_then">Then</string>
     <string name="condition_reading_live">( %s )</string>
-    <string name="rule_operator_hint">\?</string>
     <string name="save">Save</string>
     <string name="rule_widget_select_operation">Select operation</string>
     <string name="rule_value_invalid">Invalid value</string>
@@ -83,6 +81,16 @@
     <string name="rule_updated">Rule updated successfully</string>
     <string name="rule_update_problem">Update problem</string>
     <string name="rule_widget_add_outcome">Add outcome</string>
-    <string name="seomthing_went_wrong">Something went wrong</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="rule_disabled">Rule is disabled</string>
+    <string name="rule_enabled">Rule enabled</string>
+    <string name="cloud_user_dialog_title">User details</string>
+    <string name="rule_when">when</string>
+
+    <string name="reading_unit_acceleration">m/s\u00B2</string>
+    <string name="reading_unit_battery">\u0025</string>
+    <string name="reading_unit_light">lux</string>
+    <string name="reading_unit_rssi">dBm</string>
+    <string name="reading_unit_empty"/>
 
 </resources>
