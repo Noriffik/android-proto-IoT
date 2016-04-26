@@ -36,21 +36,6 @@
         <activity
             android:name="android.support.wearable.activity.ConfirmationActivity"
             android:theme="@android:style/Theme.DeviceDefault"/>
-
-        <!--<activity-->
-            <!--android:name=".notif.MyDisplayActivity"-->
-            <!--android:allowEmbedded="true"-->
-            <!--android:exported="true"-->
-            <!--android:taskAffinity=""-->
-            <!--android:theme="@android:style/Theme.DeviceDefault.Light"/>-->
-
-        <!--<receiver-->
-            <!--android:name=".notif.NotificationReceiver"-->
-            <!--android:exported="false">-->
-            <!--<intent-filter>-->
-                <!--<action android:name="io.relayr.iotsmartphone.SHOW_NOTIFICATION"/>-->
-            <!--</intent-filter>-->
-        <!--</receiver>-->
     </application>
 
 </manifest>

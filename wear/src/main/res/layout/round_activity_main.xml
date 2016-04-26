@@ -10,7 +10,7 @@
     tools:context="io.relayr.iotsmartphone.MainActivity"
     tools:deviceIds="wear_round">
 
-    <FrameLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="0dp"
@@ -20,47 +20,35 @@
             android:id="@+id/logo"
             android:layout_width="@dimen/icon_size"
             android:layout_height="@dimen/icon_size"
+            android:layout_centerHorizontal="true"
             android:layout_gravity="center_horizontal"
             android:src="@mipmap/logo"/>
 
-        <android.support.wearable.view.CardFrame
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/info"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/icon_size"
-            android:padding="0dp">
+            android:layout_below="@id/logo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="@dimen/default_padding"
+            android:gravity="center_horizontal"
+            android:padding="0dp"
+            android:text="@string/app_name"
+            android:textColor="@color/colorAccent"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="0dp"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="0dp">
-
-                <TextView
-                    android:id="@+id/info"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_margin="0dp"
-                    android:padding="0dp"
-                    android:text="@string/app_name"
-                    android:textColor="@color/colorPrimaryDark"/>
-
-                <android.support.wearable.view.DelayedConfirmationView
-                    android:id="@+id/send_btn"
-                    android:layout_width="@dimen/icon_size"
-                    android:layout_height="@dimen/icon_size"
-                    android:layout_margin="0dp"
-                    android:padding="0dp"
-                    android:src="@drawable/ic_cancel"
-                    android:textColor="@color/colorPrimaryDark"
-                    app:circle_border_color="@color/colorAccent"
-                    app:circle_border_width="4dp"
-                    app:circle_color="@color/colorAccent"
-                    app:circle_radius="@dimen/btn_radius"/>
-            </LinearLayout>
-        </android.support.wearable.view.CardFrame>
-    </FrameLayout>
+        <android.support.wearable.view.DelayedConfirmationView
+            android:id="@+id/send_btn"
+            android:layout_width="@dimen/icon_size"
+            android:layout_height="@dimen/icon_size"
+            android:layout_below="@id/info"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="@dimen/default_padding"
+            android:padding="0dp"
+            android:src="@drawable/ic_cancel"
+            android:textColor="@color/colorPrimaryDark"
+            app:circle_border_color="@color/colorPrimary"
+            app:circle_border_width="4dp"
+            app:circle_color="@color/colorPrimary"
+            app:circle_radius="@dimen/btn_radius"/>
+    </RelativeLayout>
 </android.support.wearable.view.BoxInsetLayout>
