@@ -4,7 +4,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,28 +12,22 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
-
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
-import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.handler.CloudHandler;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
-import io.relayr.java.model.CreateDevice;
 import io.relayr.java.model.Device;
-import io.relayr.java.model.User;
 import rx.android.schedulers.AndroidSchedulers;
 
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
@@ -60,6 +54,7 @@ public class FragmentCloud extends Fragment {
 
     private TimerTask mSpeedTimer;
     private AlertDialog mWarningDialog;
+    private AlertDialog mLoadingDialog;
 
     public FragmentCloud() {}
 
@@ -72,25 +67,45 @@ public class FragmentCloud extends Fragment {
         setUpPhone();
         setUpWearable();
 
-        setSpeedTimer();
-
-        if (UiHelper.isCloudConnected()) loadDevices();
+        loadDeviceData();
 
         return view;
     }
 
     @Override public void onDestroyView() {
         super.onDestroyView();
-        if (mSpeedTimer != null) mSpeedTimer.cancel();
-        mSpeedTimer = null;
-
         if (mWarningDialog != null) mWarningDialog.dismiss();
         mWarningDialog = null;
+        if (mLoadingDialog != null) mLoadingDialog.dismiss();
+        mLoadingDialog = null;
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            setSpeedTimer();
+        } else {
+            if (mSpeedTimer != null) mSpeedTimer.cancel();
+            mSpeedTimer = null;
+            if (mWarningDialog != null) mWarningDialog.dismiss();
+            mWarningDialog = null;
+        }
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.cloud_button)
     public void onButtonClick() {
-        if (!UiHelper.isCloudConnected()) logIn();
+        if (!UiUtil.isCloudConnected())
+            CloudHandler.logIn(getActivity())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new SimpleObserver<Pair<Constants.DeviceType, Device>>() {
+                        @Override public void error(Throwable e) {}
+
+                        @Override public void success(Pair<Constants.DeviceType, Device> pair) {
+                            if (pair != null) setUpDevice(pair.second, pair.first);
+                            setUpCloud();
+                        }
+                    });
         else
             new AlertDialog.Builder(getActivity(), R.style.AppTheme_DialogOverlay)
                     .setTitle(getActivity().getString(R.string.cloud_log_out))
@@ -114,7 +129,7 @@ public class FragmentCloud extends Fragment {
     public void onCloudClick() {
         new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
                 .setView(View.inflate(getContext(), R.layout.dialog_cloud_user, null))
-                .setTitle(getString(R.string.cloud_device_dialog_title))
+                .setTitle(getString(R.string.cloud_user_dialog_title))
                 .setPositiveButton(getString(R.string.close), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -132,7 +147,35 @@ public class FragmentCloud extends Fragment {
 
     @SuppressWarnings("unused") @OnClick(R.id.cloud_info)
     public void onLinkClick() {
-        if (UiHelper.isCloudConnected()) UiHelper.openDashboard(getContext());
+        if (UiUtil.isCloudConnected()) UiUtil.openDashboard(getContext());
+    }
+
+    private void loadDeviceData() {
+        if (UiUtil.isCloudConnected())
+            CloudHandler.loadDevices(getActivity())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new SimpleObserver<Pair<Constants.DeviceType, Device>>() {
+                        @Override public void error(Throwable e) {
+                            if (mLoadingDialog != null) mLoadingDialog.dismiss();
+                            mLoadingDialog = new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+                                    .setTitle(getString(R.string.something_went_wrong))
+                                    .setPositiveButton(getString(R.string.retry), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                            loadDeviceData();
+                                        }
+                                    })
+                                    .create();
+                            mLoadingDialog.show();
+                        }
+
+                        @Override public void success(Pair<Constants.DeviceType, Device> pair) {
+                            setUpDevice(pair.second, pair.first);
+                            if (mLoadingDialog != null) mLoadingDialog.dismiss();
+                            showWarning();
+                        }
+                    });
     }
 
     private void setSpeedTimer() {
@@ -140,15 +183,16 @@ public class FragmentCloud extends Fragment {
         mSpeedTimer = new TimerTask() {
             @Override public void run() {
                 ReadingHandler.calculateSpeeds();
-                getActivity().runOnUiThread(new TimerTask() {
-                    @Override public void run() {
-                        mWatchSpeed.setText(getSpeed(ReadingHandler.sWatchSpeed));
-                        mCloudSpeed.setText(getSpeed(ReadingHandler.sPhoneSpeed + ReadingHandler.sWatchSpeed));
-                    }
-                });
+                if (getActivity() != null)
+                    getActivity().runOnUiThread(new TimerTask() {
+                        @Override public void run() {
+                            mWatchSpeed.setText(getSpeed(ReadingHandler.sWatchSpeed));
+                            mCloudSpeed.setText(getSpeed(ReadingHandler.sPhoneSpeed + ReadingHandler.sWatchSpeed));
+                        }
+                    });
             }
         };
-        new Timer().scheduleAtFixedRate(mSpeedTimer, 5000, 5000);
+        new Timer().scheduleAtFixedRate(mSpeedTimer, 1000, 5000);
     }
 
     private String getSpeed(float speed) {
@@ -161,8 +205,8 @@ public class FragmentCloud extends Fragment {
         final Device device = Storage.instance().getDevice(type);
         if (device == null) {
             if (type == PHONE)
-                UiHelper.showSnackBar(getActivity(), R.string.cloud_establish_connection);
-            else UiHelper.showSnackBar(getActivity(), R.string.cloud_no_wearable);
+                UiUtil.showSnackBar(getActivity(), R.string.cloud_establish_connection);
+            else UiUtil.showSnackBar(getActivity(), R.string.cloud_no_wearable);
             return;
         }
 
@@ -188,7 +232,7 @@ public class FragmentCloud extends Fragment {
     }
 
     private void setUpCloud() {
-        if (UiHelper.isCloudConnected()) {
+        if (UiUtil.isCloudConnected()) {
             mCloudImg.setBackgroundResource(R.drawable.cloud_connected_circle);
             mCloudConnection.setBackgroundResource(R.drawable.cloud_line);
             mCloudInfoText.setText(R.string.cloud_connection_established);
@@ -208,7 +252,7 @@ public class FragmentCloud extends Fragment {
     }
 
     private void setUpWearable() {
-        if (UiHelper.isWearableConnected(getActivity())) {
+        if (UiUtil.isWearableConnected(getActivity())) {
             mWatchImg.setBackgroundResource(R.drawable.cloud_circle);
             mWatchConnection.setBackgroundResource(R.drawable.cloud_line);
             mWatchName.setText(Storage.instance().getDeviceName(WATCH));
@@ -221,94 +265,17 @@ public class FragmentCloud extends Fragment {
         }
     }
 
-    private void logIn() {
-        RelayrSdk.logIn(getActivity())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SimpleObserver<User>() {
-                    @Override public void error(Throwable e) {
-                        UiHelper.showSnackBar(getActivity(), R.string.cloud_log_in_failed);
-
-                        Crashlytics.log(Log.DEBUG, TAG, "Login failed.");
-                        if (e instanceof TimeoutException) logIn();
-                        else Crashlytics.logException(e);
-                    }
-
-                    @Override public void success(User user) {
-                        Storage.instance().activate(PHONE);
-                        Storage.instance().activate(WATCH);
-                        loadDevices();
-                        setUpCloud();
-                    }
-                });
-    }
-
-    private void loadDevices() {
-        if (Storage.instance().getDeviceId(PHONE) != null) getDeviceFromCloud(PHONE);
-        else createDevice(PHONE);
-
-        if (!UiHelper.isWearableConnected(getActivity())) return;
-        if (Storage.instance().getDeviceId(WATCH) != null) getDeviceFromCloud(WATCH);
-        else createDevice(WATCH);
-    }
-
-    private void getDeviceFromCloud(final Constants.DeviceType type) {
-        Crashlytics.log(Log.DEBUG, TAG, "Fetch " + Storage.instance().getDeviceId(type));
-
-        RelayrSdk.getDeviceApi().getDevice(Storage.instance().getDeviceId(type))
-                .timeout(5, TimeUnit.SECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SimpleObserver<Device>() {
-                    @Override public void error(Throwable e) {
-                        Crashlytics.log(Log.DEBUG, TAG, "Failed to load " + type.name() + " device.");
-                        if (!(e instanceof TimeoutException)) Crashlytics.logException(e);
-                    }
-
-                    @Override public void success(Device device) {
-                        setUpDevice(device, type);
-                    }
-                });
-    }
-
-    private void createDevice(final Constants.DeviceType type) {
-        final String name = Storage.instance().getDeviceName(type);
-        final String modelId = type == PHONE ? Storage.MODEL_PHONE : Storage.MODEL_WATCH;
-        final String description = type == PHONE ? getString(R.string.app_title_phone) : getString(R.string.app_title_watch);
-        final CreateDevice toCreate = new CreateDevice(name == null ? description : name,
-                description, modelId, DataStorage.getUserId(), null, "1.0.0");
-
-        RelayrSdk.getDeviceApi()
-                .createDevice(toCreate)
-                .timeout(5, TimeUnit.SECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SimpleObserver<Device>() {
-                    @Override public void error(Throwable e) {
-                        if (e instanceof TimeoutException) {
-                            createDevice(type);
-                        } else {
-                            Crashlytics.log(Log.DEBUG, TAG, "Failed to create " + type.name() + " device.");
-                            Crashlytics.logException(e);
-                        }
-                    }
-
-                    @Override public void success(Device device) {
-                        Crashlytics.log(Log.DEBUG, TAG, "Created device " + device.getId());
-                        setUpDevice(device, type);
-                        Storage.instance().activate(type);
-                        showWarning();
-                    }
-                });
-    }
-
     private void setUpDevice(Device device, Constants.DeviceType type) {
         Storage.instance().saveDevice(device, type);
         if (type == PHONE) setUpPhone();
         else setUpWearable();
 
-        UiHelper.showSnackBar(getActivity(), R.string.cloud_device_success);
+        UiUtil.showSnackBar(getActivity(), R.string.cloud_device_success);
         EventBus.getDefault().post(new Constants.CloudConnected());
     }
 
     private void logOut() {
+        if (mSpeedTimer != null) mSpeedTimer.cancel();
         Storage.instance().logOut();
         RelayrSdk.logOut();
         setUpCloud();

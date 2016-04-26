@@ -15,6 +15,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.User;
 import rx.android.schedulers.AndroidSchedulers;
@@ -67,6 +68,7 @@ public class CloudUserDialog extends LinearLayout {
                 new EditText.OnEditorActionListener() {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        UiUtil.hideKeyboard(getContext(), mNameEt);
                         final String newName = mNameEt.getText().toString();
                         if (newName.equals(user.getName())) return false;
 

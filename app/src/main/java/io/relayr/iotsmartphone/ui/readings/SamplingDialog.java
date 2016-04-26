@@ -17,7 +17,7 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 
 import static android.widget.Toast.LENGTH_LONG;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
@@ -114,7 +114,7 @@ public class SamplingDialog extends LinearLayout {
     private void setCloudSwitch() {
         mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (UiHelper.isCloudConnected()) {
+                if (UiUtil.isCloudConnected()) {
                     Storage.instance().saveActivity(mMeaning, mType, isChecked);
                     setSwitchInfo(isChecked);
                 } else {
@@ -130,7 +130,7 @@ public class SamplingDialog extends LinearLayout {
         mSwitch.setChecked(uploading);
         setSwitchInfo(uploading);
 
-        mSwitch.setEnabled(UiHelper.isCloudConnected());
+        mSwitch.setEnabled(UiUtil.isCloudConnected());
     }
 
     private void setSwitchInfo(boolean uploading) {

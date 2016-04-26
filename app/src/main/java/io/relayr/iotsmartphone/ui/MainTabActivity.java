@@ -1,8 +1,6 @@
 package io.relayr.iotsmartphone.ui;
 
 import android.annotation.TargetApi;
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,8 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -32,8 +28,6 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
@@ -79,7 +73,8 @@ import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.ui.cloud.FragmentCloud;
 import io.relayr.iotsmartphone.ui.readings.FragmentReadings;
 import io.relayr.iotsmartphone.ui.rules.FragmentRules;
-import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.utils.NotificationsUtil;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SuccessObserver;
 import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
@@ -136,6 +131,7 @@ public class MainTabActivity extends AppCompatActivity implements
     private boolean mResolvingError;
 
     private ProgressDialog mInitialiseDialog;
+    private AlertDialog mProblemDialog;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -164,6 +160,8 @@ public class MainTabActivity extends AppCompatActivity implements
 
         if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
         mInitialiseDialog = null;
+        if (mProblemDialog != null) mProblemDialog.dismiss();
+        mProblemDialog = null;
 
         if (mFlash != null) mFlash.off();
         if (mSound != null) {
@@ -246,11 +244,10 @@ public class MainTabActivity extends AppCompatActivity implements
 
     public class MessageReceiver extends BroadcastReceiver {
         @Override public void onReceive(Context context, Intent intent) {
-            final String extra = intent.getStringExtra(DemandIntentReceiver.EXTRA_MESSAGE);
-            if (extra == null) return;
-            else if (extra.equals(Constants.NOTIF_FLASH)) toggleFlash(false);
-            else if (extra.equals(Constants.NOTIF_SOUND)) toggleSound(false);
-            else if (extra.equals(Constants.NOTIF_VIBRATION)) toggleVibration(false);
+            final int extra = intent.getIntExtra(DemandIntentReceiver.EXTRA_MESSAGE, Constants.NOTIF_FLASH);
+            if (extra == Constants.NOTIF_FLASH) toggleFlash(false);
+            else if (extra == Constants.NOTIF_SOUND) toggleSound(false);
+            else if (extra == Constants.NOTIF_VIB) toggleVibration(false);
         }
     }
 
@@ -324,11 +321,12 @@ public class MainTabActivity extends AppCompatActivity implements
                 .subscribe(new SuccessObserver<Boolean>() {
                     @Override public void success(Boolean success) {
                         if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
-                        if (success)
+                        if (success) {
                             startReadings();
-                        else
-                            new AlertDialog.Builder(MainTabActivity.this, R.style.AppTheme_DialogOverlay)
-                                    .setTitle(getString(R.string.seomthing_went_wrong))
+                        } else {
+                            if (mProblemDialog != null) mProblemDialog.dismiss();
+                            mProblemDialog = new AlertDialog.Builder(MainTabActivity.this, R.style.AppTheme_DialogOverlay)
+                                    .setTitle(getString(R.string.something_went_wrong))
                                     .setNegativeButton(getString(R.string.close), new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
@@ -343,8 +341,9 @@ public class MainTabActivity extends AppCompatActivity implements
                                             initialise();
                                         }
                                     })
-                                    .create()
-                                    .show();
+                                    .create();
+                            mProblemDialog.show();
+                        }
                     }
                 });
     }
@@ -453,7 +452,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void setupTabIcons() {
-        if (mTabView == null) return;
+        if (mTabView == null || mTabView.getTabCount() < 3) return;
         mTabView.getTabAt(0).setIcon(R.drawable.tab_device);
         mTabView.getTabAt(1).setIcon(R.drawable.tab_cloud);
         mTabView.getTabAt(2).setIcon(R.drawable.tab_rules);
@@ -470,7 +469,8 @@ public class MainTabActivity extends AppCompatActivity implements
         } else {
             initLocationManager();
         }
-        if (UiHelper.isCloudConnected()) subscribeToCommands();
+
+        if (UiUtil.isCloudConnected()) subscribeToCommands();
     }
 
     private void initSensorManager() {
@@ -646,10 +646,11 @@ public class MainTabActivity extends AppCompatActivity implements
         try {
             mFlash.open(MainTabActivity.this.getApplicationContext());
             mFlash.on();
-            showNotification(R.string.notif_flash, R.string.notif_flash_off, Constants.NOTIF_FLASH);
+            NotificationsUtil.showNotification(this, Constants.NOTIF_FLASH);
         } catch (Exception e) {
+            UiUtil.showSnackBar(this, R.string.error_using_flash);
             Crashlytics.log(Log.ERROR, "MTA", "Failed to create FlashHelper.");
-            Toast.makeText(MainTabActivity.this, R.string.error_using_flash, Toast.LENGTH_SHORT).show();
+            Crashlytics.logException(e);
             mFlash.close();
             mFlash = null;
         }
@@ -657,15 +658,15 @@ public class MainTabActivity extends AppCompatActivity implements
 
     private void toggleFlash(boolean on) {
         if (mFlash != null && !mFlash.hasFlash(MainTabActivity.this)) {
-            Toast.makeText(MainTabActivity.this, R.string.warning_flashlight_not_available, LENGTH_SHORT).show();
+            UiUtil.showSnackBar(this, R.string.warning_flashlight_not_available);
         } else {
             if (mFlash == null) createFlashHelper();
             else {
                 if (on) {
                     mFlash.on();
-                    showNotification(R.string.notif_flash, R.string.notif_flash_off, Constants.NOTIF_FLASH);
+                    NotificationsUtil.showNotification(this, Constants.NOTIF_FLASH);
                 } else {
-                    hideNotification();
+                    NotificationsUtil.hideNotification(this, Constants.NOTIF_FLASH);
                     mFlash.off();
                 }
             }
@@ -675,18 +676,18 @@ public class MainTabActivity extends AppCompatActivity implements
     private void toggleSound(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
         if (start) {
-            showNotification(R.string.notif_music, R.string.notif_music_off, Constants.NOTIF_SOUND);
+            NotificationsUtil.showNotification(this, Constants.NOTIF_SOUND);
             mSound.playMusic(MainTabActivity.this);
         } else {
             mSound.stopMusic();
-            hideNotification();
+            NotificationsUtil.hideNotification(this, Constants.NOTIF_SOUND);
         }
     }
 
     private void toggleVibration(boolean start) {
         if (mSound == null) mSound = new SoundHelper();
         if (start) {
-            showNotification(R.string.notif_vib, R.string.notif_vib_off, Constants.NOTIF_VIBRATION);
+            NotificationsUtil.showNotification(this, Constants.NOTIF_VIB);
             //Postpone vibration because of notification
             new Handler().postDelayed(new Runnable() {
                 @Override
@@ -695,50 +696,17 @@ public class MainTabActivity extends AppCompatActivity implements
                         @Override public void run() {
                             final boolean started = mSound.vibrate(MainTabActivity.this);
                             if (!started) {
-                                UiHelper.showSnackBar(MainTabActivity.this, R.string.vibration_not_supported);
-                                hideNotification();
+                                UiUtil.showSnackBar(MainTabActivity.this, R.string.vibration_not_supported);
+                                NotificationsUtil.hideNotification(MainTabActivity.this, Constants.NOTIF_VIB);
                             }
                         }
                     });
                 }
             }, 1000);
         } else {
-            hideNotification();
+            NotificationsUtil.hideNotification(this, Constants.NOTIF_VIB);
             mSound.stopVibration();
         }
-    }
-
-    private void hideNotification() {
-        final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(this);
-        managerCompat.cancel(Constants.NOTIFICATION_ID);
-    }
-
-    public void showNotification(int titleId, int textId, String extra) {
-        Intent demandIntent = new Intent(this, DemandIntentReceiver.class)
-                .putExtra(DemandIntentReceiver.EXTRA_MESSAGE, extra)
-                .setAction(DemandIntentReceiver.ACTION_DEMAND);
-        PendingIntent demandPendingIntent = PendingIntent.getBroadcast(this, 0, demandIntent,
-                PendingIntent.FLAG_CANCEL_CURRENT);
-        NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.mipmap.logo,
-                this.getString(textId), demandPendingIntent).build();
-        showNotification(action, titleId, textId);
-    }
-
-    private void showNotification(NotificationCompat.Action action, int titleId, int textId) {
-        final NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.notification)
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setContentTitle(getString(titleId))
-                .setContentText(getString(textId));
-
-        if (UiHelper.isWearableConnected(this)) {
-            Bitmap bg = BitmapFactory.decodeResource(getResources(), R.color.primary);
-            builder.extend(new NotificationCompat.WearableExtender().addAction(action).setBackground(bg));
-        }
-        builder.addAction(action);
-
-        final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(this);
-        managerCompat.notify(Constants.NOTIFICATION_ID, builder.build());
     }
 
     private void sendToWearable() {

@@ -222,7 +222,7 @@ public class Storage {
         else return PREFS.getInt(WATCH_SDK, 0);
     }
 
-    public void savePhoneReadings(List<DeviceReading> readings) {
+    public synchronized void savePhoneReadings(List<DeviceReading> readings) {
         sReadingsPhone.clear();
         sReadingsPhone.addAll(readings);
         Collections.sort(sReadingsPhone, new Comparator<DeviceReading>() {
@@ -237,7 +237,7 @@ public class Storage {
         else return sReadingsWatch;
     }
 
-    public void savePhoneCommands(List<DeviceCommand> commands) {
+    public synchronized void savePhoneCommands(List<DeviceCommand> commands) {
         sCommandsPhone.clear();
         sCommandsPhone.addAll(commands);
         Collections.sort(sCommandsPhone, new Comparator<DeviceCommand>() {
@@ -278,7 +278,11 @@ public class Storage {
     }
 
     public void logOut() {
-        PREFS.edit().clear().apply();
+        PREFS.edit().remove(RULE_ID).apply();
+        PREFS.edit().remove(PHONE_ID).apply();
+        PREFS.edit().remove(WATCH_ID).apply();
+        PREFS.edit().remove(BACKGROUND_UPLOAD).apply();
+
         RuleHandler.clearAfterLogOut();
         ReadingHandler.clearAfterLogOut();
         System.gc();

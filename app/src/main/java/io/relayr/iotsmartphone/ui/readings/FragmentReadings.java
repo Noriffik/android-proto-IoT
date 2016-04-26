@@ -21,7 +21,7 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidget;
-import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 import static android.os.Build.MANUFACTURER;
@@ -57,27 +57,27 @@ public class FragmentReadings extends Fragment {
 
         setUpAdapters(columns);
 
-        mFab.setVisibility(UiHelper.isWearableConnected(getActivity()) ? View.VISIBLE : View.GONE);
+        mFab.setVisibility(UiUtil.isWearableConnected(getActivity()) ? View.VISIBLE : View.GONE);
+
         if (IotApplication.isVisible(WATCH)) onWatchClicked();
         else onPhoneClicked();
 
         return view;
     }
 
-    @Override public void onResume() {
-        super.onResume();
-        EventBus.getDefault().register(this);
-    }
-
-    @Override public void onPause() {
-        super.onPause();
-        EventBus.getDefault().unregister(this);
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) EventBus.getDefault().register(this);
+        else EventBus.getDefault().unregister(this);
+        sendEvent(isVisibleToUser);
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.fab)
     public void onFabClicked() {
         if (IotApplication.isVisible(PHONE)) onWatchClicked();
         else onPhoneClicked();
+        sendEvent(true);
     }
 
     @SuppressWarnings("unused")
@@ -105,7 +105,6 @@ public class FragmentReadings extends Fragment {
     private void onPhoneClicked() {
         IotApplication.sCurrent = PHONE;
         IotApplication.visible(true, false);
-        EventBus.getDefault().post(new Constants.DeviceChange(PHONE));
         mFab.setImageResource(R.drawable.ic_graphic_watch);
 
         mPhoneGrid.setVisibility(View.VISIBLE);
@@ -118,7 +117,6 @@ public class FragmentReadings extends Fragment {
     private void onWatchClicked() {
         IotApplication.sCurrent = WATCH;
         IotApplication.visible(false, true);
-        EventBus.getDefault().post(new Constants.DeviceChange(WATCH));
         mFab.setImageResource(R.drawable.ic_graphic_phone);
 
         mPhoneGrid.setVisibility(View.GONE);
@@ -126,6 +124,13 @@ public class FragmentReadings extends Fragment {
 
         if (mWatchAdapter != null)
             mWatchAdapter.update(Storage.instance().loadReadings(WATCH), WATCH);
+    }
+
+    private void sendEvent(boolean visibleToUser) {
+        if (visibleToUser && IotApplication.isVisible(PHONE))
+            EventBus.getDefault().post(new Constants.DeviceChange(PHONE));
+        if (visibleToUser && IotApplication.isVisible(WATCH))
+            EventBus.getDefault().post(new Constants.DeviceChange(WATCH));
     }
 
     static class ReadingsAdapter extends RecyclerView.Adapter<ReadingViewHolder> {

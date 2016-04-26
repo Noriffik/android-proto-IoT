@@ -13,7 +13,7 @@ import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.ui.readings.widgets.ReadingWidget;
-import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 public class ReadingViewHolder extends RecyclerView.ViewHolder {
@@ -48,7 +48,7 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
         new AlertDialog.Builder(mContext, R.style.AppTheme_DialogOverlay)
                 .setView(view)
                 .setTitle(mContext.getString(R.string.reading_settings_dialog_title,
-                        UiHelper.getNameForMeaning(mContext, mMeaning)))
+                        UiUtil.getNameForMeaning(mContext, mMeaning)))
                 .setPositiveButton(mContext.getString(R.string.close), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -62,9 +62,9 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
         mType = type;
         mPath = reading.getPath();
         mMeaning = reading.getMeaning();
-        mUnit = reading.getValueSchema().isObjectSchema() ? mContext.getString(R.string.acceleration_unit) : reading.getValueSchema().getUnit();
+        mUnit = UiUtil.getUnitForMeaning(mContext, reading.getMeaning());
 
-        mMeaningTv.setText(UiHelper.getNameForMeaning(mContext, mMeaning));
+        mMeaningTv.setText(UiUtil.getNameForMeaning(mContext, mMeaning));
 
         widget.setUp(reading.getPath(), reading.getMeaning(), reading.getValueSchema(), mType);
     }

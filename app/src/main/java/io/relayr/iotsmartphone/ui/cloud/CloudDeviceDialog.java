@@ -17,6 +17,7 @@ import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.Device;
 import rx.android.schedulers.AndroidSchedulers;
@@ -61,6 +62,7 @@ public class CloudDeviceDialog extends LinearLayout {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                         if (actionId == EditorInfo.IME_ACTION_DONE) {
+                            UiUtil.hideKeyboard(getContext(), mNameEt);
                             final String newName = mNameEt.getText().toString();
                             if (newName.equals(mDevice.getName())) return false;
 
@@ -91,6 +93,7 @@ public class CloudDeviceDialog extends LinearLayout {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                         if (actionId == EditorInfo.IME_ACTION_DONE) {
+                            UiUtil.hideKeyboard(getContext(), mDescriptionEt);
                             final String newDesc = mDescriptionEt.getText().toString();
                             if (newDesc.equals(mDevice.getDescription())) return false;
 

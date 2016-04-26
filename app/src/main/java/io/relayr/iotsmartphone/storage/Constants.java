@@ -13,10 +13,9 @@ public class Constants {
 
     public static final int GRAPH_FRAME = 20000;
 
-    public static final int NOTIFICATION_ID = 2376;
-    public static final String NOTIF_FLASH = "flash";
-    public static final String NOTIF_SOUND = "sound";
-    public static final String NOTIF_VIBRATION = "vibration";
+    public static final int NOTIF_FLASH = 23761;
+    public static final int NOTIF_SOUND = 23762;
+    public static final int NOTIF_VIB = 23763;
 
     public static final int REQUEST_RESOLVE_ERROR = 1000;
     public static final String ACTIVATE_PATH = "/activate";

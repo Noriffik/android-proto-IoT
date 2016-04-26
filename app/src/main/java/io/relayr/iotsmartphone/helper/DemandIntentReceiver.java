@@ -18,15 +18,15 @@ public class DemandIntentReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals(ACTION_DEMAND)) {
             try {
-                Log.e("DemandIntentReceiver", intent.getStringExtra(EXTRA_MESSAGE));
+                final int notificationId = intent.getIntExtra(EXTRA_MESSAGE, Constants.NOTIF_FLASH);
                 Intent messageIntent = new Intent(Intent.ACTION_SEND);
-                messageIntent.putExtra(EXTRA_MESSAGE, intent.getStringExtra(EXTRA_MESSAGE));
+                messageIntent.putExtra(EXTRA_MESSAGE, notificationId);
                 LocalBroadcastManager.getInstance(context).sendBroadcast(messageIntent);
 
                 final NotificationManagerCompat managerCompat = NotificationManagerCompat.from(context);
-                managerCompat.cancel(Constants.NOTIFICATION_ID);
+                managerCompat.cancel(notificationId);
             } catch (Exception e) {
-                Log.v("DemandIntentReceiver", "Failed to get extras");
+                Log.d("DemandIntentReceiver", "Failed to get extras");
             }
         }
     }
