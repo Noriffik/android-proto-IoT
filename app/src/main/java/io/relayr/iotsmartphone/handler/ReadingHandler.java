@@ -114,7 +114,7 @@ public class ReadingHandler {
                             })
                             .subscribe(new SimpleObserver<DeviceModel>() {
                                 @Override public void error(Throwable e) {
-                                    Log.e("RHandler", "Loading models ERROR.");
+                                    Crashlytics.log(Log.ERROR, "ReadingsHandler", "Loading models error.");
                                     subscriber.onNext(false);
                                 }
 

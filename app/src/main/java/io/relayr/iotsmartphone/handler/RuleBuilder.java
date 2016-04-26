@@ -26,9 +26,9 @@ public class RuleBuilder extends IoTSmartphoneRule {
         commands[position] = new OutputCommand(deviceId, name, value);
     }
 
-    public void setConditionOperator(String operator) {
+    public void setConditionOperator(String op) {
         if (readings[0] == null || readings[1] == null) return;
-        switch (operator) {
+        switch (op) {
             case "&":
                 operator = "and";
                 break;
@@ -42,8 +42,7 @@ public class RuleBuilder extends IoTSmartphoneRule {
     }
 
     public String getConditionOperator() {
-        if (operator == null) return null;
-        else if (operator.equals("and")) return "&";
+        if (operator == null || operator.equals("and")) return "&";
         else return "||";
     }
 
