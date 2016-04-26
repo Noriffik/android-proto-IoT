@@ -3,7 +3,6 @@ package io.relayr.iotsmartphone.ui.rules;
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +23,7 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.ui.MainTabActivity;
-import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.models.transport.DeviceCommand;
 import io.relayr.java.model.models.transport.DeviceReading;
 
@@ -70,7 +69,7 @@ public class ConditionDialog extends LinearLayout {
         super.onAttachedToWindow();
         ButterKnife.inject(this, this);
 
-        if (mCondition && UiHelper.isWearableConnected((MainTabActivity) getContext()))
+        if (mCondition && UiUtil.isWearableConnected((MainTabActivity) getContext()))
             mWatchContainer.setVisibility(VISIBLE);
 
         if (mType == null) onPhoneClicked();
@@ -105,7 +104,7 @@ public class ConditionDialog extends LinearLayout {
                 if (reading.getMeaning().equals("location") || reading.getMeaning().equals("touch"))
                     continue;
                 mReadings.add(reading);
-                mListItems.add(UiHelper.getNameForMeaning(getContext(), reading.getMeaning()));
+                mListItems.add(UiUtil.getNameForMeaning(getContext(), reading.getMeaning()));
             }
         else
             for (DeviceCommand command : Storage.instance().loadCommands(mType)) {

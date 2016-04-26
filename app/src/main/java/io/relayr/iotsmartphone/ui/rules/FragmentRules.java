@@ -6,6 +6,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -19,7 +21,7 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.handler.RuleHandler;
 import io.relayr.iotsmartphone.storage.Constants;
-import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.models.transport.DeviceCommand;
 import io.relayr.java.model.models.transport.DeviceReading;
@@ -50,6 +52,7 @@ public class FragmentRules extends Fragment {
     @InjectView(R.id.condition_two) RuleCondition mConditionTwo;
     @InjectView(R.id.condition_operator) TextView mConditionOperator;
 
+    @InjectView(R.id.rule_activity) Switch mRuleActivity;
     @InjectView(R.id.outcome_one) RuleOutcome mOutcomeOne;
     @InjectView(R.id.outcome_two) RuleOutcome mOutcomeTwo;
 
@@ -62,11 +65,11 @@ public class FragmentRules extends Fragment {
 
         RuleHandler.init(new SimpleObserver<Boolean>() {
             @Override public void error(Throwable e) {
-                UiHelper.showSnackBar(getActivity(), R.string.rule_update_problem);
+                UiUtil.showSnackBar(getActivity(), R.string.rule_update_problem);
             }
 
             @Override public void success(Boolean o) {
-                UiHelper.showSnackBar(getActivity(), R.string.rule_updated);
+                UiUtil.showSnackBar(getActivity(), R.string.rule_updated);
             }
         });
 
@@ -76,11 +79,11 @@ public class FragmentRules extends Fragment {
     @Override public void onResume() {
         super.onResume();
 
-        if (UiHelper.isCloudConnected()) loadRule();
+        if (UiUtil.isCloudConnected()) loadRule();
         else setUpConditions(null);
 
-        mLoggedInView.setVisibility(UiHelper.isCloudConnected() ? VISIBLE : GONE);
-        mNotLoggedInView.setVisibility(UiHelper.isCloudConnected() ? GONE : VISIBLE);
+        mLoggedInView.setVisibility(UiUtil.isCloudConnected() ? VISIBLE : GONE);
+        mNotLoggedInView.setVisibility(UiUtil.isCloudConnected() ? GONE : VISIBLE);
     }
 
     private void loadRule() {
@@ -97,6 +100,12 @@ public class FragmentRules extends Fragment {
                         setUpConditions(rule);
                     }
                 });
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser && mRuleActivity != null) updateActivity();
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.condition_operator)
@@ -116,16 +125,23 @@ public class FragmentRules extends Fragment {
                             mConditionOperator.setVisibility(VISIBLE);
                             mConditionTwo.setVisibility(VISIBLE);
                             RuleHandler.setCondition(0, type, reading.getMeaning(), operation, value);
+                            updateActivity();
                         }
                     }
 
                     @Override public void removeCondition() {
                         RuleHandler.removeCondition(0);
-                        mConditionOperator.setVisibility(GONE);
-                        mConditionTwo.setVisibility(GONE);
+                        updateActivity();
+                        if (!RuleHandler.isValid()) {
+                            mConditionOperator.setVisibility(GONE);
+                            mConditionTwo.setVisibility(GONE);
+                        }
                     }
                 });
+
         mConditionOperator.setVisibility(rule == null ? GONE : VISIBLE);
+        if (rule != null) mConditionOperator.setText(rule.getConditionOperator());
+
         mConditionTwo.setVisibility(rule == null ? GONE : VISIBLE);
         mConditionTwo.setUp(R.color.graph_blue, rule, 1, new ConditionListener() {
             @Override
@@ -133,10 +149,12 @@ public class FragmentRules extends Fragment {
                 mConditionOperator.setVisibility(VISIBLE);
                 RuleHandler.setConditionOperator(mConditionOperator.getText().toString());
                 RuleHandler.setCondition(1, type, reading.getMeaning(), operation, value);
+                updateActivity();
             }
 
             @Override public void removeCondition() {
                 RuleHandler.removeCondition(1);
+                updateActivity();
             }
         });
 
@@ -145,22 +163,47 @@ public class FragmentRules extends Fragment {
                 if (command != null) {
                     mOutcomeTwo.setVisibility(VISIBLE);
                     RuleHandler.setOutcome(0, PHONE, command.getName(), value);
+                    updateActivity();
                 }
             }
 
             @Override public void removeOutcome() {
-                mOutcomeTwo.setVisibility(GONE);
                 RuleHandler.removeOutcome(0);
+                updateActivity();
+                if (!RuleHandler.isValid()) mOutcomeTwo.setVisibility(GONE);
             }
         });
         mOutcomeTwo.setVisibility(rule == null ? GONE : VISIBLE);
         mOutcomeTwo.setUp(R.color.graph_red, rule, 1, new OutcomeListener() {
             @Override public void outcomeChanged(DeviceCommand command, boolean value) {
                 RuleHandler.setOutcome(1, PHONE, command.getName(), value);
+                updateActivity();
             }
 
             @Override public void removeOutcome() {
                 RuleHandler.removeOutcome(1);
+                updateActivity();
+            }
+        });
+
+        updateActivity();
+    }
+
+    private void updateActivity() {
+        if (RuleHandler.isValid()) {
+            mRuleActivity.setOnCheckedChangeListener(null);
+            mRuleActivity.setChecked(RuleHandler.isActive());
+            if (mRuleActivity.getVisibility() == GONE) {
+                mRuleActivity.setVisibility(VISIBLE);
+                UiUtil.showSnackBar(getActivity(), RuleHandler.isActive() ? R.string.rule_enabled : R.string.rule_disabled);
+            }
+        } else {
+            mRuleActivity.setVisibility(GONE);
+        }
+        mRuleActivity.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                RuleHandler.setActivity(isChecked);
+                UiUtil.showSnackBar(getActivity(), isChecked ? R.string.rule_enabled : R.string.rule_disabled);
             }
         });
     }

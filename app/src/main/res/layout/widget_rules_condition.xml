@@ -96,14 +96,13 @@
 
                 <TextView
                     style="@style/SubtitleText"
-                    android:text="when"/>
+                    android:text="@string/rule_when"/>
 
                 <TextView
                     android:id="@+id/rule_widget_operator"
                     style="@style/SubtitleText"
-                    android:layout_marginLeft="@dimen/default_padding_double"
+                    android:layout_marginLeft="@dimen/default_padding"
                     android:background="@drawable/button_active"
-                    android:hint="@string/rule_operator_hint"
                     android:paddingBottom="@dimen/default_padding_half"
                     android:paddingLeft="@dimen/default_padding"
                     android:paddingRight="@dimen/default_padding"
@@ -115,12 +114,16 @@
                     android:layout_marginLeft="@dimen/default_padding_double"
                     android:background="@drawable/button_active"
                     android:digits="0123456789-"
+                    android:gravity="center_horizontal"
                     android:imeOptions="actionDone"
                     android:inputType="number"
-                    android:paddingBottom="@dimen/default_padding_half"
-                    android:paddingLeft="@dimen/default_padding"
-                    android:paddingRight="@dimen/default_padding"
-                    android:paddingTop="@dimen/default_padding_half"/>
+                    android:padding="@dimen/default_padding_half"/>
+
+                <TextView
+                    android:id="@+id/rule_widget_unit"
+                    style="@style/SubtitleText"
+                    android:layout_marginLeft="@dimen/default_padding"/>
+
             </LinearLayout>
         </RelativeLayout>
     </RelativeLayout>

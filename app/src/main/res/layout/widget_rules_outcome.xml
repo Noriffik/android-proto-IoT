@@ -87,7 +87,7 @@
 
                 <TextView
                     style="@style/SubtitleText"
-                    android:text="turn"/>
+                    android:text="@string/rule_activate"/>
 
                 <android.support.v7.widget.SwitchCompat
                     android:id="@+id/rule_widget_switch"

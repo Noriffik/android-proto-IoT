@@ -8,8 +8,7 @@
         android:id="@+id/rules_not_logged_in"
         style="@style/TitleText"
         android:layout_centerInParent="true"
-        android:text="@string/have_to_be_logged_in"
-        android:textColor="@color/accent"/>
+        android:text="@string/have_to_be_logged_in"/>
 
     <LinearLayout
         android:id="@+id/rules_logged_in"
@@ -65,10 +64,25 @@
             layout="@layout/widget_rules_condition"
             android:visibility="gone"/>
 
-        <TextView
-            style="@style/TitleText"
-            android:text="@string/rules_outcomes"
-            android:textColor="@color/accent"/>
+        <RelativeLayout
+            style="@style/MatchWrap"
+            android:layout_marginBottom="@dimen/default_padding"
+            android:layout_marginTop="@dimen/default_padding">
+
+            <TextView
+                style="@style/TitleText"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:text="@string/rules_outcomes"
+                android:textColor="@color/accent"/>
+
+            <Switch
+                android:id="@+id/rule_activity"
+                style="@style/WrapWrap"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:visibility="gone"/>
+        </RelativeLayout>
 
         <include
             android:id="@+id/outcome_one"

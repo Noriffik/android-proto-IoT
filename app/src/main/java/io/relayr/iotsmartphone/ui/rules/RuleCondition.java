@@ -32,7 +32,7 @@ import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.utils.UiHelper;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.NumberSchema;
@@ -55,6 +55,7 @@ public class RuleCondition extends LinearLayout {
     @InjectView(R.id.rule_widget_live) TextView mLiveTv;
     @InjectView(R.id.rule_widget_operator) TextView mOperationTv;
     @InjectView(R.id.rule_widget_value) EditText mValueEt;
+    @InjectView(R.id.rule_widget_unit) TextView mUnitTv;
 
     private int mColor;
     private FragmentRules.ConditionListener mListener;
@@ -250,8 +251,7 @@ public class RuleCondition extends LinearLayout {
         mValueEt.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(mValueEt.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
+                    UiUtil.hideKeyboard(getContext(), mValueEt);
                     mListener.conditionChanged(mType, mReading, mOperation, mValue);
                     return true;
                 }
@@ -293,8 +293,9 @@ public class RuleCondition extends LinearLayout {
 
         mIconImg.setImageResource(mType == null || mType == PHONE ?
                 R.drawable.ic_graphic_phone : R.drawable.ic_graphic_watch);
-        mMeaningTv.setText(UiHelper.getNameForMeaning(getContext(), mReading.getMeaning()));
+        mMeaningTv.setText(UiUtil.getNameForMeaning(getContext(), mReading.getMeaning()));
         mOperationTv.setText(mOperation);
         mValueEt.setText("" + mValue);
+        mUnitTv.setText(UiUtil.getUnitForMeaning(getContext(), mReading.getMeaning()));
     }
 }
