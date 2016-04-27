@@ -129,12 +129,12 @@ public class SamplingDialog extends LinearLayout {
 
         mSwitch.setChecked(uploading);
         setSwitchInfo(uploading);
-
-        mSwitch.setEnabled(UiUtil.isCloudConnected());
     }
 
     private void setSwitchInfo(boolean uploading) {
+        mSwitch.setEnabled(UiUtil.isCloudConnected());
         mCloudLocal.setTextColor(ContextCompat.getColor(getContext(), uploading ? R.color.text_color : R.color.accent));
         mCloudUploading.setTextColor(ContextCompat.getColor(getContext(), uploading ? R.color.accent : R.color.text_color));
+        mCloudUploading.setText(UiUtil.isCloudConnected() ? R.string.dialog_send_to_the_cloud : R.string.dialog_not_logged_in);
     }
 }

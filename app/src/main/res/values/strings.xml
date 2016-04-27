@@ -1,8 +1,10 @@
 <resources>
 
-    <string name="app_name">IoT smartphone</string>
+    <string name="app_title">relayr proto IoT</string>
 
-    <!--SendReceiveView-->
+    <string name="app_title_phone">Smartphone data</string>
+    <string name="app_title_watch">Watch data</string>
+
     <string name="warning_no_wifi">Not connected to Wifi</string>
     <string name="error_using_flash">Error when using flash</string>
     <string name="warning_flashlight_not_available">Flashlight not available.</string>
@@ -14,17 +16,7 @@
     <string name="close">Close</string>
     <string name="initializing">Initializing…</string>
     <string name="preparing_cloud">Fluffing up relayr cloud…</string>
-
-    <string name="app_title_phone">IoT smartphone</string>
-    <string name="app_title_watch">IoT watch</string>
-
-    <string name="reading_title_acceleration">Acceleration</string>
-    <string name="reading_title_gyro">Gyroscope</string>
-    <string name="reading_title_battery">Battery</string>
-    <string name="reading_title_light">Luminosity</string>
-    <string name="reading_title_location">Location</string>
-    <string name="reading_title_rssi">WiFi signal</string>
-    <string name="reading_title_touch">Screen touch</string>
+    <string name="something_went_wrong">Something went wrong</string>
 
     <string name="reading_settings_dialog_title">%s settings</string>
 
@@ -42,11 +34,13 @@
     <string name="dialog_sampling">Sampling</string>
     <string name="dialog_data">Data</string>
     <string name="dialog_send_to_the_cloud">send to cloud</string>
+    <string name="dialog_not_logged_in">not logged in</string>
     <string name="dialog_keep_local">keep local</string>
     <string name="dialog_low">low</string>
     <string name="dialog_high">high</string>
-    <string name="cloud_title">relayr cloud</string>
 
+    <string name="cloud_user_dialog_title">User details</string>
+    <string name="cloud_title">relayr cloud</string>
     <string name="cloud_device_dialog_title">Device details</string>
     <string name="cloud_connection_established">Watch data on: <u>dev.relayr.io</u></string>
     <string name="cloud_upload_warning_title">Data upload</string>
@@ -55,7 +49,6 @@
     <string name="dialog_background_send">send in background</string>
 
     <string name="dialog_global_settings">Global settings</string>
-    <string name="have_to_be_logged_in">You have to be logged in to create rules.</string>
     <string name="global_condition">\u0026</string>
 
     <string name="notif_music">Playing sound</string>
@@ -67,30 +60,38 @@
     <string name="vibration_not_supported">Vibration not supported</string>
 
     <string name="rules_title">rules</string>
+    <string name="have_to_be_logged_in">You have to be logged in to create rules.</string>
     <string name="rules_if">If</string>
     <string name="rules_then">Then</string>
     <string name="condition_reading_live">( %s )</string>
     <string name="save">Save</string>
     <string name="rule_widget_select_operation">Select operation</string>
     <string name="rule_value_invalid">Invalid value</string>
-    <string name="rule_valu_out_of_bounds">Value out of bounds</string>
+    <string name="rule_valu_out_of_bounds">Out of bounds</string>
     <string name="rule_widget_add_condition">Add condition</string>
     <string name="rules_conditions">Conditions</string>
     <string name="rules_outcomes">Outcomes</string>
     <string name="loading_rules">Loading rules…</string>
-    <string name="rule_updated">Rule updated successfully</string>
+    <string name="rule_updated">Rule updated</string>
     <string name="rule_update_problem">Update problem</string>
     <string name="rule_widget_add_outcome">Add outcome</string>
-    <string name="something_went_wrong">Something went wrong</string>
     <string name="rule_disabled">Rule is disabled</string>
     <string name="rule_enabled">Rule enabled</string>
-    <string name="cloud_user_dialog_title">User details</string>
     <string name="rule_when">when</string>
+    <string name="rule_activate">activate</string>
 
     <string name="reading_unit_acceleration">m/s\u00B2</string>
     <string name="reading_unit_battery">\u0025</string>
     <string name="reading_unit_light">lux</string>
     <string name="reading_unit_rssi">dBm</string>
     <string name="reading_unit_empty"/>
+
+    <string name="reading_title_acceleration">Acceleration</string>
+    <string name="reading_title_gyro">Gyroscope</string>
+    <string name="reading_title_battery">Battery</string>
+    <string name="reading_title_light">Luminosity</string>
+    <string name="reading_title_location">Location</string>
+    <string name="reading_title_rssi">WiFi signal</string>
+    <string name="reading_title_touch">Screen touch</string>
 
 </resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+        android:color="?android:attr/colorControlHighlight">
+    <item>
+        <shape xmlns:android="http://schemas.android.com/apk/res/android">
+            <solid android:color="@color/secondary"/>
+            <corners android:radius="@dimen/cloud_icon_radius"/>
+            <padding
+                android:bottom="@dimen/cloud_circle_padding"
+                android:left="@dimen/cloud_circle_padding"
+                android:right="@dimen/cloud_circle_padding"
+                android:top="@dimen/cloud_circle_padding"/>
+        </shape>
+    </item>
+</ripple>

@@ -36,6 +36,8 @@ public class Storage {
     private static final String FREQUENCY_PHONE = "freq_p";
     private static final String FREQUENCY_WATCH = "freq_w";
 
+    private static final String USER_ID = "user_id";
+
     private static final String PHONE_ID = "phone_id";
     private static final String PHONE_NAME = "phone_name";
     private static final String PHONE_SDK = "phone_sdk";
@@ -164,6 +166,7 @@ public class Storage {
 
     public void locationPermission(boolean granted) {
         PREFS.edit().putBoolean(PREFS_SETTINGS_LOCATION, granted).apply();
+        if (!granted) saveActivity("location", PHONE, false);
     }
 
     public boolean locationGranted() {
@@ -270,7 +273,10 @@ public class Storage {
         Set<String> meanings;
         if (type == PHONE) {
             meanings = new HashSet<>(ACTIVITY_PHONE.keySet());
-            for (String meaning : meanings) saveActivity(meaning, PHONE, activity);
+            for (String meaning : meanings) {
+                if (meaning.equals("location")) saveActivity(meaning, PHONE, locationGranted());
+                else saveActivity(meaning, PHONE, activity);
+            }
         } else {
             meanings = new HashSet<>(ACTIVITY_WATCH.keySet());
             for (String meaning : meanings) saveActivity(meaning, WATCH, activity);
@@ -278,9 +284,6 @@ public class Storage {
     }
 
     public void logOut() {
-        PREFS.edit().remove(RULE_ID).apply();
-        PREFS.edit().remove(PHONE_ID).apply();
-        PREFS.edit().remove(WATCH_ID).apply();
         PREFS.edit().remove(BACKGROUND_UPLOAD).apply();
 
         RuleHandler.clearAfterLogOut();
@@ -294,7 +297,17 @@ public class Storage {
 
     public void activeInBackground(boolean active) {
         PREFS.edit().putBoolean(BACKGROUND_UPLOAD, active).apply();
+    }
 
+    public void userId(String userId) {
+        PREFS.edit().remove(RULE_ID).apply();
+        PREFS.edit().remove(PHONE_ID).apply();
+        PREFS.edit().remove(WATCH_ID).apply();
+        PREFS.edit().putString(USER_ID, userId).apply();
+    }
+
+    public String oldUserId() {
+        return PREFS.getString(USER_ID, null);
     }
 }
 

@@ -127,16 +127,17 @@ public class FragmentCloud extends Fragment {
 
     @SuppressWarnings("unused") @OnClick(R.id.cloud)
     public void onCloudClick() {
-        new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
-                .setView(View.inflate(getContext(), R.layout.dialog_cloud_user, null))
-                .setTitle(getString(R.string.cloud_user_dialog_title))
-                .setPositiveButton(getString(R.string.close), new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .create()
-                .show();
+        if (UiUtil.isCloudConnected())
+            new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+                    .setView(View.inflate(getContext(), R.layout.dialog_cloud_user, null))
+                    .setTitle(getString(R.string.cloud_user_dialog_title))
+                    .setPositiveButton(getString(R.string.close), new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create()
+                    .show();
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.phone)

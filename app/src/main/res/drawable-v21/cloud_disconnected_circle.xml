@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+        android:color="?android:attr/colorControlHighlight">
+    <item>
+        <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+            <item>
+                <shape android:shape="oval">
+                    <size
+                        android:width="@dimen/cloud_connected_size"
+                        android:height="@dimen/cloud_connected_size"/>
+                    <solid android:color="@color/secondary"/>
+                </shape>
+            </item>
+            <item
+                android:bottom="@dimen/default_padding_half"
+                android:left="@dimen/default_padding_half"
+                android:right="@dimen/default_padding_half"
+                android:top="@dimen/default_padding_half">
+                <shape android:shape="oval">
+                    <size
+                        android:width="@dimen/cloud_connected_size"
+                        android:height="@dimen/cloud_connected_size"/>
+                    <solid android:color="@color/background"/>
+                </shape>
+            </item>
+            <item
+                android:bottom="@dimen/default_padding"
+                android:left="@dimen/default_padding"
+                android:right="@dimen/default_padding"
+                android:top="@dimen/default_padding">
+                <shape android:shape="oval">
+                    <size
+                        android:width="@dimen/cloud_icon_size"
+                        android:height="@dimen/cloud_icon_size"/>
+                    <solid android:color="@color/secondary"/>
+                    <padding
+                        android:bottom="@dimen/big_padding"
+                        android:left="@dimen/big_padding"
+                        android:right="@dimen/big_padding"
+                        android:top="@dimen/big_padding"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</ripple>

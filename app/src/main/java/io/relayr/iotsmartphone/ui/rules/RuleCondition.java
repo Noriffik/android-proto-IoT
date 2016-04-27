@@ -9,7 +9,6 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -32,6 +31,7 @@ import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.ui.MainTabActivity;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
@@ -185,7 +185,7 @@ public class RuleCondition extends LinearLayout {
             mType = view.getType();
             mReading = (DeviceReading) view.getSelected();
 
-            IotApplication.visible(true, true);
+            IotApplication.visible(true, UiUtil.isWearableConnected((MainTabActivity) getContext()));
 
             toggleControls(true);
             setInitialValues();

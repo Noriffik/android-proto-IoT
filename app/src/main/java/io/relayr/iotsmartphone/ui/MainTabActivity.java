@@ -264,7 +264,7 @@ public class MainTabActivity extends AppCompatActivity implements
     @Override public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     @Override public void onLocationChanged(Location location) {
-        ReadingHandler.publishLocation(location);
+        if (Storage.instance().locationGranted()) ReadingHandler.publishLocation(location);
     }
 
     @Override
@@ -463,8 +463,8 @@ public class MainTabActivity extends AppCompatActivity implements
         initWifiManager();
         monitorBattery();
 
-        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
+        if (!Storage.instance().locationGranted() &&
+                checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
             ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
         } else {
             initLocationManager();
@@ -536,36 +536,34 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void initLocationManager() {
-        if (Storage.instance().locationGranted()) {
-            new Handler().postDelayed(new Runnable() {
-                @Override public void run() {
-                    if (mLocationManager != null) return;
+        if (!Storage.instance().locationGranted()) return;
+        new Handler().postDelayed(new Runnable() {
+            @Override public void run() {
+                if (mLocationManager != null) return;
+                if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
                     mLocationManager = (LocationManager) MainTabActivity.this.getSystemService(LOCATION_SERVICE);
-                    if (ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED) {
+                    try {
+                        mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, MainTabActivity.this);
+                        monitorLocation();
+                    } catch (Exception e) {
+                        Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
                         try {
-                            mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, MainTabActivity.this);
+                            mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, MainTabActivity.this);
                             monitorLocation();
-                        } catch (Exception e) {
-                            Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
-                            try {
-                                mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, MainTabActivity.this);
-                                monitorLocation();
-                            } catch (Exception e1) {
-                                Crashlytics.log(Log.ERROR, "MTA", "NETWORK_PROVIDER doesn't exist.");
-                            }
+                        } catch (Exception e1) {
+                            Crashlytics.log(Log.ERROR, "MTA", "NETWORK_PROVIDER doesn't exist.");
                         }
                     }
                 }
-            }, 500);
-        }
+            }
+        }, 500);
     }
 
     private void monitorLocation() {
-        if (mLocationManager == null) return;
+        if (mLocationManager == null || !Storage.instance().locationGranted()) return;
         new Handler().post(new Runnable() {
             @Override public void run() {
-                if (ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_FINE_LOCATION) == PERMISSION_GRANTED &&
-                        ContextCompat.checkSelfPermission(MainTabActivity.this, ACCESS_COARSE_LOCATION) == PERMISSION_GRANTED) {
+                if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
                     Location location = mLocationManager.getLastKnownLocation(GPS_PROVIDER);
                     if (location == null)
                         location = mLocationManager.getLastKnownLocation(NETWORK_PROVIDER);
@@ -577,6 +575,10 @@ public class MainTabActivity extends AppCompatActivity implements
                 }
             }
         });
+    }
+
+    private boolean checkPermission(String permission) {
+        return ContextCompat.checkSelfPermission(MainTabActivity.this, permission) == PERMISSION_GRANTED;
     }
 
     private void showLocationDialog() {

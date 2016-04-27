@@ -36,6 +36,8 @@ public class CloudHandler {
                 .flatMap(new Func1<User, Observable<Pair<Constants.DeviceType, Device>>>() {
                     @Override
                     public Observable<Pair<Constants.DeviceType, Device>> call(User user) {
+                        if (!user.getId().equals(Storage.instance().oldUserId()))
+                            Storage.instance().userId(user.getId());
                         Storage.instance().activate(PHONE);
                         Storage.instance().activate(WATCH);
                         return loadDevices(activity);
