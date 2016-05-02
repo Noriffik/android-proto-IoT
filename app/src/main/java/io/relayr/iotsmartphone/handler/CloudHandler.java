@@ -14,6 +14,7 @@ import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.ui.utils.TutorialUtil;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.CreateDevice;
@@ -37,9 +38,13 @@ public class CloudHandler {
                     @Override
                     public Observable<Pair<Constants.DeviceType, Device>> call(User user) {
                         if (!user.getId().equals(Storage.instance().oldUserId()))
-                            Storage.instance().userId(user.getId());
+                            Storage.instance().loggedIn(user.getId());
                         Storage.instance().activate(PHONE);
                         Storage.instance().activate(WATCH);
+
+                        TutorialUtil.updateTutorial(Storage.TUTORIAL_LOG_IN, true);
+                        TutorialUtil.updateTutorial(Storage.TUTORIAL_LOG_TO_PLAY, true);
+
                         return loadDevices(activity);
                     }
                 })

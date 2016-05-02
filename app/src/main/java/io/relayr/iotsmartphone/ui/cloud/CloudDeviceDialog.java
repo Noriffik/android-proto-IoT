@@ -56,32 +56,25 @@ public class CloudDeviceDialog extends LinearLayout {
         setActions();
     }
 
+    @Override protected void onDetachedFromWindow() {
+        updateName();
+        updateDescription();
+        super.onDetachedFromWindow();
+    }
+
+    private void setInfo() {
+        mIdTv.setText(mDevice.getId());
+        mNameEt.setText(mDevice.getName());
+        mDescriptionEt.setText(mDevice.getDescription());
+    }
+
     private void setActions() {
         mNameEt.setOnEditorActionListener(
                 new EditText.OnEditorActionListener() {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                         if (actionId == EditorInfo.IME_ACTION_DONE) {
-                            UiUtil.hideKeyboard(getContext(), mNameEt);
-                            final String newName = mNameEt.getText().toString();
-                            if (newName.equals(mDevice.getName())) return false;
-
-                            mDevice.setName(newName);
-                            RelayrSdk.getDeviceApi()
-                                    .updateDevice(mDevice.getId(), mDevice)
-                                    .timeout(5, TimeUnit.SECONDS)
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe(new SimpleObserver<Device>() {
-                                        @Override public void error(Throwable e) {
-                                            Toast.makeText(getContext(), "Failed to update device name!", Toast.LENGTH_LONG).show();
-                                        }
-
-                                        @Override public void success(Device device) {
-                                            Storage.instance().saveDevice(device, mType);
-                                            Storage.instance().updateDeviceName(device.getName(), mType);
-                                            Toast.makeText(getContext(), "Device name updated!", Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                            updateName();
                             return true;
                         }
                         return false;
@@ -93,25 +86,7 @@ public class CloudDeviceDialog extends LinearLayout {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                         if (actionId == EditorInfo.IME_ACTION_DONE) {
-                            UiUtil.hideKeyboard(getContext(), mDescriptionEt);
-                            final String newDesc = mDescriptionEt.getText().toString();
-                            if (newDesc.equals(mDevice.getDescription())) return false;
-
-                            mDevice.setDescription(newDesc);
-                            RelayrSdk.getDeviceApi()
-                                    .updateDevice(mDevice.getId(), mDevice)
-                                    .timeout(5, TimeUnit.SECONDS)
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe(new SimpleObserver<Device>() {
-                                        @Override public void error(Throwable e) {
-                                            Toast.makeText(getContext(), "Failed to update description!", Toast.LENGTH_LONG).show();
-                                        }
-
-                                        @Override public void success(Device device) {
-                                            Storage.instance().saveDevice(device, mType);
-                                            Toast.makeText(getContext(), "Device description updated!", Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                            updateDescription();
                             return true;
                         }
                         return false;
@@ -119,9 +94,48 @@ public class CloudDeviceDialog extends LinearLayout {
                 });
     }
 
-    private void setInfo() {
-        mIdTv.setText(mDevice.getId());
-        mNameEt.setText(mDevice.getName());
-        mDescriptionEt.setText(mDevice.getDescription());
+    private void updateName() {
+        UiUtil.hideKeyboard(getContext(), mNameEt);
+        final String newName = mNameEt.getText().toString();
+        if (newName.equals(mDevice.getName())) return;
+
+        mDevice.setName(newName);
+        RelayrSdk.getDeviceApi()
+                .updateDevice(mDevice.getId(), mDevice)
+                .timeout(5, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SimpleObserver<Device>() {
+                    @Override public void error(Throwable e) {
+                        Toast.makeText(getContext(), "Failed to update device name!", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override public void success(Device device) {
+                        Storage.instance().saveDevice(device, mType);
+                        Storage.instance().updateDeviceName(device.getName(), mType);
+                        Toast.makeText(getContext(), "Device name updated!", Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void updateDescription() {
+        UiUtil.hideKeyboard(getContext(), mDescriptionEt);
+        final String newDesc = mDescriptionEt.getText().toString();
+        if (newDesc.equals(mDevice.getDescription())) return;
+
+        mDevice.setDescription(newDesc);
+        RelayrSdk.getDeviceApi()
+                .updateDevice(mDevice.getId(), mDevice)
+                .timeout(5, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SimpleObserver<Device>() {
+                    @Override public void error(Throwable e) {
+                        Toast.makeText(getContext(), "Failed to update description!", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override public void success(Device device) {
+                        Storage.instance().saveDevice(device, mType);
+                        Toast.makeText(getContext(), "Device description updated!", Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 }

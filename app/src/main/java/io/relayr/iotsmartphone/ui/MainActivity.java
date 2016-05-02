@@ -1,5 +1,6 @@
 package io.relayr.iotsmartphone.ui;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -8,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -74,6 +76,7 @@ import io.relayr.iotsmartphone.ui.cloud.FragmentCloud;
 import io.relayr.iotsmartphone.ui.readings.FragmentReadings;
 import io.relayr.iotsmartphone.ui.rules.FragmentRules;
 import io.relayr.iotsmartphone.ui.utils.NotificationsUtil;
+import io.relayr.iotsmartphone.ui.utils.TutorialUtil;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SuccessObserver;
 import io.relayr.java.model.action.Command;
@@ -102,8 +105,9 @@ import static android.widget.Toast.LENGTH_SHORT;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 import static io.relayr.iotsmartphone.storage.Storage.FREQS_PHONE;
+import static io.relayr.iotsmartphone.storage.Storage.TUTORIAL;
 
-public class MainTabActivity extends AppCompatActivity implements
+public class MainActivity extends AppCompatActivity implements
         SensorEventListener, LocationListener, DataApi.DataListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -146,6 +150,7 @@ public class MainTabActivity extends AppCompatActivity implements
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
 
+        TutorialUtil.updateTutorial(TUTORIAL, false);
         initialise();
     }
 
@@ -157,6 +162,8 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @Override protected void onPause() {
         super.onPause();
+
+        TutorialUtil.dismiss();
 
         if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
         mInitialiseDialog = null;
@@ -198,7 +205,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     @SuppressWarnings("unused") public void onEvent(Constants.DeviceChange event) {
-        setToolbarTitle(0);
+        if (mTabView != null && mTabView.getSelectedTabPosition() == 0) setToolbarTitle(0);
         if (event.getType() == WATCH) sendToWearable();
     }
 
@@ -208,6 +215,14 @@ public class MainTabActivity extends AppCompatActivity implements
 
     @SuppressWarnings("unused") public void onEvent(Constants.WatchSamplingUpdate event) {
         sendToWearable(event.getMeaning(), event.getSampling());
+    }
+
+    @SuppressWarnings("unused") public void onEvent(Constants.Tutorial event) {
+        TutorialUtil.dismiss();
+        if (event.getPosition() == 1)
+            TutorialUtil.showPlay(MainActivity.this, mTabView);
+        if (event.getPosition() == 2)
+            TutorialUtil.showLogInToPlay(MainActivity.this, mTabView);
     }
 
     @Override
@@ -274,6 +289,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (e.sensor.getType() == TYPE_ACCELEROMETER &&
                 millis - FREQS_PHONE.get("acceleration") > mAccelerationChange) {
             mAccelerationChange = millis;
+            TutorialUtil.showLogIn(this, mTabView, e.values[0], e.values[1], e.values[2]);
             ReadingHandler.publish(ReadingHandler.createAccelReading(e.values[0], e.values[1], e.values[2]));
         } else if (e.sensor.getType() == TYPE_GYROSCOPE &&
                 millis - FREQS_PHONE.get("angularSpeed") > mGyroscopeChange) {
@@ -325,7 +341,7 @@ public class MainTabActivity extends AppCompatActivity implements
                             startReadings();
                         } else {
                             if (mProblemDialog != null) mProblemDialog.dismiss();
-                            mProblemDialog = new AlertDialog.Builder(MainTabActivity.this, R.style.AppTheme_DialogOverlay)
+                            mProblemDialog = new AlertDialog.Builder(MainActivity.this, R.style.AppTheme_DialogOverlay)
                                     .setTitle(getString(R.string.something_went_wrong))
                                     .setNegativeButton(getString(R.string.close), new DialogInterface.OnClickListener() {
                                         @Override
@@ -387,6 +403,9 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mSound != null) mSound.close();
 
         if (mSensorManager != null) mSensorManager.unregisterListener(this);
+        if (mLocationManager != null && checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION))
+            mLocationManager.removeUpdates(this);
+
         if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
         mRefreshSubs = null;
     }
@@ -424,8 +443,11 @@ public class MainTabActivity extends AppCompatActivity implements
             @Override public void onTabSelected(TabLayout.Tab tab) {
                 final int position = tab.getPosition();
                 mViewPager.setCurrentItem(position);
-                setToolbarTitle(position);
+
                 setVisibility(position);
+                setToolbarTitle(position);
+
+                onEvent(new Constants.Tutorial(position));
             }
 
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
@@ -492,8 +514,8 @@ public class MainTabActivity extends AppCompatActivity implements
 
     private void initWifiManager() {
         if (mWifiManager != null && mConnectivityManager != null) return;
-        mWifiManager = (WifiManager) MainTabActivity.this.getSystemService(WIFI_SERVICE);
-        mConnectivityManager = (ConnectivityManager) MainTabActivity.this.getSystemService(CONNECTIVITY_SERVICE);
+        mWifiManager = (WifiManager) MainActivity.this.getSystemService(WIFI_SERVICE);
+        mConnectivityManager = (ConnectivityManager) MainActivity.this.getSystemService(CONNECTIVITY_SERVICE);
         monitorWiFi();
     }
 
@@ -501,7 +523,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mConnectivityManager == null || mWifiManager == null) return;
 
         if (!checkWifi(mConnectivityManager))
-            Toast.makeText(MainTabActivity.this, R.string.warning_no_wifi, LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, R.string.warning_no_wifi, LENGTH_SHORT).show();
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
@@ -524,7 +546,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void monitorBattery() {
-        Intent batteryIntent = MainTabActivity.this.registerReceiver(null, new IntentFilter(ACTION_BATTERY_CHANGED));
+        Intent batteryIntent = MainActivity.this.registerReceiver(null, new IntentFilter(ACTION_BATTERY_CHANGED));
         int level = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_LEVEL, -1) : 0;
         int scale = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_SCALE, -1) : 0;
 
@@ -541,14 +563,14 @@ public class MainTabActivity extends AppCompatActivity implements
             @Override public void run() {
                 if (mLocationManager != null) return;
                 if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
-                    mLocationManager = (LocationManager) MainTabActivity.this.getSystemService(LOCATION_SERVICE);
+                    mLocationManager = (LocationManager) MainActivity.this.getSystemService(LOCATION_SERVICE);
                     try {
-                        mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, MainTabActivity.this);
+                        mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, MainActivity.this);
                         monitorLocation();
                     } catch (Exception e) {
                         Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
                         try {
-                            mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, MainTabActivity.this);
+                            mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, MainActivity.this);
                             monitorLocation();
                         } catch (Exception e1) {
                             Crashlytics.log(Log.ERROR, "MTA", "NETWORK_PROVIDER doesn't exist.");
@@ -578,22 +600,22 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private boolean checkPermission(String permission) {
-        return ContextCompat.checkSelfPermission(MainTabActivity.this, permission) == PERMISSION_GRANTED;
+        return ContextCompat.checkSelfPermission(MainActivity.this, permission) == PERMISSION_GRANTED;
     }
 
     private void showLocationDialog() {
         new AlertDialog.Builder(this, R.style.AppTheme_DialogOverlay)
                 .setTitle(this.getString(R.string.warning_location_off_title))
                 .setIcon(R.drawable.ic_warning)
-                .setMessage(MainTabActivity.this.getString(R.string.warning_location_off_message))
-                .setPositiveButton(MainTabActivity.this.getString(R.string.ok), new DialogInterface.OnClickListener() {
+                .setMessage(MainActivity.this.getString(R.string.warning_location_off_message))
+                .setPositiveButton(MainActivity.this.getString(R.string.ok), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int i) {
                         dialog.dismiss();
                         Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        MainTabActivity.this.startActivity(myIntent);
+                        MainActivity.this.startActivity(myIntent);
                     }
                 })
-                .setNegativeButton(MainTabActivity.this.getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                .setNegativeButton(MainActivity.this.getString(R.string.cancel), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
@@ -646,7 +668,7 @@ public class MainTabActivity extends AppCompatActivity implements
     private void createFlashHelper() {
         if (mFlash == null) mFlash = new FlashHelper();
         try {
-            mFlash.open(MainTabActivity.this.getApplicationContext());
+            mFlash.open(MainActivity.this.getApplicationContext());
             mFlash.on();
             NotificationsUtil.showNotification(this, Constants.NOTIF_FLASH);
         } catch (Exception e) {
@@ -659,7 +681,7 @@ public class MainTabActivity extends AppCompatActivity implements
     }
 
     private void toggleFlash(boolean on) {
-        if (mFlash != null && !mFlash.hasFlash(MainTabActivity.this)) {
+        if (mFlash != null && !mFlash.hasFlash(MainActivity.this)) {
             UiUtil.showSnackBar(this, R.string.warning_flashlight_not_available);
         } else {
             if (mFlash == null) createFlashHelper();
@@ -679,7 +701,7 @@ public class MainTabActivity extends AppCompatActivity implements
         if (mSound == null) mSound = new SoundHelper();
         if (start) {
             NotificationsUtil.showNotification(this, Constants.NOTIF_SOUND);
-            mSound.playMusic(MainTabActivity.this);
+            mSound.playMusic(MainActivity.this);
         } else {
             mSound.stopMusic();
             NotificationsUtil.hideNotification(this, Constants.NOTIF_SOUND);
@@ -696,10 +718,10 @@ public class MainTabActivity extends AppCompatActivity implements
                 public void run() {
                     runOnUiThread(new TimerTask() {
                         @Override public void run() {
-                            final boolean started = mSound.vibrate(MainTabActivity.this);
+                            final boolean started = mSound.vibrate(MainActivity.this);
                             if (!started) {
-                                UiUtil.showSnackBar(MainTabActivity.this, R.string.vibration_not_supported);
-                                NotificationsUtil.hideNotification(MainTabActivity.this, Constants.NOTIF_VIB);
+                                UiUtil.showSnackBar(MainActivity.this, R.string.vibration_not_supported);
+                                NotificationsUtil.hideNotification(MainActivity.this, Constants.NOTIF_VIB);
                             }
                         }
                     });

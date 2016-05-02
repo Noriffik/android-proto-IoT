@@ -46,7 +46,7 @@ public class Constants {
         defaultSizes.put("acceleration", 70);
         defaultSizes.put("angularSpeed", 70);
         defaultSizes.put("luminosity", 50);
-        defaultSizes.put("touch", 50);
+        defaultSizes.put("touch", 70);
         defaultSizes.put("batteryLevel", GRAPH_FRAME / SAMPLING_PHONE_MIN);
         defaultSizes.put("rssi", GRAPH_FRAME / SAMPLING_PHONE_MIN);
         defaultSizes.put("location", 1);
@@ -108,5 +108,15 @@ public class Constants {
 
     public static class CloudConnected {
         public CloudConnected() {}
+    }
+
+    public static class Tutorial {
+        private final int position;
+
+        public Tutorial(int position) {this.position = position;}
+
+        public int getPosition() {
+            return position;
+        }
     }
 }

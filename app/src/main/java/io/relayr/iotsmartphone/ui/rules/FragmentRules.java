@@ -21,6 +21,7 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.handler.RuleHandler;
 import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.ui.utils.TutorialUtil;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.models.transport.DeviceCommand;
@@ -52,7 +53,7 @@ public class FragmentRules extends Fragment {
     @InjectView(R.id.condition_two) RuleCondition mConditionTwo;
     @InjectView(R.id.condition_operator) TextView mConditionOperator;
 
-    @InjectView(R.id.rule_activity) Switch mRuleActivity;
+    @InjectView(R.id.rule_activity) Switch mStateSwitch;
     @InjectView(R.id.outcome_one) RuleOutcome mOutcomeOne;
     @InjectView(R.id.outcome_two) RuleOutcome mOutcomeTwo;
 
@@ -105,7 +106,7 @@ public class FragmentRules extends Fragment {
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
-        if (isVisibleToUser && mRuleActivity != null) updateActivity();
+        if (isVisibleToUser && mStateSwitch != null) updateActivity();
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.condition_operator)
@@ -191,16 +192,16 @@ public class FragmentRules extends Fragment {
 
     private void updateActivity() {
         if (RuleHandler.isValid()) {
-            mRuleActivity.setOnCheckedChangeListener(null);
-            mRuleActivity.setChecked(RuleHandler.isActive());
-            if (mRuleActivity.getVisibility() == GONE) {
-                mRuleActivity.setVisibility(VISIBLE);
+            mStateSwitch.setOnCheckedChangeListener(null);
+            mStateSwitch.setChecked(RuleHandler.isActive());
+            if (mStateSwitch.getVisibility() == GONE) {
+                mStateSwitch.setVisibility(VISIBLE);
                 UiUtil.showSnackBar(getActivity(), RuleHandler.isActive() ? R.string.rule_enabled : R.string.rule_disabled);
             }
         } else {
-            mRuleActivity.setVisibility(GONE);
+            mStateSwitch.setVisibility(GONE);
         }
-        mRuleActivity.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mStateSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 RuleHandler.setActivity(isChecked);
                 UiUtil.showSnackBar(getActivity(), isChecked ? R.string.rule_enabled : R.string.rule_disabled);

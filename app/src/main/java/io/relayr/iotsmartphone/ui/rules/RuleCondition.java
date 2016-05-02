@@ -31,7 +31,7 @@ import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.ui.MainTabActivity;
+import io.relayr.iotsmartphone.ui.MainActivity;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
@@ -41,6 +41,7 @@ import io.relayr.java.model.models.schema.ValueSchema;
 import io.relayr.java.model.models.transport.DeviceReading;
 
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class RuleCondition extends LinearLayout {
 
@@ -129,18 +130,12 @@ public class RuleCondition extends LinearLayout {
                 mLiveTv.setText(getContext().getString(R.string.condition_reading_live, ((Number) last.value).intValue()));
             else if (last.value instanceof AccelGyroscope.Acceleration) {
                 AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) last.value;
-                double vector = calculateVector(accel.x, accel.y, accel.z);
-                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", vector)));
+                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", UiUtil.calculateVector(accel))));
             } else if (last.value instanceof AccelGyroscope.AngularSpeed) {
                 AccelGyroscope.AngularSpeed gyro = (AccelGyroscope.AngularSpeed) last.value;
-                double vector = calculateVector(gyro.x, gyro.y, gyro.z);
-                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", vector)));
+                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", UiUtil.calculateVector(gyro))));
             }
         }
-    }
-
-    private double calculateVector(float a, float b, float c) {
-        return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2) + Math.pow(c, 2));
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.rule_widget_remove_btn)
@@ -185,7 +180,7 @@ public class RuleCondition extends LinearLayout {
             mType = view.getType();
             mReading = (DeviceReading) view.getSelected();
 
-            IotApplication.visible(true, UiUtil.isWearableConnected((MainTabActivity) getContext()));
+            IotApplication.visible(true, UiUtil.isWearableConnected((MainActivity) getContext()));
 
             toggleControls(true);
             setInitialValues();
@@ -290,6 +285,8 @@ public class RuleCondition extends LinearLayout {
     private void setConditionValues() {
         setInitialValues();
         toggleControls(true);
+
+        if (mType == WATCH) EventBus.getDefault().post(new Constants.DeviceChange(PHONE));
 
         mIconImg.setImageResource(mType == null || mType == PHONE ?
                 R.drawable.ic_graphic_phone : R.drawable.ic_graphic_watch);

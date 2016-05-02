@@ -22,7 +22,7 @@ import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.ui.MainTabActivity;
+import io.relayr.iotsmartphone.ui.MainActivity;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.models.transport.DeviceCommand;
 import io.relayr.java.model.models.transport.DeviceReading;
@@ -69,7 +69,7 @@ public class ConditionDialog extends LinearLayout {
         super.onAttachedToWindow();
         ButterKnife.inject(this, this);
 
-        if (mCondition && UiUtil.isWearableConnected((MainTabActivity) getContext()))
+        if (mCondition && UiUtil.isWearableConnected((MainActivity) getContext()))
             mWatchContainer.setVisibility(VISIBLE);
 
         if (mType == null) onPhoneClicked();

@@ -49,6 +49,11 @@ public class Storage {
     private static final String BACKGROUND_UPLOAD = "background";
     private static final String RULE_ID = "rule_id";
 
+    public static final String TUTORIAL = "tutorial";
+    public static final String TUTORIAL_LOG_IN = "tutorial_main";
+    public static final String TUTORIAL_PLAY = "tutorial_cloud";
+    public static final String TUTORIAL_LOG_TO_PLAY = "tutorial_rules";
+
     private static List<DeviceReading> sReadingsPhone = new ArrayList<>();
     private static List<DeviceReading> sReadingsWatch = new ArrayList<>();
     private static List<DeviceCommand> sCommandsPhone = new ArrayList<>();
@@ -255,7 +260,7 @@ public class Storage {
         else return new ArrayList<>();
     }
 
-    public void saveWatchReadings(List<DeviceReading> readings) {
+    public synchronized void saveWatchReadings(List<DeviceReading> readings) {
         sReadingsWatch.clear();
         sReadingsWatch.addAll(readings);
         Collections.sort(sReadingsWatch, new Comparator<DeviceReading>() {
@@ -283,14 +288,6 @@ public class Storage {
         }
     }
 
-    public void logOut() {
-        PREFS.edit().remove(BACKGROUND_UPLOAD).apply();
-
-        RuleHandler.clearAfterLogOut();
-        ReadingHandler.clearAfterLogOut();
-        System.gc();
-    }
-
     public boolean isActiveInBackground() {
         return PREFS.getBoolean(BACKGROUND_UPLOAD, false);
     }
@@ -299,15 +296,47 @@ public class Storage {
         PREFS.edit().putBoolean(BACKGROUND_UPLOAD, active).apply();
     }
 
-    public void userId(String userId) {
+    public void loggedIn(String userId) {
         PREFS.edit().remove(RULE_ID).apply();
         PREFS.edit().remove(PHONE_ID).apply();
         PREFS.edit().remove(WATCH_ID).apply();
+
         PREFS.edit().putString(USER_ID, userId).apply();
+    }
+
+    public void logOut() {
+        changeActivity(PHONE, false);
+        changeActivity(WATCH, false);
+
+        PREFS.edit().remove(BACKGROUND_UPLOAD).apply();
+
+        PREFS.edit().remove(TUTORIAL).apply();
+        PREFS.edit().remove(TUTORIAL_LOG_IN).apply();
+        PREFS.edit().remove(TUTORIAL_PLAY).apply();
+        PREFS.edit().remove(TUTORIAL_LOG_TO_PLAY).apply();
+
+        changeActivity(PHONE, false);
+        changeActivity(WATCH, false);
+
+        RuleHandler.clearAfterLogOut();
+        ReadingHandler.clearAfterLogOut();
+        System.gc();
     }
 
     public String oldUserId() {
         return PREFS.getString(USER_ID, null);
+    }
+
+    public void updateTutorial(String constant, boolean finished) {
+        if (constant == null) return;
+        PREFS.edit().putBoolean(constant, finished).apply();
+
+        if (finished && tutorialFinished(TUTORIAL_PLAY) && tutorialFinished(TUTORIAL_LOG_IN) && tutorialFinished(TUTORIAL_LOG_TO_PLAY))
+            PREFS.edit().putBoolean(TUTORIAL, true).apply();
+    }
+
+    public boolean tutorialFinished(String tutorial) {
+        return PREFS.getBoolean(tutorial, false);
     }
 }
 

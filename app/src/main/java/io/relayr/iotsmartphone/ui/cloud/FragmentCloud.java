@@ -25,6 +25,7 @@ import io.relayr.iotsmartphone.handler.CloudHandler;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.ui.utils.TutorialUtil;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.Device;
@@ -41,7 +42,7 @@ public class FragmentCloud extends Fragment {
     @InjectView(R.id.cloud_connection) View mCloudConnection;
     @InjectView(R.id.cloud_connection_speed) TextView mCloudSpeed;
     @InjectView(R.id.cloud_info) TextView mCloudInfoText;
-    @InjectView(R.id.cloud_button) Button mCloudInfoBtn;
+    @InjectView(R.id.cloud_button) Button mCloudBtn;
 
     @InjectView(R.id.phone_info_name) TextView mPhoneName;
     @InjectView(R.id.phone_info_version) TextView mPhoneVersion;
@@ -102,6 +103,7 @@ public class FragmentCloud extends Fragment {
                         @Override public void error(Throwable e) {}
 
                         @Override public void success(Pair<Constants.DeviceType, Device> pair) {
+                            EventBus.getDefault().post(new Constants.Tutorial(1));
                             if (pair != null) setUpDevice(pair.second, pair.first);
                             setUpCloud();
                         }
@@ -188,7 +190,8 @@ public class FragmentCloud extends Fragment {
                     getActivity().runOnUiThread(new TimerTask() {
                         @Override public void run() {
                             mWatchSpeed.setText(getSpeed(ReadingHandler.sWatchSpeed));
-                            mCloudSpeed.setText(getSpeed(ReadingHandler.sPhoneSpeed + ReadingHandler.sWatchSpeed));
+                            if (UiUtil.isCloudConnected())
+                                mCloudSpeed.setText(getSpeed(ReadingHandler.sPhoneSpeed + ReadingHandler.sWatchSpeed));
                         }
                     });
             }
@@ -237,13 +240,13 @@ public class FragmentCloud extends Fragment {
             mCloudImg.setBackgroundResource(R.drawable.cloud_connected_circle);
             mCloudConnection.setBackgroundResource(R.drawable.cloud_line);
             mCloudInfoText.setText(R.string.cloud_connection_established);
-            mCloudInfoBtn.setText(R.string.cloud_log_out);
+            mCloudBtn.setText(R.string.cloud_log_out);
             EventBus.getDefault().post(new Constants.CloudConnected());
         } else {
             mCloudImg.setBackgroundResource(R.drawable.cloud_disconnected_circle);
             mCloudConnection.setBackgroundResource(R.drawable.cloud_dotted_vertical_line);
             mCloudInfoText.setText(R.string.cloud_establish_connection);
-            mCloudInfoBtn.setText(R.string.cloud_log_in);
+            mCloudBtn.setText(R.string.cloud_log_in);
         }
     }
 
@@ -276,9 +279,9 @@ public class FragmentCloud extends Fragment {
     }
 
     private void logOut() {
-        if (mSpeedTimer != null) mSpeedTimer.cancel();
-        Storage.instance().logOut();
+        mCloudSpeed.setText("");
         RelayrSdk.logOut();
+        Storage.instance().logOut();
         setUpCloud();
     }
 

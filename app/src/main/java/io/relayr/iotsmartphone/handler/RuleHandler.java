@@ -12,6 +12,7 @@ import io.relayr.android.RelayrSdk;
 import io.relayr.android.storage.DataStorage;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.ui.utils.TutorialUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.rules.AppliedTemplate;
 import io.relayr.java.model.rules.TemplateInfo;
@@ -240,6 +241,9 @@ public class RuleHandler {
                             if (mObserver != null) mObserver.onNext(true);
                         }
                     });
+
+        TutorialUtil.updateTutorial(Storage.TUTORIAL_PLAY, true);
+
         return true;
     }
 }

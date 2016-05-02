@@ -88,7 +88,7 @@ public class SamplingDialog extends LinearLayout {
         mSamplingLow.setText(complex ? getContext().getString(R.string.dialog_low) : ((Constants.SAMPLING_MAX + minimum) + " s"));
 
         mSamplingSeek.setMax(Constants.SAMPLING_MAX);
-        if (complex) mSamplingSeek.setProgress(frequency / Constants.SAMPLING_COMPLEX);
+        if (complex) mSamplingSeek.setProgress(frequency / Constants.SAMPLING_COMPLEX - minimum);
         else mSamplingSeek.setProgress(frequency - minimum);
 
         mSamplingSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {

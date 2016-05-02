@@ -59,8 +59,8 @@ public class FragmentReadings extends Fragment {
 
         mFab.setVisibility(UiUtil.isWearableConnected(getActivity()) ? View.VISIBLE : View.GONE);
 
-        if (IotApplication.isVisible(WATCH)) onWatchClicked();
-        else onPhoneClicked();
+        if (IotApplication.sCurrent == PHONE) onPhoneClicked();
+        else onWatchClicked();
 
         return view;
     }
