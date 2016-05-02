@@ -81,20 +81,6 @@
         <item name="android:width">@dimen/settings_switch_width</item>
     </style>
 
-    <style name="CardViewReading" parent="MatchWrap">
-        <item name="cardPreventCornerOverlap">false</item>
-        <item name="cardUseCompatPadding">true</item>
-        <item name="cardCornerRadius">@dimen/cardview_default_radius</item>
-        <item name="cardElevation">@dimen/cardview_default_elevation</item>
-        <item name="cardBackgroundColor">@color/background</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:minHeight">@dimen/default_padding</item>
-    </style>
-
-    <style name="CardViewReadingEmpty" parent="CardViewReading">
-        <item name="android:minHeight">100dp</item>
-    </style>
-
     <!--WIDGET-->
     <style name="MatchMatch" parent="@android:style/Widget">
         <item name="android:layout_width">match_parent</item>

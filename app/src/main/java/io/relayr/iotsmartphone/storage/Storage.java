@@ -315,9 +315,6 @@ public class Storage {
         PREFS.edit().remove(TUTORIAL_PLAY).apply();
         PREFS.edit().remove(TUTORIAL_LOG_TO_PLAY).apply();
 
-        changeActivity(PHONE, false);
-        changeActivity(WATCH, false);
-
         RuleHandler.clearAfterLogOut();
         ReadingHandler.clearAfterLogOut();
         System.gc();
