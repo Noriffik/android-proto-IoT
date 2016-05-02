@@ -3,17 +3,13 @@
     <dimen name="default_padding">8dp</dimen>
     <dimen name="big_padding">32dp</dimen>
 
-    <dimen name="fab_margin">16dp</dimen>
-
     <dimen name="title_text">22sp</dimen>
     <dimen name="subtitle_text">18sp</dimen>
     <dimen name="normal_text">14sp</dimen>
     <dimen name="small_text">12sp</dimen>
     <dimen name="tiny_text">10sp</dimen>
 
-    <dimen name="device_name_text">14sp</dimen>
     <dimen name="settings_switch_width">250dp</dimen>
-    <dimen name="settings_padding">20dp</dimen>
     <dimen name="toolbar_height">60dp</dimen>
     <dimen name="default_padding_half">4dp</dimen>
     <dimen name="cloud_icon_size">100dp</dimen>

@@ -12,7 +12,7 @@ import android.support.v4.app.NotificationManagerCompat;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.helper.DemandIntentReceiver;
 import io.relayr.iotsmartphone.storage.Constants;
-import io.relayr.iotsmartphone.ui.MainTabActivity;
+import io.relayr.iotsmartphone.ui.MainActivity;
 
 public class NotificationsUtil {
 
@@ -56,7 +56,7 @@ public class NotificationsUtil {
                 .setContentTitle(context.getString(titleId))
                 .setContentText(context.getString(textId));
 
-        if (UiUtil.isWearableConnected((MainTabActivity) context)) {
+        if (UiUtil.isWearableConnected((MainActivity) context)) {
             Bitmap bg = BitmapFactory.decodeResource(context.getResources(), R.color.primary);
             builder.extend(new NotificationCompat.WearableExtender().addAction(action).setBackground(bg));
         }

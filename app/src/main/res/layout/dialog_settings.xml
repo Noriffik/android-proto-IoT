@@ -34,9 +34,8 @@
             android:layout_width="0dp"
             android:layout_weight="40"
             android:background="@color/primary"
-            android:gravity="center_vertical|center_horizontal"
-            android:paddingLeft="@dimen/default_padding"
-            android:paddingRight="@dimen/default_padding">
+            android:gravity="center_vertical|left"
+            android:paddingLeft="@dimen/default_padding_double">
 
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/cloud_upload"
@@ -47,6 +46,50 @@
                 android:id="@+id/cloud_uploading"
                 style="@style/NormalText"
                 android:text="@string/dialog_background_send"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        style="@style/MatchWrapHor"
+        android:layout_height="@dimen/dialog_item_height"
+        android:layout_marginTop="@dimen/default_padding"
+        android:gravity="center_vertical">
+
+        <TextView
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="15"
+            android:gravity="right"
+            android:paddingRight="@dimen/default_padding_double"
+            android:singleLine="true"
+            android:text="@string/global_tutorial"
+            android:textColor="@color/accent"
+            android:textStyle="bold"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/graph_green"/>
+
+        <LinearLayout
+            style="@style/MatchMatchHor"
+            android:layout_width="0dp"
+            android:layout_weight="40"
+            android:background="@color/primary"
+            android:gravity="center_vertical|left"
+            android:paddingLeft="@dimen/default_padding_double">
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/tutorial"
+                style="@style/NormalText"
+                android:gravity="center_vertical"/>
+
+            <TextView
+                android:id="@+id/tutorial_state"
+                style="@style/NormalText"
+                android:text="@string/tutorial_active"/>
         </LinearLayout>
     </LinearLayout>
 

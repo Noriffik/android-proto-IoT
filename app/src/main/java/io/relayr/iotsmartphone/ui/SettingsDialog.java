@@ -12,11 +12,17 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Storage;
+import io.relayr.iotsmartphone.ui.utils.TutorialUtil;
+
+import static io.relayr.iotsmartphone.storage.Storage.TUTORIAL;
 
 public class SettingsDialog extends LinearLayout {
 
     @InjectView(R.id.cloud_upload) SwitchCompat mUploadSwitch;
     @InjectView(R.id.cloud_uploading) TextView mUploading;
+
+    @InjectView(R.id.tutorial) SwitchCompat mTutorialSwitch;
+    @InjectView(R.id.tutorial_state) TextView mTutorial;
 
     public SettingsDialog(Context context) {
         this(context, null);
@@ -34,22 +40,27 @@ public class SettingsDialog extends LinearLayout {
         super.onAttachedToWindow();
         ButterKnife.inject(this, this);
 
-        setState();
+        mUploadSwitch.setChecked(Storage.instance().isActiveInBackground());
         mUploadSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 Storage.instance().activeInBackground(isChecked);
-                setState();
+                setText(mUploading, isChecked);
+            }
+        });
+
+        mTutorialSwitch.setChecked(!Storage.instance().tutorialFinished(TUTORIAL));
+        mTutorialSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                TutorialUtil.updateTutorial(TUTORIAL, !isChecked);
+                setText(mTutorial, !isChecked);
             }
         });
     }
 
-    private void setState() {
-        if (Storage.instance().isActiveInBackground()) {
-            mUploadSwitch.setChecked(true);
-            mUploading.setTextColor(ContextCompat.getColor(getContext(), R.color.accent));
-        } else {
-            mUploadSwitch.setChecked(false);
-            mUploading.setTextColor(ContextCompat.getColor(getContext(), R.color.text_color));
-        }
+    private void setText(TextView controlInfo, boolean status) {
+        if (status)
+            controlInfo.setTextColor(ContextCompat.getColor(getContext(), R.color.accent));
+        else
+            controlInfo.setTextColor(ContextCompat.getColor(getContext(), R.color.text_color));
     }
 }

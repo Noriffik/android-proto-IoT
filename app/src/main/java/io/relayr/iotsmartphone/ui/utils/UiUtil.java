@@ -7,14 +7,19 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.design.widget.Snackbar;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
+import io.relayr.java.model.AccelGyroscope;
 
 public class UiUtil {
 
@@ -95,5 +100,17 @@ public class UiUtil {
     public static void hideKeyboard(Context context, View element) {
         InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(element.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
+    }
+
+    public static double calculateVector(AccelGyroscope.Acceleration acceleration) {
+        return calculateVector(acceleration.x, acceleration.y, acceleration.z);
+    }
+
+    public static double calculateVector(AccelGyroscope.AngularSpeed angularSpeed) {
+        return calculateVector(angularSpeed.x, angularSpeed.y, angularSpeed.z);
+    }
+
+    public static double calculateVector(float a, float b, float c) {
+        return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2) + Math.pow(c, 2));
     }
 }

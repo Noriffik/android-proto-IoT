@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_margin="0dp"
+              android:orientation="vertical"
+              android:padding="0dp">
+
+    <View
+        android:layout_width="@dimen/default_padding_double"
+        android:layout_height="@dimen/default_padding_double"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/popup_bck_triangle"/>
+
+    <LinearLayout
+        style="@style/WrapWrap"
+        android:layout_width="wrap_content"
+        android:background="@drawable/popup_bck"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/popup_text"
+            style="@style/NormalText"
+            android:gravity="center_vertical|center_horizontal"
+            android:padding="@dimen/default_padding"/>
+
+        <TextView
+            android:id="@+id/button_ok"
+            style="@style/NormalText"
+            android:layout_gravity="right"
+            android:paddingBottom="@dimen/default_padding"
+            android:paddingLeft="@dimen/default_padding_double"
+            android:paddingRight="@dimen/default_padding_double"
+            android:paddingTop="@dimen/default_padding"
+            android:text="@string/got_it"
+            android:textAllCaps="true"
+            android:textStyle="bold"/>
+    </LinearLayout>
+</LinearLayout>
