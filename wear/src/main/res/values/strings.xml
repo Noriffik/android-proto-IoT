@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">IoTwatch</string>
-    <string name="sending_data">Sending data to IoTsmartphone app.</string>
-    <string name="not_sending_data">NOT sending data.</string>
+    <string name="app_name">Proto IoT</string>
+    <string name="sending_data">Sending data to the app.</string>
+    <string name="not_sending_data">Not sending data.</string>
     <string name="start">START</string>
     <string name="stop">STOP</string>
 </resources>
