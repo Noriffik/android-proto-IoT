@@ -106,13 +106,13 @@ public class CloudDeviceDialog extends LinearLayout {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SimpleObserver<Device>() {
                     @Override public void error(Throwable e) {
-                        Toast.makeText(getContext(), "Failed to update device name!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), R.string.dialog_device_name_update_failed, Toast.LENGTH_LONG).show();
                     }
 
                     @Override public void success(Device device) {
                         Storage.instance().saveDevice(device, mType);
                         Storage.instance().updateDeviceName(device.getName(), mType);
-                        Toast.makeText(getContext(), "Device name updated!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), R.string.update_success, Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -129,12 +129,12 @@ public class CloudDeviceDialog extends LinearLayout {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SimpleObserver<Device>() {
                     @Override public void error(Throwable e) {
-                        Toast.makeText(getContext(), "Failed to update description!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), R.string.something_went_wrong, Toast.LENGTH_LONG).show();
                     }
 
                     @Override public void success(Device device) {
                         Storage.instance().saveDevice(device, mType);
-                        Toast.makeText(getContext(), "Device description updated!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), R.string.update_success, Toast.LENGTH_LONG).show();
                     }
                 });
     }

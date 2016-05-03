@@ -20,8 +20,11 @@
         style="@style/WrapWrap"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:padding="@dimen/default_padding_half"
         android:elevation="@dimen/default_padding_half"
+        android:paddingBottom="0dp"
+        android:paddingLeft="@dimen/default_padding_double"
+        android:paddingRight="@dimen/default_padding_double"
+        android:paddingTop="@dimen/default_padding"
         android:src="@drawable/ic_settings"/>
 
 </RelativeLayout>

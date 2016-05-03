@@ -22,7 +22,8 @@
             android:id="@+id/popup_text"
             style="@style/NormalText"
             android:gravity="center_vertical|center_horizontal"
-            android:padding="@dimen/default_padding"/>
+            android:padding="@dimen/default_padding"
+            android:textColor="@color/primary"/>
 
         <TextView
             android:id="@+id/button_ok"
@@ -34,6 +35,7 @@
             android:paddingTop="@dimen/default_padding"
             android:text="@string/got_it"
             android:textAllCaps="true"
+            android:textColor="@color/primary"
             android:textStyle="bold"/>
     </LinearLayout>
 </LinearLayout>

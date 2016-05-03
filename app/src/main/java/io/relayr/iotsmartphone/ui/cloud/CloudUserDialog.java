@@ -38,57 +38,70 @@ public class CloudUserDialog extends LinearLayout {
         super(context, attrs, defStyleAttr);
     }
 
+    private User mUser;
+
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         ButterKnife.inject(this, this);
 
         RelayrSdk.getUser()
+                .timeout(5, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SimpleObserver<User>() {
                     @Override public void error(Throwable e) {
-                        Toast.makeText(getContext(), "something went wrong", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), R.string.something_went_wrong, Toast.LENGTH_LONG).show();
                     }
 
                     @Override public void success(User user) {
+                        mUser = user;
                         setInfo(user);
+                        setActions();
                     }
                 });
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        updateName();
+        super.onDetachedFromWindow();
     }
 
     private void setInfo(User user) {
         mIdTv.setText(user.getId());
         mNameEt.setText(user.getName());
         mEmailTv.setText(user.getEmail());
-
-        setActions(user);
     }
 
-    private void setActions(final User user) {
+    private void setActions() {
         mNameEt.setOnEditorActionListener(
                 new EditText.OnEditorActionListener() {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                        UiUtil.hideKeyboard(getContext(), mNameEt);
-                        final String newName = mNameEt.getText().toString();
-                        if (newName.equals(user.getName())) return false;
-
                         if (actionId == EditorInfo.IME_ACTION_DONE) {
-                            user.update(newName)
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .timeout(5, TimeUnit.SECONDS)
-                                    .subscribe(new SimpleObserver<User>() {
-                                        @Override public void error(Throwable e) {
-                                            Toast.makeText(getContext(), "something went wrong", Toast.LENGTH_LONG).show();
-                                        }
-
-                                        @Override public void success(User updated) {
-                                            setInfo(updated);
-                                            Toast.makeText(getContext(), "User name updated", Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                            updateName();
                             return true;
                         }
                         return false;
+                    }
+                });
+    }
+
+    private void updateName() {
+        UiUtil.hideKeyboard(getContext(), mNameEt);
+        final String newName = mNameEt.getText().toString();
+        if (newName.equals(mUser.getName())) return;
+
+        mUser.update(newName)
+                .observeOn(AndroidSchedulers.mainThread())
+                .timeout(5, TimeUnit.SECONDS)
+                .subscribe(new SimpleObserver<User>() {
+                    @Override public void error(Throwable e) {
+                        Toast.makeText(getContext(), R.string.something_went_wrong, Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override public void success(User updated) {
+                        mUser = updated;
+                        setInfo(updated);
+                        Toast.makeText(getContext(), R.string.username_updated, Toast.LENGTH_LONG).show();
                     }
                 });
     }

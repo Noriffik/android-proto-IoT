@@ -21,14 +21,13 @@
         android:padding="@dimen/default_padding_half"
         android:visibility="gone"/>
 
-
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
         style="@style/WrapWrap"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_gravity="bottom"
-        android:layout_margin="16dp"
         android:clickable="true"
-        android:src="@drawable/ic_graphic_watch"/>
+        android:padding="@dimen/default_padding_double"
+        android:src="@drawable/ic_graphic_watch"
+        app:useCompatPadding="true"/>
 </RelativeLayout>

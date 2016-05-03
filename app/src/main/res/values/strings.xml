@@ -2,8 +2,8 @@
 
     <string name="app_title">relayr Proto IoT</string>
 
-    <string name="app_title_phone">Smartphone</string>
-    <string name="app_title_watch">Watch</string>
+    <string name="app_title_phone">smartphone</string>
+    <string name="app_title_watch">watch</string>
 
     <string name="warning_no_wifi">Not connected to Wifi</string>
     <string name="error_using_flash">Error when using flash</string>
@@ -98,5 +98,11 @@
     <string name="global_tutorial">Tutorial</string>
     <string name="tutorial_active">tutorial active</string>
     <string name="got_it">got it</string>
+    <string name="dialog_device_name_update_failed">Failed to update device name!</string>
+    <string name="update_success">Update successful.</string>
+    <string name="username_updated">User name updated</string>
+    <string name="tab_rules">rules</string>
+    <string name="tab_cloud">relayr</string>
+    <string name="tab_main">device</string>
 
 </resources>
