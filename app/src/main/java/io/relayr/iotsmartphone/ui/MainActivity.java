@@ -1,5 +1,6 @@
 package io.relayr.iotsmartphone.ui;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -8,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -103,6 +105,7 @@ import static android.widget.Toast.LENGTH_SHORT;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 import static io.relayr.iotsmartphone.storage.Storage.FREQS_PHONE;
+import static io.relayr.iotsmartphone.storage.Storage.TUTORIAL;
 
 public class MainActivity extends AppCompatActivity implements
         SensorEventListener, LocationListener, DataApi.DataListener,

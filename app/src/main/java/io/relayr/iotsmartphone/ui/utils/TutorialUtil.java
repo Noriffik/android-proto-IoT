@@ -39,7 +39,7 @@ public class TutorialUtil {
     }
 
     public static void showPlay(Context context, View anchor) {
-        if (RuleHandler.hasRule()) return;
+        if (RuleHandler.hasRule() || !UiUtil.isCloudConnected()) return;
         if (!checkData(context, anchor, Storage.TUTORIAL_PLAY)) return;
         showTutorial(context, anchor, TUTORIAL_PLAY, 2);
     }
