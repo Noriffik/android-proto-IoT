@@ -9,8 +9,8 @@ android {
         applicationId "io.relayr.iotsmartphone"
         minSdkVersion 20
         targetSdkVersion 23
-        versionCode 20
-        versionName "1.4.0"
+        versionCode 21
+        versionName "1.4.1"
     }
     buildTypes {
         release {
