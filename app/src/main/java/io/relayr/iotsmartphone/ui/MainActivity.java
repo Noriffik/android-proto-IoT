@@ -404,6 +404,8 @@ public class MainActivity extends AppCompatActivity implements
 
         if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
         mRefreshSubs = null;
+
+        RelayrSdk.getWebSocketClient().clean();
     }
 
     private void setupViewPager(Bundle savedInstanceState) {
