@@ -360,54 +360,6 @@ public class MainActivity extends AppCompatActivity implements
                 });
     }
 
-    private void startReadings() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-        if (!mResolvingError) mGoogleApiClient.connect();
-
-        if (mRefreshSubs == null)
-            mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Observer<Long>() {
-                        @Override public void onCompleted() {}
-
-                        @Override public void onError(Throwable e) {
-                            Crashlytics.log(Log.ERROR, "MTA", "Failed while refreshing");
-                            Crashlytics.logException(e);
-                        }
-
-                        @Override public void onNext(Long num) {
-                            if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
-                            if (num % FREQS_PHONE.get("location") == 0) monitorLocation();
-                            if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
-                            if (num % FREQS_PHONE.get("touch") == 0)
-                                ReadingHandler.publishTouch(false);
-                        }
-                    });
-
-        initReadings();
-    }
-
-    private void stopReadings() {
-        mResolvingError = false;
-        if (mGoogleApiClient != null) Wearable.DataApi.removeListener(mGoogleApiClient, this);
-
-        if (mFlash != null) mFlash.close();
-        if (mSound != null) mSound.close();
-
-        if (mSensorManager != null) mSensorManager.unregisterListener(this);
-        if (mLocationManager != null && checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION))
-            mLocationManager.removeUpdates(this);
-
-        if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
-        mRefreshSubs = null;
-
-        RelayrSdk.getWebSocketClient().clean();
-    }
-
     private void setupViewPager(Bundle savedInstanceState) {
         if (savedInstanceState != null &&
                 getSupportFragmentManager() != null &&
@@ -476,6 +428,57 @@ public class MainActivity extends AppCompatActivity implements
         mTabView.getTabAt(0).setIcon(R.drawable.tab_device);
         mTabView.getTabAt(1).setIcon(R.drawable.tab_cloud);
         mTabView.getTabAt(2).setIcon(R.drawable.tab_rules);
+    }
+
+    private void startReadings() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+        if (!mResolvingError) mGoogleApiClient.connect();
+
+        if (mRefreshSubs == null)
+            mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<Long>() {
+                        @Override public void onCompleted() {}
+
+                        @Override public void onError(Throwable e) {
+                            Crashlytics.log(Log.ERROR, "MTA", "Failed while refreshing");
+                            Crashlytics.logException(e);
+                        }
+
+                        @Override public void onNext(Long num) {
+                            if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
+                            if (num % FREQS_PHONE.get("location") == 0) monitorLocation();
+                            if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
+                            if (num % FREQS_PHONE.get("touch") == 0)
+                                ReadingHandler.publishTouch(false);
+                        }
+                    });
+
+        initReadings();
+    }
+
+    private void stopReadings() {
+        mResolvingError = false;
+        if (mGoogleApiClient != null) Wearable.DataApi.removeListener(mGoogleApiClient, this);
+
+        if (mFlash != null) mFlash.close();
+        if (mSound != null) mSound.close();
+
+        if (mSensorManager != null) mSensorManager.unregisterListener(this);
+        if (mLocationManager != null && checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION))
+            mLocationManager.removeUpdates(this);
+
+        if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
+        mRefreshSubs = null;
+
+        if (mCommandsSubscription != null) mCommandsSubscription.unsubscribe();
+        mCommandsSubscription = null;
+
+        RelayrSdk.getWebSocketClient().clean();
     }
 
     private void initReadings() {

@@ -104,5 +104,6 @@
     <string name="tab_rules">rules</string>
     <string name="tab_cloud">relayr</string>
     <string name="tab_main">device</string>
+    <string name="send_in_background">Sending data in the background uses your internet traffic and is not completely reliable.</string>
 
 </resources>

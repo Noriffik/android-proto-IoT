@@ -4,9 +4,11 @@ import android.content.Context;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.SwitchCompat;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -20,6 +22,7 @@ public class SettingsDialog extends LinearLayout {
 
     @InjectView(R.id.cloud_upload) SwitchCompat mUploadSwitch;
     @InjectView(R.id.cloud_uploading) TextView mUploading;
+    @InjectView(R.id.cloud_upload_warning) View mUploadingWarning;
 
     @InjectView(R.id.tutorial) SwitchCompat mTutorialSwitch;
     @InjectView(R.id.tutorial_state) TextView mTutorial;
@@ -45,8 +48,10 @@ public class SettingsDialog extends LinearLayout {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 Storage.instance().activeInBackground(isChecked);
                 setText(mUploading, isChecked);
+                mUploadingWarning.setVisibility(isChecked ? VISIBLE : GONE);
             }
         });
+        mUploadingWarning.setVisibility(Storage.instance().isActiveInBackground() ? VISIBLE : GONE);
 
         mTutorialSwitch.setChecked(!Storage.instance().tutorialFinished(TUTORIAL));
         mTutorialSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {

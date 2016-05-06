@@ -50,6 +50,25 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/cloud_upload_warning"
+        style="@style/MatchWrapHor"
+        android:layout_height="@dimen/dialog_item_height">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="16"/>
+
+        <TextView
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="40"
+            android:gravity="left|top"
+            android:text="@string/send_in_background"/>
+    </LinearLayout>
+
+    <LinearLayout
         style="@style/MatchWrapHor"
         android:layout_height="@dimen/dialog_item_height"
         android:layout_marginTop="@dimen/default_padding"
