@@ -32,7 +32,7 @@ public class TutorialUtil {
         if (!IotApplication.isVisible(Constants.DeviceType.PHONE)) return;
         if (!checkData(context, anchor, Storage.TUTORIAL_LOG_IN)) return;
         final double vector = UiUtil.calculateVector(x, y, z);
-        if (vector > 10 && vectorControl++ > 3) {
+        if (vector > 12 && vectorControl++ > 3) {
             vectorControl = 0;
             showTutorial(context, anchor, TUTORIAL_LOG_IN, 1);
         }
