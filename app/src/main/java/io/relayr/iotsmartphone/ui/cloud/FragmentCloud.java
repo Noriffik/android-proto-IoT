@@ -16,7 +16,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
@@ -38,20 +38,20 @@ public class FragmentCloud extends Fragment {
 
     private static final String TAG = "FragCloud";
 
-    @InjectView(R.id.cloud) ImageView mCloudImg;
-    @InjectView(R.id.cloud_connection) View mCloudConnection;
-    @InjectView(R.id.cloud_connection_speed) TextView mCloudSpeed;
-    @InjectView(R.id.cloud_info) TextView mCloudInfoText;
-    @InjectView(R.id.cloud_button) Button mCloudBtn;
+    @BindView(R.id.cloud) ImageView mCloudImg;
+    @BindView(R.id.cloud_connection) View mCloudConnection;
+    @BindView(R.id.cloud_connection_speed) TextView mCloudSpeed;
+    @BindView(R.id.cloud_info) TextView mCloudInfoText;
+    @BindView(R.id.cloud_button) Button mCloudBtn;
 
-    @InjectView(R.id.phone_info_name) TextView mPhoneName;
-    @InjectView(R.id.phone_info_version) TextView mPhoneVersion;
+    @BindView(R.id.phone_info_name) TextView mPhoneName;
+    @BindView(R.id.phone_info_version) TextView mPhoneVersion;
 
-    @InjectView(R.id.watch) ImageView mWatchImg;
-    @InjectView(R.id.watch_connection) View mWatchConnection;
-    @InjectView(R.id.watch_connection_speed) TextView mWatchSpeed;
-    @InjectView(R.id.watch_info_name) TextView mWatchName;
-    @InjectView(R.id.watch_info_version) TextView mWatchVersion;
+    @BindView(R.id.watch) ImageView mWatchImg;
+    @BindView(R.id.watch_connection) View mWatchConnection;
+    @BindView(R.id.watch_connection_speed) TextView mWatchSpeed;
+    @BindView(R.id.watch_info_name) TextView mWatchName;
+    @BindView(R.id.watch_info_version) TextView mWatchVersion;
 
     private TimerTask mSpeedTimer;
     private AlertDialog mWarningDialog;
@@ -62,7 +62,7 @@ public class FragmentCloud extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle saved) {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_cloud, container, false);
-        ButterKnife.inject(this, view);
+        ButterKnife.bind(this, view);
 
         setUpCloud();
         setUpPhone();

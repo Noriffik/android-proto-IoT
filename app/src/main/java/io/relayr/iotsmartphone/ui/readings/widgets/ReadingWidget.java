@@ -39,7 +39,7 @@ public abstract class ReadingWidget extends LinearLayout {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ButterKnife.inject(this, this);
+        ButterKnife.bind(this, this);
         EventBus.getDefault().register(this);
 
         axisX = new ArrayList<>((int) mMaxPoints);

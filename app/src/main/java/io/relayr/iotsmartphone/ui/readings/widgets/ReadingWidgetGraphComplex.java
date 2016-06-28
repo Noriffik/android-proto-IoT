@@ -19,7 +19,7 @@ import com.google.gson.internal.LinkedTreeMap;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.InjectView;
+import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
@@ -35,7 +35,7 @@ import static io.relayr.iotsmartphone.storage.Storage.FREQS_WATCH;
 
 public class ReadingWidgetGraphComplex extends ReadingWidget {
 
-    @InjectView(R.id.chart) LineChart mChart;
+    @BindView(R.id.chart) LineChart mChart;
 
     public ReadingWidgetGraphComplex(Context context) {
         this(context, null);
@@ -72,6 +72,7 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setGraphParameters() {
+        if (mSchema == null) return;
         if (mSchema.isObjectSchema()) {
             final ObjectSchema schema = mSchema.asObject();
             final LinkedTreeMap<String, Object> properties = (LinkedTreeMap<String, Object>) schema.getProperties();
@@ -112,6 +113,8 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setData(List<Reading> readings) {
+        if (readings == null) return;
+
         long mDiff;
         long mFirstPoint;
 

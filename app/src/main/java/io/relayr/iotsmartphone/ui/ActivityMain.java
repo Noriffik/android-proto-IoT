@@ -58,7 +58,7 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.IotApplication;
@@ -104,13 +104,19 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 import static io.relayr.iotsmartphone.storage.Storage.FREQS_PHONE;
 
-public class MainActivity extends AppCompatActivity implements
+public class ActivityMain extends AppCompatActivity implements
         SensorEventListener, LocationListener, DataApi.DataListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    @InjectView(R.id.toolbar) Toolbar mToolbar;
-    @InjectView(R.id.viewpager) ViewPager mViewPager;
-    @InjectView(R.id.tabs) TabLayout mTabView;
+    @BindView(R.id.toolbar) Toolbar mToolbar;
+    @BindView(R.id.tabs) TabLayout mTabView;
+    @BindView(R.id.viewpager) ViewPager mViewPager;
+
+    public static void start(Context context) {
+        Intent intent = new Intent(context, ActivityMain.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        context.startActivity(intent);
+    }
 
     private FlashHelper mFlash;
     private SoundHelper mSound;
@@ -136,16 +142,21 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        setContentView(R.layout.activity_tab_main);
-        ButterKnife.inject(this);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-        setSupportActionBar(mToolbar);
-        setupViewPager(state);
-        setUpTabs();
+        //        if (!Storage.instance().isTutorialActivityDone()) {
+        //            ActivityTutorial.start(this);
+        //            return;
+        //        }
 
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
+
+        setSupportActionBar(mToolbar);
+        setupViewPager(state);
+        setUpTabs();
 
         initialise();
     }
@@ -159,11 +170,14 @@ public class MainActivity extends AppCompatActivity implements
     @Override protected void onPause() {
         super.onPause();
 
+        EventBus.getDefault().unregister(this);
+        if (!Storage.instance().isActiveInBackground()) stopReadings();
+
         TutorialUtil.dismiss();
 
         if (mInitialiseDialog != null) mInitialiseDialog.dismiss();
-        mInitialiseDialog = null;
         if (mProblemDialog != null) mProblemDialog.dismiss();
+        mInitialiseDialog = null;
         mProblemDialog = null;
 
         if (mFlash != null) mFlash.off();
@@ -171,9 +185,6 @@ public class MainActivity extends AppCompatActivity implements
             mSound.stopMusic();
             mSound.stopVibration();
         }
-
-        EventBus.getDefault().unregister(this);
-        if (!Storage.instance().isActiveInBackground()) stopReadings();
     }
 
     @Override protected void onDestroy() {
@@ -216,9 +227,9 @@ public class MainActivity extends AppCompatActivity implements
     @SuppressWarnings("unused") public void onEvent(Constants.Tutorial event) {
         TutorialUtil.dismiss();
         if (event.getPosition() == 1)
-            TutorialUtil.showPlay(MainActivity.this, mTabView);
+            TutorialUtil.showPlay(ActivityMain.this, mTabView);
         if (event.getPosition() == 2)
-            TutorialUtil.showLogInToPlay(MainActivity.this, mTabView);
+            TutorialUtil.showLogInToPlay(ActivityMain.this, mTabView);
     }
 
     @Override
@@ -337,7 +348,7 @@ public class MainActivity extends AppCompatActivity implements
                             startReadings();
                         } else {
                             if (mProblemDialog != null) mProblemDialog.dismiss();
-                            mProblemDialog = new AlertDialog.Builder(MainActivity.this, R.style.AppTheme_DialogOverlay)
+                            mProblemDialog = new AlertDialog.Builder(ActivityMain.this, R.style.AppTheme_DialogOverlay)
                                     .setTitle(getString(R.string.something_went_wrong))
                                     .setNegativeButton(getString(R.string.close), new DialogInterface.OnClickListener() {
                                         @Override
@@ -515,8 +526,8 @@ public class MainActivity extends AppCompatActivity implements
 
     private void initWifiManager() {
         if (mWifiManager != null && mConnectivityManager != null) return;
-        mWifiManager = (WifiManager) MainActivity.this.getSystemService(WIFI_SERVICE);
-        mConnectivityManager = (ConnectivityManager) MainActivity.this.getSystemService(CONNECTIVITY_SERVICE);
+        mWifiManager = (WifiManager) ActivityMain.this.getSystemService(WIFI_SERVICE);
+        mConnectivityManager = (ConnectivityManager) ActivityMain.this.getSystemService(CONNECTIVITY_SERVICE);
         monitorWiFi();
     }
 
@@ -524,7 +535,7 @@ public class MainActivity extends AppCompatActivity implements
         if (mConnectivityManager == null || mWifiManager == null) return;
 
         if (!checkWifi(mConnectivityManager))
-            Toast.makeText(MainActivity.this, R.string.warning_no_wifi, LENGTH_SHORT).show();
+            Toast.makeText(ActivityMain.this, R.string.warning_no_wifi, LENGTH_SHORT).show();
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
@@ -547,7 +558,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void monitorBattery() {
-        Intent batteryIntent = MainActivity.this.registerReceiver(null, new IntentFilter(ACTION_BATTERY_CHANGED));
+        Intent batteryIntent = ActivityMain.this.registerReceiver(null, new IntentFilter(ACTION_BATTERY_CHANGED));
         int level = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_LEVEL, -1) : 0;
         int scale = batteryIntent != null ? batteryIntent.getIntExtra(EXTRA_SCALE, -1) : 0;
 
@@ -564,14 +575,14 @@ public class MainActivity extends AppCompatActivity implements
             @Override public void run() {
                 if (mLocationManager != null) return;
                 if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
-                    mLocationManager = (LocationManager) MainActivity.this.getSystemService(LOCATION_SERVICE);
+                    mLocationManager = (LocationManager) ActivityMain.this.getSystemService(LOCATION_SERVICE);
                     try {
-                        mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, MainActivity.this);
+                        mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, ActivityMain.this);
                         monitorLocation();
                     } catch (Exception e) {
                         Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
                         try {
-                            mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, MainActivity.this);
+                            mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, ActivityMain.this);
                             monitorLocation();
                         } catch (Exception e1) {
                             Crashlytics.log(Log.ERROR, "MTA", "NETWORK_PROVIDER doesn't exist.");
@@ -601,22 +612,22 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private boolean checkPermission(String permission) {
-        return ContextCompat.checkSelfPermission(MainActivity.this, permission) == PERMISSION_GRANTED;
+        return ContextCompat.checkSelfPermission(ActivityMain.this, permission) == PERMISSION_GRANTED;
     }
 
     private void showLocationDialog() {
         new AlertDialog.Builder(this, R.style.AppTheme_DialogOverlay)
                 .setTitle(this.getString(R.string.warning_location_off_title))
                 .setIcon(R.drawable.ic_warning)
-                .setMessage(MainActivity.this.getString(R.string.warning_location_off_message))
-                .setPositiveButton(MainActivity.this.getString(R.string.ok), new DialogInterface.OnClickListener() {
+                .setMessage(ActivityMain.this.getString(R.string.warning_location_off_message))
+                .setPositiveButton(ActivityMain.this.getString(R.string.ok), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int i) {
                         dialog.dismiss();
                         Intent myIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        MainActivity.this.startActivity(myIntent);
+                        ActivityMain.this.startActivity(myIntent);
                     }
                 })
-                .setNegativeButton(MainActivity.this.getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                .setNegativeButton(ActivityMain.this.getString(R.string.cancel), new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
                     }
@@ -669,7 +680,7 @@ public class MainActivity extends AppCompatActivity implements
     private void createFlashHelper() {
         if (mFlash == null) mFlash = new FlashHelper();
         try {
-            mFlash.open(MainActivity.this.getApplicationContext());
+            mFlash.open(ActivityMain.this.getApplicationContext());
             mFlash.on();
             NotificationsUtil.showNotification(this, Constants.NOTIF_FLASH);
         } catch (Exception e) {
@@ -682,7 +693,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void toggleFlash(boolean on) {
-        if (mFlash != null && !mFlash.hasFlash(MainActivity.this)) {
+        if (mFlash != null && !mFlash.hasFlash(ActivityMain.this)) {
             UiUtil.showSnackBar(this, R.string.warning_flashlight_not_available);
         } else {
             if (mFlash == null) createFlashHelper();
@@ -702,7 +713,7 @@ public class MainActivity extends AppCompatActivity implements
         if (mSound == null) mSound = new SoundHelper();
         if (start) {
             NotificationsUtil.showNotification(this, Constants.NOTIF_SOUND);
-            mSound.playMusic(MainActivity.this);
+            mSound.playMusic(ActivityMain.this);
         } else {
             mSound.stopMusic();
             NotificationsUtil.hideNotification(this, Constants.NOTIF_SOUND);
@@ -719,10 +730,10 @@ public class MainActivity extends AppCompatActivity implements
                 public void run() {
                     runOnUiThread(new TimerTask() {
                         @Override public void run() {
-                            final boolean started = mSound.vibrate(MainActivity.this);
+                            final boolean started = mSound.vibrate(ActivityMain.this);
                             if (!started) {
-                                UiUtil.showSnackBar(MainActivity.this, R.string.vibration_not_supported);
-                                NotificationsUtil.hideNotification(MainActivity.this, Constants.NOTIF_VIB);
+                                UiUtil.showSnackBar(ActivityMain.this, R.string.vibration_not_supported);
+                                NotificationsUtil.hideNotification(ActivityMain.this, Constants.NOTIF_VIB);
                             }
                         }
                     });

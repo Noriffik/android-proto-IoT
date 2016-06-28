@@ -15,7 +15,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.InjectView;
+import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
@@ -27,7 +27,7 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 
 public class ReadingWidgetGraphSimple extends ReadingWidget {
 
-    @InjectView(R.id.chart) LineChart mChart;
+    @BindView(R.id.chart) LineChart mChart;
 
     public ReadingWidgetGraphSimple(Context context) {
         this(context, null);
@@ -61,6 +61,7 @@ public class ReadingWidgetGraphSimple extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setGraphParameters() {
+        if (mSchema == null) return;
         if (mSchema.isIntegerSchema() || mSchema.isNumberSchema()) {
             final NumberSchema schema = mSchema.asNumber();
             initGraph(schema.getMin() != null ? schema.getMin().intValue() : 0,
@@ -96,6 +97,8 @@ public class ReadingWidgetGraphSimple extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setData(List<Reading> readings) {
+        if (readings == null) return;
+
         long mDiff;
         long mFirstPoint;
 

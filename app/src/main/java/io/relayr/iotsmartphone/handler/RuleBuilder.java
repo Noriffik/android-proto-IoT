@@ -2,9 +2,9 @@ package io.relayr.iotsmartphone.handler;
 
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.java.model.rules.IoTSmartphoneRule;
+import io.relayr.java.model.rules.ProtoIoTRule;
 
-public class RuleBuilder extends IoTSmartphoneRule {
+public class RuleBuilder extends ProtoIoTRule {
 
     private transient InputReading[] readings = new InputReading[2];
     private transient OutputCommand[] commands = new OutputCommand[2];

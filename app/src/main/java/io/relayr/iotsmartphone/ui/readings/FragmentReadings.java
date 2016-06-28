@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.IotApplication;
@@ -33,9 +33,9 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class FragmentReadings extends Fragment {
 
-    @InjectView(R.id.readings_phone_grid) protected RecyclerView mPhoneGrid;
-    @InjectView(R.id.readings_watch_grid) protected RecyclerView mWatchGrid;
-    @InjectView(R.id.fab) protected FloatingActionButton mFab;
+    @BindView(R.id.readings_phone_grid) protected RecyclerView mPhoneGrid;
+    @BindView(R.id.readings_watch_grid) protected RecyclerView mWatchGrid;
+    @BindView(R.id.fab) protected FloatingActionButton mFab;
 
     private ReadingsAdapter mPhoneAdapter;
     private ReadingsAdapter mWatchAdapter;
@@ -51,7 +51,7 @@ public class FragmentReadings extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle saved) {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_readings, container, false);
-        ButterKnife.inject(this, view);
+        ButterKnife.bind(this, view);
 
         final int columns = getResources().getInteger(R.integer.num_columns);
 

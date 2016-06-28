@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
@@ -18,7 +18,7 @@ import io.relayr.java.model.models.transport.DeviceReading;
 
 public class ReadingViewHolder extends RecyclerView.ViewHolder {
 
-    @InjectView(R.id.reading_title) TextView mMeaningTv;
+    @BindView(R.id.reading_title) TextView mMeaningTv;
 
     private final Context mContext;
     private final ReadingWidget widget;
@@ -33,7 +33,7 @@ public class ReadingViewHolder extends RecyclerView.ViewHolder {
         this.widget = widget;
         this.mContext = context;
 
-        ButterKnife.inject(this, widget);
+        ButterKnife.bind(this, widget);
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.reading_settings)

@@ -1,16 +1,20 @@
 buildscript {
     repositories {
+        mavenCentral()
         maven { url 'https://maven.fabric.io/public' }
     }
 
     dependencies {
         classpath 'io.fabric.tools:gradle:1.20.1'
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
     }
 }
 apply plugin: 'com.android.application'
+apply plugin: 'com.neenbedankt.android-apt'
 apply plugin: 'io.fabric'
 
 repositories {
+    mavenCentral()
     maven { url 'https://maven.fabric.io/public' }
     maven { url "https://jitpack.io" }
 }
@@ -24,7 +28,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 22
-        versionName "1.4.2"
+        versionName "1.4.3"
     }
     buildTypes {
         develop {
@@ -39,19 +43,25 @@ android {
 
 dependencies {
     wearApp project(':wear')
+
     compile(project(':java-sdk'))
     compile(project(':android-sdk:android-sdk'))
 
-    compile 'de.greenrobot:eventbus:2.4.0'
-    compile 'com.jakewharton:butterknife:6.1.0'
+    compile 'de.greenrobot:eventbus:2.4.1'
+
+    compile 'com.jakewharton:butterknife:8.1.0'
+    apt 'com.jakewharton:butterknife-compiler:8.1.0'
+
     compile 'com.github.PhilJay:MPAndroidChart:v2.2.2'
 
-    compile 'com.android.support:design:23.3.0'
-    compile "com.android.support:support-v13:23.3.0"
-    compile 'com.android.support:appcompat-v7:23.3.0'
-    compile 'com.android.support:recyclerview-v7:23.3.0'
+    compile 'com.android.support:design:23.4.0'
+    compile "com.android.support:support-v13:23.4.0"
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support:recyclerview-v7:23.4.0'
 
-    compile 'com.google.android.gms:play-services-wearable:8.4.0'
+    compile 'com.google.android.gms:play-services-wearable:9.0.2'
+
+    compile 'za.co.riggaroo:materialhelptutorial:1.2.0'
 
     compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
         transitive = true;

@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.IotApplication;
@@ -31,7 +31,7 @@ import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.ui.MainActivity;
+import io.relayr.iotsmartphone.ui.ActivityMain;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
@@ -45,18 +45,18 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class RuleCondition extends LinearLayout {
 
-    @InjectView(R.id.rule_widget_color) View mColorView;
+    @BindView(R.id.rule_widget_color) View mColorView;
 
-    @InjectView(R.id.rule_widget_icon) ImageView mIconImg;
+    @BindView(R.id.rule_widget_icon) ImageView mIconImg;
 
-    @InjectView(R.id.rule_widget_empty_text) TextView mEmptyTv;
-    @InjectView(R.id.rule_widget_container) View mContainer;
+    @BindView(R.id.rule_widget_empty_text) TextView mEmptyTv;
+    @BindView(R.id.rule_widget_container) View mContainer;
 
-    @InjectView(R.id.rule_widget_meaning) TextView mMeaningTv;
-    @InjectView(R.id.rule_widget_live) TextView mLiveTv;
-    @InjectView(R.id.rule_widget_operator) TextView mOperationTv;
-    @InjectView(R.id.rule_widget_value) EditText mValueEt;
-    @InjectView(R.id.rule_widget_unit) TextView mUnitTv;
+    @BindView(R.id.rule_widget_meaning) TextView mMeaningTv;
+    @BindView(R.id.rule_widget_live) TextView mLiveTv;
+    @BindView(R.id.rule_widget_operator) TextView mOperationTv;
+    @BindView(R.id.rule_widget_value) EditText mValueEt;
+    @BindView(R.id.rule_widget_unit) TextView mUnitTv;
 
     private int mColor;
     private FragmentRules.ConditionListener mListener;
@@ -104,7 +104,7 @@ public class RuleCondition extends LinearLayout {
 
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ButterKnife.inject(this, this);
+        ButterKnife.bind(this, this);
 
         mColorView.setBackgroundResource(mColor);
 
@@ -143,7 +143,7 @@ public class RuleCondition extends LinearLayout {
         mType = null;
         mReading = null;
         toggleControls(false);
-        mListener.removeCondition();
+        if (mListener != null) mListener.removeCondition();
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.rule_widget_icon)
@@ -175,18 +175,18 @@ public class RuleCondition extends LinearLayout {
     }
 
     private void getSelectedData(ConditionDialog view) {
-        if (view == null) return;
+        if (view == null || mListener == null) return;
         if ((mType == null || mReading == null) || !mReading.equals(view.getSelected()) || mType != view.getType()) {
             mType = view.getType();
             mReading = (DeviceReading) view.getSelected();
 
-            IotApplication.visible(true, UiUtil.isWearableConnected((MainActivity) getContext()));
+            IotApplication.visible(true, UiUtil.isWearableConnected((ActivityMain) getContext()));
 
             toggleControls(true);
             setInitialValues();
             setDefaultValues();
             setConditionValues();
-            mListener.conditionChanged(mType, mReading, mOperation, mValue);
+            if (mListener != null) mListener.conditionChanged(mType, mReading, mOperation, mValue);
         }
     }
 
@@ -211,7 +211,7 @@ public class RuleCondition extends LinearLayout {
                                 dialog.dismiss();
                                 mOperation = mOperations.get(which);
                                 mOperationTv.setText(mOperation);
-                                mListener.conditionChanged(mType, mReading, mOperation, mValue);
+                                if (mListener != null) mListener.conditionChanged(mType, mReading, mOperation, mValue);
                             }
                         })
                 .show();
@@ -247,7 +247,7 @@ public class RuleCondition extends LinearLayout {
             @Override public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     UiUtil.hideKeyboard(getContext(), mValueEt);
-                    mListener.conditionChanged(mType, mReading, mOperation, mValue);
+                    if (mListener != null) mListener.conditionChanged(mType, mReading, mOperation, mValue);
                     return true;
                 }
                 return false;
@@ -257,6 +257,7 @@ public class RuleCondition extends LinearLayout {
 
     private void setInitialValues() {
         final ValueSchema valueSchema = mReading.getValueSchema();
+        if (valueSchema == null) return;
         if (valueSchema.isIntegerSchema() || valueSchema.isNumberSchema()) {
             final NumberSchema schema = valueSchema.asNumber();
             setInitialHints(schema);
@@ -272,6 +273,7 @@ public class RuleCondition extends LinearLayout {
     }
 
     public void setInitialHints(NumberSchema schema) {
+        if (schema == null) return;
         mMin = schema.getMin() != null ? schema.getMin().intValue() : 0;
         mMax = schema.getMax() != null ? schema.getMax().intValue() : 100;
         mValueEt.setHint("[" + mMin + ", " + mMax + "]");

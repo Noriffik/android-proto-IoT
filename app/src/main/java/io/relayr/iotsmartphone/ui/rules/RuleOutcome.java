@@ -12,7 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
@@ -24,14 +24,14 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 
 public class RuleOutcome extends LinearLayout {
 
-    @InjectView(R.id.rule_widget_color) View mColorView;
+    @BindView(R.id.rule_widget_color) View mColorView;
 
-    @InjectView(R.id.rule_widget_icon) ImageView mIcon;
-    @InjectView(R.id.rule_widget_empty_text) TextView mEmptyTv;
-    @InjectView(R.id.rule_widget_container) View mContainer;
+    @BindView(R.id.rule_widget_icon) ImageView mIcon;
+    @BindView(R.id.rule_widget_empty_text) TextView mEmptyTv;
+    @BindView(R.id.rule_widget_container) View mContainer;
 
-    @InjectView(R.id.rule_widget_name) TextView mMeaningTv;
-    @InjectView(R.id.rule_widget_switch) SwitchCompat mValueSwitch;
+    @BindView(R.id.rule_widget_name) TextView mMeaningTv;
+    @BindView(R.id.rule_widget_switch) SwitchCompat mValueSwitch;
 
     private int mColor;
 
@@ -71,7 +71,7 @@ public class RuleOutcome extends LinearLayout {
 
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ButterKnife.inject(this, this);
+        ButterKnife.bind(this, this);
 
         mColorView.setBackgroundResource(mColor);
 
@@ -123,7 +123,8 @@ public class RuleOutcome extends LinearLayout {
             mValue = true;
             toggleControls(true);
             setOutcomeValues();
-            mListener.outcomeChanged(mCommand, mValue);
+
+            if (mListener != null) mListener.outcomeChanged(mCommand, mValue);
         }
     }
 
@@ -143,7 +144,7 @@ public class RuleOutcome extends LinearLayout {
         mValueSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 mValue = isChecked;
-                mListener.outcomeChanged(mCommand, mValue);
+                if (mListener != null) mListener.outcomeChanged(mCommand, mValue);
             }
         });
     }

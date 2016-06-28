@@ -11,7 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import de.greenrobot.event.EventBus;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
@@ -27,17 +27,17 @@ import static io.relayr.iotsmartphone.storage.Constants.SAMPLING_WATCH_MIN;
 
 public class SamplingDialog extends LinearLayout {
 
-    @InjectView(R.id.dialog_unit) TextView mUnitTv;
-    @InjectView(R.id.dialog_identifier) TextView mIdentifierTv;
+    @BindView(R.id.dialog_unit) TextView mUnitTv;
+    @BindView(R.id.dialog_identifier) TextView mIdentifierTv;
 
-    @InjectView(R.id.sampling_high) TextView mSamplingHigh;
-    @InjectView(R.id.sampling_low) TextView mSamplingLow;
-    @InjectView(R.id.sampling_seek) SeekBar mSamplingSeek;
-    @InjectView(R.id.sampling_info) TextView mSamplingInfo;
+    @BindView(R.id.sampling_high) TextView mSamplingHigh;
+    @BindView(R.id.sampling_low) TextView mSamplingLow;
+    @BindView(R.id.sampling_seek) SeekBar mSamplingSeek;
+    @BindView(R.id.sampling_info) TextView mSamplingInfo;
 
-    @InjectView(R.id.cloud_local) TextView mCloudLocal;
-    @InjectView(R.id.cloud_upload) SwitchCompat mSwitch;
-    @InjectView(R.id.cloud_uploading) TextView mCloudUploading;
+    @BindView(R.id.cloud_local) TextView mCloudLocal;
+    @BindView(R.id.cloud_upload) SwitchCompat mSwitch;
+    @BindView(R.id.cloud_uploading) TextView mCloudUploading;
 
     private String mMeaning;
     private String mPath;
@@ -65,7 +65,7 @@ public class SamplingDialog extends LinearLayout {
 
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ButterKnife.inject(this, this);
+        ButterKnife.bind(this, this);
 
         setInfo();
         setSampling();

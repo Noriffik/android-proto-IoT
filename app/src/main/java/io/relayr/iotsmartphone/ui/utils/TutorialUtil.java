@@ -13,7 +13,7 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.RuleHandler;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.ui.MainActivity;
+import io.relayr.iotsmartphone.ui.ActivityMain;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static io.relayr.iotsmartphone.storage.Storage.TUTORIAL;
@@ -95,7 +95,7 @@ public class TutorialUtil {
     private static int getScreenWidth(Context context) {
         if (mWidth > 0) return mWidth;
         DisplayMetrics displaymetrics = new DisplayMetrics();
-        ((MainActivity) context).getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+        ((ActivityMain) context).getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
         mWidth = displaymetrics.widthPixels;
         return mWidth;
     }
@@ -109,7 +109,7 @@ public class TutorialUtil {
             case TUTORIAL_LOG_TO_PLAY:
                 return R.string.tutorial_rules;
             default:
-                return R.string.app_title;
+                return R.string.app_name;
         }
     }
 }

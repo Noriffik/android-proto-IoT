@@ -7,7 +7,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
-import butterknife.InjectView;
+import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
@@ -15,8 +15,8 @@ import io.relayr.java.model.action.Reading;
 
 public class ReadingWidgetMap extends ReadingWidget {
 
-    @InjectView(R.id.map_image) ImageView mMapImage;
-    @InjectView(R.id.map_pin_container) LinearLayout mPinContainer;
+    @BindView(R.id.map_image) ImageView mMapImage;
+    @BindView(R.id.map_pin_container) LinearLayout mPinContainer;
 
     public ReadingWidgetMap(Context context) {
         this(context, null);

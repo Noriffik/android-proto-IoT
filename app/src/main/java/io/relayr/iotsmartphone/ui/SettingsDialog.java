@@ -11,7 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Storage;
 import io.relayr.iotsmartphone.ui.utils.TutorialUtil;
@@ -20,12 +20,12 @@ import static io.relayr.iotsmartphone.storage.Storage.TUTORIAL;
 
 public class SettingsDialog extends LinearLayout {
 
-    @InjectView(R.id.cloud_upload) SwitchCompat mUploadSwitch;
-    @InjectView(R.id.cloud_uploading) TextView mUploading;
-    @InjectView(R.id.cloud_upload_warning) View mUploadingWarning;
+    @BindView(R.id.cloud_upload) SwitchCompat mUploadSwitch;
+    @BindView(R.id.cloud_uploading) TextView mUploading;
+    @BindView(R.id.cloud_upload_warning) View mUploadingWarning;
 
-    @InjectView(R.id.tutorial) SwitchCompat mTutorialSwitch;
-    @InjectView(R.id.tutorial_state) TextView mTutorial;
+    @BindView(R.id.tutorial) SwitchCompat mTutorialSwitch;
+    @BindView(R.id.tutorial_state) TextView mTutorial;
 
     public SettingsDialog(Context context) {
         this(context, null);
@@ -41,7 +41,7 @@ public class SettingsDialog extends LinearLayout {
 
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ButterKnife.inject(this, this);
+        ButterKnife.bind(this, this);
 
         mUploadSwitch.setChecked(Storage.instance().isActiveInBackground());
         mUploadSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {

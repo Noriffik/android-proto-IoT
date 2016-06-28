@@ -49,6 +49,7 @@ public class Storage {
     private static final String BACKGROUND_UPLOAD = "background";
     private static final String RULE_ID = "rule_id";
 
+    public static final String TUTORIAL_ACTIVITY = "tutorial_activity";
     public static final String TUTORIAL = "tutorial";
     public static final String TUTORIAL_LOG_IN = "tutorial_main";
     public static final String TUTORIAL_PLAY = "tutorial_cloud";
@@ -334,6 +335,14 @@ public class Storage {
 
     public boolean tutorialFinished(String tutorial) {
         return PREFS.getBoolean(tutorial, false);
+    }
+
+    public void tutorialActivityDone() {
+        PREFS.edit().putBoolean(TUTORIAL_ACTIVITY, true).apply();
+    }
+
+    public boolean isTutorialActivityDone() {
+        return PREFS.getBoolean(TUTORIAL_ACTIVITY, false);
     }
 }
 

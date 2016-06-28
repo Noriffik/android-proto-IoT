@@ -11,8 +11,8 @@ import android.widget.Toast;
 
 import java.util.concurrent.TimeUnit;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
@@ -24,9 +24,9 @@ import rx.android.schedulers.AndroidSchedulers;
 
 public class CloudDeviceDialog extends LinearLayout {
 
-    @InjectView(R.id.cloud_device_id) TextView mIdTv;
-    @InjectView(R.id.cloud_device_name) EditText mNameEt;
-    @InjectView(R.id.cloud_device_description) EditText mDescriptionEt;
+    @BindView(R.id.cloud_device_id) TextView mIdTv;
+    @BindView(R.id.cloud_device_name) EditText mNameEt;
+    @BindView(R.id.cloud_device_description) EditText mDescriptionEt;
 
     private Device mDevice;
     private Constants.DeviceType mType;
@@ -50,7 +50,7 @@ public class CloudDeviceDialog extends LinearLayout {
 
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ButterKnife.inject(this, this);
+        ButterKnife.bind(this, this);
 
         setInfo();
         setActions();

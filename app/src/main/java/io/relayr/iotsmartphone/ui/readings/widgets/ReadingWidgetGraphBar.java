@@ -15,7 +15,7 @@ import com.github.mikephil.charting.data.BarEntry;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.InjectView;
+import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
@@ -26,7 +26,7 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 
 public class ReadingWidgetGraphBar extends ReadingWidget {
 
-    @InjectView(R.id.chart) BarChart mChart;
+    @BindView(R.id.chart) BarChart mChart;
 
     public ReadingWidgetGraphBar(Context context) {
         this(context, null);
@@ -56,6 +56,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setGraphParameters() {
+        if (mSchema == null) return;
         if (mSchema.isBooleanSchema()) initGraph(0, 1);
         else Crashlytics.log(Log.WARN, "RWGB", "Object not supported");
     }
@@ -85,6 +86,8 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
 
     @SuppressWarnings("unchecked")
     private void setData(List<Reading> points) {
+        if (points == null) return;
+
         long mFirstPoint = (System.currentTimeMillis() - Constants.GRAPH_FRAME);
         long mDiff = (long) (Constants.GRAPH_FRAME / mMaxPoints);
 

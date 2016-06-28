@@ -17,12 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.ui.MainActivity;
+import io.relayr.iotsmartphone.ui.ActivityMain;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.models.transport.DeviceCommand;
 import io.relayr.java.model.models.transport.DeviceReading;
@@ -32,10 +32,10 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class ConditionDialog extends LinearLayout {
 
-    @InjectView(R.id.condition_dialog_list) ListView mListView;
-    @InjectView(R.id.condition_dialog_phone) ImageView mPhoneImg;
-    @InjectView(R.id.condition_dialog_watch) ImageView mWatchImg;
-    @InjectView(R.id.condition_dialog_watch_container) View mWatchContainer;
+    @BindView(R.id.condition_dialog_list) ListView mListView;
+    @BindView(R.id.condition_dialog_phone) ImageView mPhoneImg;
+    @BindView(R.id.condition_dialog_watch) ImageView mWatchImg;
+    @BindView(R.id.condition_dialog_watch_container) View mWatchContainer;
 
     private boolean mCondition;
     private List<String> mListItems = new ArrayList<>();
@@ -67,9 +67,9 @@ public class ConditionDialog extends LinearLayout {
 
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        ButterKnife.inject(this, this);
+        ButterKnife.bind(this, this);
 
-        if (mCondition && UiUtil.isWearableConnected((MainActivity) getContext()))
+        if (mCondition && UiUtil.isWearableConnected((ActivityMain) getContext()))
             mWatchContainer.setVisibility(VISIBLE);
 
         if (mType == null) onPhoneClicked();

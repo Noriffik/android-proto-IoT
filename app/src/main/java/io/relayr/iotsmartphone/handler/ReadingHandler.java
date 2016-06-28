@@ -44,10 +44,12 @@ public class ReadingHandler {
     public static float sWatchSpeed;
     public static float sPhoneSpeed;
 
-    public static final Map<String, LimitedQueue<Reading>> readingsPhone = new HashMap<>();
-    public static final Map<String, LimitedQueue<Reading>> readingsWatch = new HashMap<>();
+    public static final Map<String, LimitedQueue<Reading>> readingsPhone;
+    public static final Map<String, LimitedQueue<Reading>> readingsWatch;
 
     static {
+        readingsPhone = new HashMap<>();
+        readingsWatch = new HashMap<>();
         initializeReadings();
     }
 
@@ -82,7 +84,6 @@ public class ReadingHandler {
                 @Override public void call(final Subscriber<? super Boolean> subscriber) {
                     RelayrSdk.getDeviceModelsApi()
                             .getDeviceModelById(Storage.MODEL_PHONE)
-                            .subscribeOn(Schedulers.io())
                             .timeout(5, TimeUnit.SECONDS)
                             .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
                                 @Override
@@ -112,6 +113,7 @@ public class ReadingHandler {
                                     return Observable.just(deviceModel);
                                 }
                             })
+                            .subscribeOn(Schedulers.io())
                             .subscribe(new SimpleObserver<DeviceModel>() {
                                 @Override public void error(Throwable e) {
                                     Crashlytics.log(Log.ERROR, "ReadingsHandler", "Loading models error.");
@@ -129,19 +131,11 @@ public class ReadingHandler {
     }
 
     public static Reading createAccelReading(float x, float y, float z) {
-        final AccelGyroscope.Acceleration acceleration = new AccelGyroscope.Acceleration();
-        acceleration.x = x;
-        acceleration.y = y;
-        acceleration.z = z;
-        return new Reading(0, System.currentTimeMillis(), "acceleration", "/", acceleration);
+        return new Reading(0, System.currentTimeMillis(), "acceleration", "/", new AccelGyroscope.Acceleration(x, y, z));
     }
 
     public static Reading createGyroReading(float x, float y, float z) {
-        final AccelGyroscope.AngularSpeed angularSpeed = new AccelGyroscope.AngularSpeed();
-        angularSpeed.x = x;
-        angularSpeed.y = y;
-        angularSpeed.z = z;
-        return new Reading(0, System.currentTimeMillis(), "angularSpeed", "/", angularSpeed);
+        return new Reading(0, System.currentTimeMillis(), "angularSpeed", "/", new AccelGyroscope.AngularSpeed(x, y, z));
     }
 
     public static void publish(Reading reading) {

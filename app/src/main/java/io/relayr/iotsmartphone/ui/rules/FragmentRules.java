@@ -15,7 +15,7 @@ import com.crashlytics.android.Crashlytics;
 import java.util.concurrent.TimeoutException;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.BindView;
 import butterknife.OnClick;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.RuleBuilder;
@@ -46,23 +46,23 @@ public class FragmentRules extends Fragment {
         void removeOutcome();
     }
 
-    @InjectView(R.id.rules_logged_in) View mLoggedInView;
-    @InjectView(R.id.rules_not_logged_in) View mNotLoggedInView;
+    @BindView(R.id.rules_logged_in) View mLoggedInView;
+    @BindView(R.id.rules_not_logged_in) View mNotLoggedInView;
 
-    @InjectView(R.id.condition_one) RuleCondition mConditionOne;
-    @InjectView(R.id.condition_two) RuleCondition mConditionTwo;
-    @InjectView(R.id.condition_operator) TextView mConditionOperator;
+    @BindView(R.id.condition_one) RuleCondition mConditionOne;
+    @BindView(R.id.condition_two) RuleCondition mConditionTwo;
+    @BindView(R.id.condition_operator) TextView mConditionOperator;
 
-    @InjectView(R.id.rule_activity) Switch mStateSwitch;
-    @InjectView(R.id.outcome_one) RuleOutcome mOutcomeOne;
-    @InjectView(R.id.outcome_two) RuleOutcome mOutcomeTwo;
+    @BindView(R.id.rule_activity) Switch mStateSwitch;
+    @BindView(R.id.outcome_one) RuleOutcome mOutcomeOne;
+    @BindView(R.id.outcome_two) RuleOutcome mOutcomeTwo;
 
     public FragmentRules() {}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle saved) {
         final View view = inflater.inflate(R.layout.activity_tab_fragment_rules, container, false);
-        ButterKnife.inject(this, view);
+        ButterKnife.bind(this, view);
 
         RuleHandler.init(new SimpleObserver<Boolean>() {
             @Override public void error(Throwable e) {
