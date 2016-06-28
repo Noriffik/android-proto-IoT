@@ -7,7 +7,7 @@
 
 [**Download on nGoogle Play**] (https://play.google.com/store/apps/details?id=io.relayr.iotsmartphone&hl=en)
 
-[![Introducing Proto IoT for Android](http://imgur.com/qNlgY9L)](https://www.youtube.com/watch?v=s55vkryfQSY "Introducing Proto IoT for Android | relayr")
+[![Introducing Proto IoT for Android](video_tmb.png)](https://www.youtube.com/watch?v=s55vkryfQSY "Introducing Proto IoT for Android | relayr")
 
 Explore the IoT ecosystem by turning your smart device into an IoT sensor node. 
 With Proto IoT you can monitor your device’s sensor, send the readings to the relayr Cloud and interact with them remotely through the relayr Dashboard. 
