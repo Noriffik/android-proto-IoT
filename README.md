@@ -9,7 +9,8 @@
 
 ## Introduction
 
-**Welcome to Proto IoT, an open-source Android app for rapid Internet of Things prototyping.**
+**Welcome to Proto IoT, an open-source Android app for rapid Internet of
+Things prototyping.**
 
 Using Proto IoT, you can:
 
@@ -25,20 +26,38 @@ Using Proto IoT, you can:
 
 [![Introducing Proto IoT for Android](video_tmb.png)](https://www.youtube.com/watch?v=s55vkryfQSY "Introducing Proto IoT for Android | relayr")
 
-Proto IoT is open-source, so if you are a developer, take a look under the hood or connect your own application through relayr’s RESTful API.
+Proto IoT is open-source, so if you are a developer, take a look under the
+hood or connect your own application through relayr’s RESTful API.
 
 ## Android & Java SDK reference
 
-Proto IoT uses relayr's [Java](https://relayr.github.io/java-sdk/) and [Android](https://github.com/relayr/android-sdk) SDKs in order to interact with the relayr cloud. Check out the documentation for more information.
+Proto IoT uses relayr's [Java](https://relayr.github.io/java-
+sdk/)[:target="_self"] and [Android](https://github.com/relayr/android-
+sdk)[:target="_self"] SDKs in order to interact with the relayr cloud. Check
+out the documentation for more information.
 
 ## Using Proto IoT
 
+Todo
 
+### Setting it up on your device
+
+Todo
+
+### Viewing device data
+
+Todo
+
+### How data is transferred
+
+Todo
+
+### Rules
+
+Todo
 
 ## Other resources
 
 [Introducing Proto IoT](http://blog.relayr.io/engineering/introducing-proto-iot-for-android)
-
-[Proto IoT guide](http://blog.relayr.io/engineering/iot-smartphone-guide)
 
 [Example project](https://github.com/bernardpletikosa/droidcon-workshop-2016)
