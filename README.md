@@ -4,7 +4,11 @@
 
 1.  [Introduction](#introduction)
 2.  [Android & Java SDK reference](#android--java-sdk-reference)
-3.  [Using Proto IoT](#using-proto-iot)
+3.  [Using Proto IoT](#using-proto-iot)  
+  1.  [Setting it up on your device](#setting-it-up-on-your-device)
+  2.  [Viewing device data](#viewing-device-data)
+  3.  [How data is transferred](#how-data-is-transferred)
+  4.  [Rules](#rules)
 4.  [Other resources](#other-resources)
 
 ## Introduction
