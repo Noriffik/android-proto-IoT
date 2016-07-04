@@ -2,25 +2,35 @@
 
 ## Table of Contents
 
-1.  Introduction
-2.  Other resources
+1.  [Introduction](#introduction)
+2.  [Android & Java SDK reference](#android--java-sdk-reference)
+3.  [Other resources](#other-resources)
 
 ## Introduction
 
-**Welcome to Proto IoT, an open-source Android app for fast Internet of Things prototyping.**
-* Access sensor data easily and securely from anywhere with an internet connection.
-* Add interactions and rules on top of your sensors’ data to trigger actions on separate devices through the mobile app or the relayr dashboard.
-* Build and demonstrate IoT prototype solutions quickly, with just a smartphone.
+**Welcome to Proto IoT, an open-source Android app for rapid Internet of Things prototyping.**
 
-[**Download on Google Play**] (https://play.google.com/store/apps/details?id=io.relayr.iotsmartphone&hl=en)
+Using Proto IoT, you can:
+
+-  Access sensor data easily and securely from anywhere with an internet connection.
+-  Send readings from your device's sensors to the relayr cloud and interact with them remotely through the [relayr Developer Dashboard](http://developer.relayr.io)
+-  Add interactions and rules on top of your sensors’ data in order to trigger actions on separate devices via the mobile app or the Dashboard.
+-  Build and demonstrate IoT prototype solutions quickly, using just a smartphone.
+-  View historical data from your devices.
+-  Connect your wearable to the Internet of Things.
+-  Trigger your device's actuators.
+
+[**Download on Google Play**](https://play.google.com/store/apps/details?id=io.relayr.iotsmartphone&hl=en)
 
 [![Introducing Proto IoT for Android](video_tmb.png)](https://www.youtube.com/watch?v=s55vkryfQSY "Introducing Proto IoT for Android | relayr")
 
-Explore the IoT ecosystem by turning your smart device into an IoT sensor node. 
-With Proto IoT you can monitor your device’s sensor, send the readings to the relayr Cloud and interact with them remotely through the relayr Dashboard. 
-See the history charts, connect a wearable, trigger your device’s actuators (flashlight, speakers, vibrations) or have “if this then that” rules trigger them.
+Proto IoT is open-source, so if you are a developer, take a look under the hood or connect your own application through relayr’s RESTful API.
 
-Proto IoT is open-source, so if you are a developer look under the hood, or connect your own application to it through relayr’s RESTful API. Start prototyping!
+## Android & Java SDK reference
+
+Proto IoT uses relayr's [Java]() and [Android]() SDKs in order to interact with the relayr cloud. Check out the documentation for more information.
+
+## 
 
 ## Other resources
 
