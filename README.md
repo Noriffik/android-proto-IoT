@@ -4,7 +4,8 @@
 
 1.  [Introduction](#introduction)
 2.  [Android & Java SDK reference](#android--java-sdk-reference)
-3.  [Other resources](#other-resources)
+3.  [Using Proto IoT](#using-proto-iot)
+4.  [Other resources](#other-resources)
 
 ## Introduction
 
@@ -28,9 +29,11 @@ Proto IoT is open-source, so if you are a developer, take a look under the hood 
 
 ## Android & Java SDK reference
 
-Proto IoT uses relayr's [Java]() and [Android]() SDKs in order to interact with the relayr cloud. Check out the documentation for more information.
+Proto IoT uses relayr's [Java](https://relayr.github.io/java-sdk/) and [Android](https://github.com/relayr/android-sdk) SDKs in order to interact with the relayr cloud. Check out the documentation for more information.
 
-## 
+## Using Proto IoT
+
+
 
 ## Other resources
 
