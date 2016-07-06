@@ -1,26 +1,27 @@
 # Android Proto IoT
 
+Welcome to Proto IoT, an open-source Android app for rapid Internet of
+Things prototyping!
+
 ## Table of Contents
 
 1.  [Introduction](#introduction)
 2.  [Android & Java SDK reference](#android--java-sdk-reference)
-3.  [Using Proto IoT](#using-proto-iot)  
+3.  [Using the app](#using-proto-iot)  
   1.  [Setting it up on your device](#setting-it-up-on-your-device)
   2.  [Viewing device data](#viewing-device-data)
   3.  [How data is transferred](#how-data-is-transferred)
   4.  [Rules](#rules)
-4.  [Other resources](#other-resources)
+4.  [Developing the app](#developing-the-app)
+5.  [Other resources](#other-resources)
 
 ## Introduction
-
-**Welcome to Proto IoT, an open-source Android app for rapid Internet of
-Things prototyping.**
 
 Proto IoT turns your smartphone into a cloud-connected IoT device by measuring
 sensor data from your device (_e.g._ touch, battery, wifi signal) and sending
 it to the cloud over a secure MQTT connection. You can interact with your
 device and view the data in the [relayr Developer
-Dashboard](http://developer.relayr.io)
+Dashboard](http://developer.relayr.io).
 
 Using Proto IoT, you can:
 
@@ -39,7 +40,9 @@ hood or connect your own application through relayr’s RESTful API.
 
 ## Android & Java SDK reference
 
-Proto IoT uses relayr's [Java](https://relayr.github.io/java-sdk/){:target="_self"} and [Android](https://github.com/relayr/android-sdk){:target="_self"} SDKs in order to interact with the relayr cloud.
+Proto IoT uses relayr's [Java](https://relayr.github.io/java-sdk/) and
+[Android](https://github.com/relayr/android-sdk) SDKs in order to interact
+with the relayr cloud.
 
 ## Using Proto IoT
 
@@ -59,7 +62,20 @@ At this point, you're all set! Your device will begin pushing sensor data to the
 
 ### Viewing device data
 
-Todo
+You can see the data measured by your smartphone's sensors on the _smartphone
+tab_, which is the first tab you see when you open the app. It's the leftmost
+tab at the top, denoted by a chip icon. On this tab, you can see the following
+data readings:
+
+-  **Acceleration**: Measures the rate of your smartphone's acceleration among the x, y and z axes, in `m/s²`.
+-  **Gyroscope**: Measures the angular tilt of your smartphone, in `m/s²`.
+-  **Luminosity**: Measures the amount of light hitting your smartphone's camera, in `lux`.  
+  **Note:** In order 
+-  **Location**: Records your phone's physical location.  
+  **Note:** The Proto IoT app requires permission to use your device's location. You can double-check to make sure this is enabled under Settings > Apps > relayr Proto IoT.
+-  **Screen touch**: Records every instance when your phone's screen is touched.
+-  **Battery**: Measures your phone's battery percentage.
+-  **WiFi signal**: Measures the strength of your phone's WiFi signal relative to the wifi network, in `dBi`. The signal strength is measured on a scale of -120 (worst connection) to 0 (best connection).
 
 ### How data is transferred
 
@@ -69,10 +85,16 @@ Todo
 
 Todo
 
+## Developing the app
+
+Todo
+
 ## Other resources
 
 [Introducing Proto IoT](http://blog.relayr.io/engineering/introducing-proto-iot-for-android)
 
 [Example project](https://github.com/bernardpletikosa/droidcon-workshop-2016)
+
+**YouTube: Introducing Proto IoT for Android**
 
 [![Introducing Proto IoT for Android](video_tmb.png)](https://www.youtube.com/watch?v=s55vkryfQSY "Introducing Proto IoT for Android | relayr")
