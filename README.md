@@ -36,7 +36,7 @@ Using Proto IoT, you can:
 [**Download on Google Play**](https://play.google.com/store/apps/details?id=io.relayr.iotsmartphone&hl=en)
 
 Proto IoT is open-source, so if you are a developer, take a look under the
-hood or connect your own application through relayr’s RESTful API.
+hood or connect your own application through [relayr’s RESTful API](http://docs.relayr.io/api).
 
 ## Android & Java SDK reference
 
@@ -69,17 +69,63 @@ data readings:
 
 -  **Acceleration**: Measures the rate of your smartphone's acceleration among the x, y and z axes, in `m/s²`.
 -  **Gyroscope**: Measures the angular tilt of your smartphone, in `m/s²`.
--  **Luminosity**: Measures the amount of light hitting your smartphone's camera, in `lux`.  
-  **Note:** In order 
+-  **Luminosity**: Measures the amount of light reaching your smartphone's screen, in `lux`.
 -  **Location**: Records your phone's physical location.  
-  **Note:** The Proto IoT app requires permission to use your device's location. You can double-check to make sure this is enabled under Settings > Apps > relayr Proto IoT.
+  _NOTE:_ The Proto IoT app requires permission to use your device's location. You can double-check to make sure this is enabled under Settings > Apps > relayr Proto IoT > Permissions.
 -  **Screen touch**: Records every instance when your phone's screen is touched.
 -  **Battery**: Measures your phone's battery percentage.
 -  **WiFi signal**: Measures the strength of your phone's WiFi signal relative to the wifi network, in `dBi`. The signal strength is measured on a scale of -120 (worst connection) to 0 (best connection).
 
 ### How data is transferred
 
-Todo
+By default, data measured by your smartphone will be sent to the cloud through
+your relayr user account. If you'd prefer to keep the data stored locally on
+the smartphone, you can tap the gear icon to the right of each data reading
+and set the **Data** value to **keep local**.
+
+Data from your smartphone is sent to the relayr cloud in the form of **data
+readings**. A reading is a JSON object that contains a `meaning` (the name of
+what's being measured, _e.g._ acceleration), a `value` (the value of what was
+measured), and an optional `path` (which differentiates between multiple
+readings with the same meaning).
+
+Here is an example of the schema received by the cloud for an acceleration
+reading:
+
+```json
+{
+    "deviceId": "6e2aa661-02hg-4ee0-aa0f-e042eed1eda7",			// Your device's relayr cloud UUID.
+    "readings": [										// Array of readings.
+        {
+            "path": "/",
+            "meaning": "acceleration",				// Name of the value that's being measured.
+            "value": {								// Value schema of the acceleration reading.
+                "x": 5.0699997,
+                "y": 6.04,
+                "z": 8.25
+            },
+            "recorded": 1467812771620,				// Timestamp from when your device recorded the reading.
+            "received": "2016-07-06T13:46:13.642Z"
+        }
+    ],
+    "received": 1467812773560
+}
+```
+
+Commands and configurations follow a similar pattern, except that their names
+are specified by a `name` property instead of `meaning`:
+
+```json
+"commands": [
+    {
+        "name": "vibration",
+        "path": "",
+        "valueSchema": {
+            "type": "boolean"
+        }
+    }
+]
+```
 
 ### Rules
 
