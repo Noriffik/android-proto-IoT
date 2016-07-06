@@ -92,7 +92,7 @@ readings with the same meaning).
 Here is an example of the schema received by the cloud for an acceleration
 reading:
 
-```json
+```
 {
     "deviceId": "6e2aa661-02hg-4ee0-aa0f-e042eed1eda7",			// Your device's relayr cloud UUID.
     "readings": [										// Array of readings.
@@ -115,7 +115,7 @@ reading:
 Commands and configurations follow a similar pattern, except that their names
 are specified by a `name` property instead of `meaning`:
 
-```json
+```
 "commands": [
     {
         "name": "vibration",
