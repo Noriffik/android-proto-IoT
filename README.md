@@ -16,10 +16,16 @@
 **Welcome to Proto IoT, an open-source Android app for rapid Internet of
 Things prototyping.**
 
+Proto IoT turns your smartphone into a cloud-connected IoT device by measuring
+sensor data from your device (_e.g._ touch, battery, wifi signal) and sending
+it to the cloud over a secure MQTT connection. You can interact with your
+device and view the data in the [relayr Developer
+Dashboard](http://developer.relayr.io)
+
 Using Proto IoT, you can:
 
 -  Access sensor data easily and securely from anywhere with an internet connection.
--  Send readings from your device's sensors to the relayr cloud and interact with them remotely through the [relayr Developer Dashboard](http://developer.relayr.io)
+-  Send readings from your device's sensors to the relayr cloud and interact with them remotely through the Dashboard.
 -  Add interactions and rules on top of your sensors’ data in order to trigger actions on separate devices via the mobile app or the Dashboard.
 -  Build and demonstrate IoT prototype solutions quickly, using just a smartphone.
 -  View historical data from your devices.
@@ -28,25 +34,28 @@ Using Proto IoT, you can:
 
 [**Download on Google Play**](https://play.google.com/store/apps/details?id=io.relayr.iotsmartphone&hl=en)
 
-[![Introducing Proto IoT for Android](video_tmb.png)](https://www.youtube.com/watch?v=s55vkryfQSY "Introducing Proto IoT for Android | relayr")
-
 Proto IoT is open-source, so if you are a developer, take a look under the
 hood or connect your own application through relayr’s RESTful API.
 
 ## Android & Java SDK reference
 
-Proto IoT uses relayr's [Java](https://relayr.github.io/java-
-sdk/)[:target="_self"] and [Android](https://github.com/relayr/android-
-sdk)[:target="_self"] SDKs in order to interact with the relayr cloud. Check
-out the documentation for more information.
+Proto IoT uses relayr's [Java](https://relayr.github.io/java-sdk/){:target="_self"} and [Android](https://github.com/relayr/android-sdk){:target="_self"} SDKs in order to interact with the relayr cloud.
 
 ## Using Proto IoT
 
-Todo
-
 ### Setting it up on your device
 
-Todo
+Before you can connect your device to the cloud, you'll need a relayr
+Developer Dashboard account. You can register one either [by visiting the
+Dashboard](http://developer.relayr.io) or through the app as described below.
+
+To connect your phone to the cloud:
+
+1.  Open the Proto IoT app and click the cloud icon.
+2.  In the first section labeled "Establish connection with the relayr Cloud," click **Log in**.
+3.  On the login screen, if you don't have an account yet, switch to the **Create an account** tab, fill in the account details and click **Create account**. Otherwise, enter your account credentials and click **Log in.**
+
+At this point, you're all set! Your device will begin pushing sensor data to the cloud.
 
 ### Viewing device data
 
@@ -65,3 +74,5 @@ Todo
 [Introducing Proto IoT](http://blog.relayr.io/engineering/introducing-proto-iot-for-android)
 
 [Example project](https://github.com/bernardpletikosa/droidcon-workshop-2016)
+
+[![Introducing Proto IoT for Android](video_tmb.png)](https://www.youtube.com/watch?v=s55vkryfQSY "Introducing Proto IoT for Android | relayr")
