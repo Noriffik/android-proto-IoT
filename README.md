@@ -44,7 +44,7 @@ Proto IoT uses relayr's [Java](https://relayr.github.io/java-sdk/) and
 [Android](https://github.com/relayr/android-sdk) SDKs in order to interact
 with the relayr cloud.
 
-## Using Proto IoT
+## Using the app
 
 ### Setting it up on your device
 
