@@ -12,8 +12,7 @@ Things prototyping!
   2.  [Viewing device data](#viewing-device-data)
   3.  [How data is transferred](#how-data-is-transferred)
   4.  [Rules](#rules)
-4.  [Developing the app](#developing-the-app)
-5.  [Other resources](#other-resources)
+4.  [Other resources](#other-resources)
 
 ## Introduction
 
