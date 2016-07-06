@@ -129,11 +129,19 @@ are specified by a `name` property instead of `meaning`:
 
 ### Rules
 
-Todo
+The Rules feature of the Proto IoT app lets you define a set of conditions that execute a command on your device. For instance, in the current configuration, you could create a rule to play a sound when your smartphone's battery reaches a low percentage.
 
-## Developing the app
+To define a rule:
 
-Todo
+1.  Go to the **rules** tab (the icon farthest to the right).
+2.  On the rules tab, tap the plus icon under "Conditions."
+3.  Choose the reading from the list that will trigger the new rule.
+4.  When you've chosen the reading, you can then define the value that will trigger the rule. First, choose a comparison operator (_e.g._ >, >=, ==) and then enter a value (_e.g._ 50).
+5.  Additional conditions can be added by tapping the plus icon under the condition you just created. You can also define whether the conditions have an "and" relationship (_i.e._ both conditions must be met) or an "or" relationship by tapping the white icon between the two conditions.
+6.  When you've finished adding conditions, tap the plus icon under "Outcomes."
+7.  Choose a command from the list that will execute when the above condition(s) is/are met.
+
+The rule will be saved, and the command(s) will execute when the condition(s) is/are met.
 
 ## Other resources
 
