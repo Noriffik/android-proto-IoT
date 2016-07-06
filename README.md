@@ -7,7 +7,7 @@ Things prototyping!
 
 1.  [Introduction](#introduction)
 2.  [Android & Java SDK reference](#android--java-sdk-reference)
-3.  [Using the app](#using-proto-iot)  
+3.  [Using the app](#using-the-app)  
   1.  [Setting it up on your device](#setting-it-up-on-your-device)
   2.  [Viewing device data](#viewing-device-data)
   3.  [How data is transferred](#how-data-is-transferred)
