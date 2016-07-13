@@ -44,8 +44,13 @@ android {
 dependencies {
     wearApp project(':wear')
 
+    //when using submodules
     compile(project(':java-sdk'))
     compile(project(':android-sdk:android-sdk'))
+
+    //repos
+//    compile 'io.relayr:android-sdk:1.0.3'
+//    compile 'io.relayr:java-sdk:1.2.1'
 
     compile 'de.greenrobot:eventbus:2.4.1'
 

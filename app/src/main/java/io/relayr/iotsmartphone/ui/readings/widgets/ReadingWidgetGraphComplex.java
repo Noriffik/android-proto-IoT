@@ -1,41 +1,31 @@
 package io.relayr.iotsmartphone.ui.readings.widgets;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
-import io.relayr.iotsmartphone.handler.ReadingHandler;
+import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
-import io.relayr.java.model.models.schema.NumberSchema;
-import io.relayr.java.model.models.schema.ObjectSchema;
-
-import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
-import static io.relayr.iotsmartphone.storage.Storage.FREQS_PHONE;
-import static io.relayr.iotsmartphone.storage.Storage.FREQS_WATCH;
 
 public class ReadingWidgetGraphComplex extends ReadingWidget {
 
     @BindView(R.id.chart) LineChart mChart;
+
+    private List<Entry> valuesX = new ArrayList<>();
+    private List<Entry> valuesY = new ArrayList<>();
+    private List<Entry> valuesZ = new ArrayList<>();
 
     public ReadingWidgetGraphComplex(Context context) {
         this(context, null);
@@ -47,15 +37,16 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
 
     public ReadingWidgetGraphComplex(final Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        mMin = -10;
+        mMax = 10;
+        mSimple = false;
     }
-
-    private Gson mGson = new GsonBuilder().disableHtmlEscaping().create();
-    private int[] mColors = new int[]{R.color.graph_green, R.color.graph_blue, R.color.graph_red};
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         update();
+        calculateFrame();
     }
 
     @Override protected void onDetachedFromWindow() {
@@ -63,115 +54,80 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
     }
 
     @Override void update() {
-        setGraphParameters();
+        initGraph();
     }
 
     @Override void refresh(LimitedQueue<Reading> readings) {
         if (mChart != null && isShown()) setData(readings);
     }
 
-    @SuppressWarnings("unchecked")
-    private void setGraphParameters() {
-        if (mSchema == null) return;
-        if (mSchema.isObjectSchema()) {
-            final ObjectSchema schema = mSchema.asObject();
-            final LinkedTreeMap<String, Object> properties = (LinkedTreeMap<String, Object>) schema.getProperties();
-            if (properties != null) {
-                final Object x = properties.get("x");
-                final NumberSchema fromJson = mGson.fromJson(x.toString(), NumberSchema.class);
-                initGraph(fromJson.getMin() != null ? fromJson.getMin().intValue() : 0,
-                        fromJson.getMax() != null ? fromJson.getMax().intValue() : 100);
-            }
-        } else {
-            Crashlytics.log(Log.ERROR, "RWGComplex", "Object not supported");
-        }
-    }
-
-    private void initGraph(int min, int max) {
-        mChart.setDescription("");
-        mChart.setTouchEnabled(false);
+    private void initGraph() {
+        super.initGraph(mChart);
         mChart.setDragEnabled(false);
         mChart.setScaleEnabled(false);
         mChart.setPinchZoom(false);
-
-        mChart.getLegend().setEnabled(false);
         mChart.getAxisRight().setEnabled(true);
-
-        initAxis(mChart.getAxisLeft(), min, max);
-        initAxis(mChart.getAxisRight(), min, max);
-
-        refresh(mType == PHONE ? ReadingHandler.readingsPhone.get(mMeaning) : ReadingHandler.readingsWatch.get(mMeaning));
+        initAxises();
     }
 
-    private void initAxis(YAxis axis, int min, int max) {
-        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.axis));
-        axis.setAxisLineColor(ContextCompat.getColor(getContext(), R.color.axis));
-        axis.setAxisMaxValue(max);
-        axis.setAxisMinValue(min);
-        axis.setStartAtZero(min == 0);
+    private void initAxises() {
+        initAxis(this.mChart.getAxisLeft(), mMin, mMax);
+        initAxis(this.mChart.getAxisRight(), mMin, mMax);
     }
 
     @SuppressWarnings("unchecked")
     private void setData(List<Reading> readings) {
-        if (readings == null) return;
+        if (readings == null || mFrame <= 0) return;
 
-        long mDiff;
-        long mFirstPoint;
+        long mFirstPoint = System.currentTimeMillis() - mFrame;
 
-        final int frame = calculateFrame();
-        mFirstPoint = System.currentTimeMillis() - frame;
-        mDiff = (long) (frame / mMaxPoints);
-
-        List<Entry> valuesX = new ArrayList<>();
-        List<Entry> valuesY = new ArrayList<>();
-        List<Entry> valuesZ = new ArrayList<>();
+        valuesX.clear();
+        valuesY.clear();
+        valuesZ.clear();
 
         for (int i = 0; i < readings.size(); i++) {
             final Reading reading = readings.get(i);
             final int index = (int) ((reading.recorded - mFirstPoint) / mDiff);
             if (index < 0) continue;
-            if (index >= mMaxPoints) break;
+            if (index >= Constants.MAX_POINTS) break;
 
             if (reading.value instanceof AccelGyroscope.Acceleration) {
                 AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) reading.value;
                 valuesX.add(new Entry(accel.x, index));
                 valuesY.add(new Entry(accel.y, index));
                 valuesZ.add(new Entry(accel.z, index));
+                if (checkValue(accel.x) || checkValue(accel.y) || checkValue(accel.z)) initAxises();
             } else if (reading.value instanceof AccelGyroscope.AngularSpeed) {
                 AccelGyroscope.AngularSpeed gyro = (AccelGyroscope.AngularSpeed) reading.value;
                 valuesX.add(new Entry(gyro.x, index));
                 valuesY.add(new Entry(gyro.y, index));
                 valuesZ.add(new Entry(gyro.z, index));
+                if (checkValue(gyro.x) || checkValue(gyro.y) || checkValue(gyro.z)) initAxises();
             }
         }
 
-        List<ILineDataSet> dataSets = new ArrayList<>();
-        dataSets.add(createDataSet("x", valuesX, mColors[0], mColors[0]));
-        dataSets.add(createDataSet("y", valuesY, mColors[1], mColors[1]));
-        dataSets.add(createDataSet("z", valuesZ, mColors[2], mColors[2]));
-
-        LineData data = new LineData(axisX, dataSets);
-
-        mChart.setData(data);
+        mChart.setData(new LineData(axisX, createAllDataSets()));
         mChart.invalidate();
     }
 
-    private int calculateFrame() {
-        final int places = Constants.defaultSizes.get(mMeaning);
-        final int frequency = mType == PHONE ? FREQS_PHONE.get(mMeaning) : FREQS_WATCH.get(mMeaning);
-        return (int) (places * frequency / 3f);
+    private List<ILineDataSet> createAllDataSets() {
+        List<ILineDataSet> dataSets = new ArrayList<>();
+        dataSets.add(createDataSet("x", valuesX, colRed, colRed));
+        dataSets.add(createDataSet("y", valuesY, colGreen, colGreen));
+        dataSets.add(createDataSet("z", valuesZ, colBlue, colBlue));
+        return dataSets;
     }
 
     private LineDataSet createDataSet(String name, List<Entry> entrys, int dotColor, int lineColor) {
         LineDataSet set = new LineDataSet(entrys, name);
-        set.setColor(ContextCompat.getColor(getContext(), lineColor));
-        set.setCircleColor(ContextCompat.getColor(getContext(), dotColor));
+        set.setColor(lineColor);
+        set.setCircleColor(dotColor);
         set.setLineWidth(1f);
         set.setDrawCircleHole(false);
         set.setDrawValues(false);
         set.setCircleRadius(2);
-        set.setValueTextColor(ContextCompat.getColor(getContext(), R.color.axis));
-        set.setFillColor(ContextCompat.getColor(getContext(), dotColor));
+        set.setValueTextColor(colAxis);
+        set.setFillColor(dotColor);
         return set;
     }
 }

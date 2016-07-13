@@ -5,19 +5,21 @@ import java.util.Map;
 
 public class Constants {
 
+    public static final int REQUEST_RESOLVE_ERROR = 1000;
+
     public static final int SAMPLING_COMPLEX = 100;
     public static final int SAMPLING_SIMPLE = 3;
     public static final int SAMPLING_MAX = 28;
     public static final int SAMPLING_PHONE_MIN = 2;
     public static final int SAMPLING_WATCH_MIN = 5;
 
-    public static final int GRAPH_FRAME = 20000;
+    public static final int GRAPH_FRAME = 30000;
+    public static final int MAX_POINTS = 500;
 
     public static final int NOTIF_FLASH = 23761;
     public static final int NOTIF_SOUND = 23762;
     public static final int NOTIF_VIB = 23763;
 
-    public static final int REQUEST_RESOLVE_ERROR = 1000;
     public static final String ACTIVATE_PATH = "/activate";
     public static final String ACTIVATE = "activate";
 
@@ -45,8 +47,8 @@ public class Constants {
         defaultSizes.clear();
         defaultSizes.put("acceleration", 70);
         defaultSizes.put("angularSpeed", 70);
-        defaultSizes.put("luminosity", 50);
-        defaultSizes.put("touch", 70);
+        defaultSizes.put("luminosity", 25);
+        defaultSizes.put("touch", 25);
         defaultSizes.put("batteryLevel", GRAPH_FRAME / SAMPLING_PHONE_MIN);
         defaultSizes.put("rssi", GRAPH_FRAME / SAMPLING_PHONE_MIN);
         defaultSizes.put("location", 1);
@@ -85,6 +87,18 @@ public class Constants {
 
         public int getSampling() {
             return sampling;
+        }
+    }
+
+    public static class PhoneSamplingUpdate {
+        private final String meaning;
+
+        public PhoneSamplingUpdate(String meaning) {
+            this.meaning = meaning;
+        }
+
+        public String getMeaning() {
+            return meaning;
         }
     }
 

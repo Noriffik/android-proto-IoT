@@ -196,7 +196,7 @@ public class FragmentCloud extends Fragment {
                     });
             }
         };
-        new Timer().scheduleAtFixedRate(mSpeedTimer, 1000, 5000);
+        new Timer().scheduleAtFixedRate(mSpeedTimer, 1000, 3000);
     }
 
     private String getSpeed(float speed) {

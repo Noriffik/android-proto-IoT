@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
+import butterknife.BindDimen;
 import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
@@ -17,6 +18,9 @@ public class ReadingWidgetMap extends ReadingWidget {
 
     @BindView(R.id.map_image) ImageView mMapImage;
     @BindView(R.id.map_pin_container) LinearLayout mPinContainer;
+    @BindDimen(R.dimen.indicator_height) int pinSize;
+
+    private View mPin;
 
     public ReadingWidgetMap(Context context) {
         this(context, null);
@@ -32,16 +36,11 @@ public class ReadingWidgetMap extends ReadingWidget {
 
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        mPin = View.inflate(getContext(), R.layout.widget_reading_map_pin, null);
         update();
     }
 
-    @Override protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-    }
-
-    @Override void update() {
-
-    }
+    @Override void update() {}
 
     @Override void refresh(LimitedQueue<Reading> readings) {
         if (isShown()) setData(readings);
@@ -49,25 +48,19 @@ public class ReadingWidgetMap extends ReadingWidget {
 
     public void setData(LimitedQueue<Reading> data) {
         if (data == null || data.isEmpty() || mPinContainer == null) return;
+        final ReadingHandler.LocationReading reading = (ReadingHandler.LocationReading) data.getLast().value;
+
+        final double latOffset = (mPinContainer.getBottom() - mPinContainer.getTop()) / 180f * reading.latitude();
+        final double lonOffset = (mPinContainer.getRight() - mPinContainer.getLeft()) / 360f * reading.longitude();
 
         RelativeLayout.LayoutParams mapParams = new RelativeLayout.LayoutParams(mMapImage.getWidth(), mMapImage.getHeight());
         mPinContainer.setLayoutParams(mapParams);
 
-        final Reading last = data.getLast();
-        final ReadingHandler.LocationReading reading = (ReadingHandler.LocationReading) last.value;
-        double lat = reading.latitude() > 0 ? 90 - reading.latitude() : reading.latitude() + 180;
-        double lon = reading.longitude() + 180;
-
-        final double latOffset = (mPinContainer.getBottom() - mPinContainer.getTop()) / 180f * lat;
-        final double lonOffset = (mPinContainer.getRight() - mPinContainer.getLeft()) / 360f * lon;
-
-        final View pin = View.inflate(getContext(), R.layout.widget_reading_map_pin, null);
-        final int pinSize = getResources().getDimensionPixelSize(R.dimen.indicator_height);
-        LayoutParams layoutParams = new LayoutParams(pinSize, pinSize);
-        layoutParams.setMargins((int) (lonOffset - pinSize / 2f), (int) (latOffset - pinSize / 2f), 0, 0);
-        pin.setLayoutParams(layoutParams);
+        LayoutParams mPinLayoutParams = new LayoutParams(pinSize, pinSize);
+        mPinLayoutParams.setMargins((int) (lonOffset - pinSize / 2f), (int) (latOffset - pinSize / 2f), 0, 0);
+        mPin.setLayoutParams(mPinLayoutParams);
 
         mPinContainer.removeAllViews();
-        mPinContainer.addView(pin);
+        mPinContainer.addView(mPin);
     }
 }

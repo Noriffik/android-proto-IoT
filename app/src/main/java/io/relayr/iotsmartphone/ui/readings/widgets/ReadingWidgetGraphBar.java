@@ -1,13 +1,9 @@
 package io.relayr.iotsmartphone.ui.readings.widgets;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
@@ -17,16 +13,15 @@ import java.util.List;
 
 import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
-import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
-import io.relayr.iotsmartphone.handler.ReadingHandler;
+import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.java.model.action.Reading;
-
-import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 
 public class ReadingWidgetGraphBar extends ReadingWidget {
 
     @BindView(R.id.chart) BarChart mChart;
+
+    private List<BarEntry> entries = new ArrayList<>();
 
     public ReadingWidgetGraphBar(Context context) {
         this(context, null);
@@ -38,77 +33,61 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
 
     public ReadingWidgetGraphBar(final Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        mMin = 0;
+        mMax = 1;
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         update();
+        mFrame = 20 * 1000;
+        mDiff = mFrame / Constants.MAX_POINTS;
     }
 
-    @Override void update() {
-        setGraphParameters();
-    }
+    @Override void update() {initGraph();}
 
     @Override void refresh(LimitedQueue<Reading> readings) {
         if (mChart != null && isShown()) setData(readings);
     }
 
-    @SuppressWarnings("unchecked")
-    private void setGraphParameters() {
-        if (mSchema == null) return;
-        if (mSchema.isBooleanSchema()) initGraph(0, 1);
-        else Crashlytics.log(Log.WARN, "RWGB", "Object not supported");
-    }
-
-    private void initGraph(int min, int max) {
-        mChart.setDescription("");
-        mChart.setTouchEnabled(false);
+    private void initGraph() {
+        super.initGraph(mChart);
         mChart.setDragEnabled(false);
         mChart.setScaleEnabled(false);
-        mChart.setPinchZoom(false);
-
-        mChart.getLegend().setEnabled(false);
         mChart.getAxisRight().setEnabled(true);
-        initAxis(mChart.getAxisLeft(), min, max);
-        initAxis(mChart.getAxisRight(), min, max);
-
-        refresh(mType == PHONE ? ReadingHandler.readingsPhone.get(mMeaning) : ReadingHandler.readingsWatch.get(mMeaning));
+        initAxises();
     }
 
-    private void initAxis(YAxis axis, int min, int max) {
-        axis.setTextColor(ContextCompat.getColor(getContext(), R.color.axis));
-        axis.setAxisLineColor(ContextCompat.getColor(getContext(), R.color.axis));
-        axis.setAxisMaxValue(max);
-        axis.setAxisMinValue(min);
-        axis.setStartAtZero(min == 0);
+    private void initAxises() {
+        initAxis(this.mChart.getAxisLeft(), mMin, mMax);
+        initAxis(this.mChart.getAxisRight(), mMin, mMax);
     }
 
     @SuppressWarnings("unchecked")
-    private void setData(List<Reading> points) {
-        if (points == null) return;
+    private void setData(List<Reading> readings) {
+        if (readings == null || mFrame <= 0) return;
 
-        long mFirstPoint = (System.currentTimeMillis() - Constants.GRAPH_FRAME);
-        long mDiff = (long) (Constants.GRAPH_FRAME / mMaxPoints);
+        long mFirstPoint = System.currentTimeMillis() - mFrame;
 
-        List<BarEntry> yValues = new ArrayList<>();
-        for (int i = 0; i < points.size(); i++) {
-            final Reading reading = points.get(i);
-            final int index = (int) ((reading.recorded - mFirstPoint) / mDiff);
+        entries.clear();
+        for (int i = 0; i < readings.size(); i++) {
+            final int index = (int) ((readings.get(i).recorded - mFirstPoint) / mDiff);
             if (index < 0) continue;
-            if (index >= mMaxPoints) break;
+            if (index >= Constants.MAX_POINTS) break;
 
-            yValues.add(new BarEntry(((Boolean) reading.value) ? .8f : 0, index));
+            entries.add(new BarEntry(((Boolean) readings.get(i).value) ? .8f : 0, index));
         }
 
-        BarDataSet barDataSet = new BarDataSet(yValues, mMeaning);
-        barDataSet.setColor(ContextCompat.getColor(getContext(), R.color.graph_yellow));
-        barDataSet.setBarSpacePercent(2f);
-
-        BarData data = new BarData(axisX, barDataSet);
-        data.setDrawValues(false);
-
-        mChart.setData(data);
+        mChart.setData(new BarData(axisX, createDataSet()));
         mChart.invalidate();
+    }
+
+    private BarDataSet createDataSet() {
+        BarDataSet barDataSet = new BarDataSet(entries, mMeaning);
+        barDataSet.setColor(colYellow);
+        barDataSet.setBarSpacePercent(2f);
+        barDataSet.setDrawValues(false);
+        return barDataSet;
     }
 }

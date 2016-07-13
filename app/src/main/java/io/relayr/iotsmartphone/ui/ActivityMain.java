@@ -497,13 +497,14 @@ public class ActivityMain extends AppCompatActivity implements
         initWifiManager();
         monitorBattery();
 
-        if (!Storage.instance().locationGranted() &&
-                checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
-            ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
-        } else {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            if (!Storage.instance().locationGranted()) return;
             initLocationManager();
+        } else {
+            if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) initLocationManager();
+            else
+                ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
         }
-
         if (UiUtil.isCloudConnected()) subscribeToCommands();
     }
 
@@ -574,7 +575,9 @@ public class ActivityMain extends AppCompatActivity implements
         new Handler().postDelayed(new Runnable() {
             @Override public void run() {
                 if (mLocationManager != null) return;
-                if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+                        checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
+
                     mLocationManager = (LocationManager) ActivityMain.this.getSystemService(LOCATION_SERVICE);
                     try {
                         mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, ActivityMain.this);
@@ -597,10 +600,10 @@ public class ActivityMain extends AppCompatActivity implements
         if (mLocationManager == null || !Storage.instance().locationGranted()) return;
         new Handler().post(new Runnable() {
             @Override public void run() {
-                if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+                        checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
                     Location location = mLocationManager.getLastKnownLocation(GPS_PROVIDER);
-                    if (location == null)
-                        location = mLocationManager.getLastKnownLocation(NETWORK_PROVIDER);
+                    if (location == null) location = mLocationManager.getLastKnownLocation(NETWORK_PROVIDER);
                     if (location != null) ReadingHandler.publishLocation(location);
 
                     if (location == null && !mLocationManager.isProviderEnabled(GPS_PROVIDER) &&

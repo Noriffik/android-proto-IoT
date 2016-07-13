@@ -72,22 +72,26 @@ public class TutorialUtil {
                 Storage.instance().tutorialFinished(step));
     }
 
-    private static void showTutorial(Context context, View anchor, final String tutorial, int tab) {
-        dismiss();
-        LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View sPopupView = layoutInflater.inflate(R.layout.popup, null);
-        sPopupWindow = new PopupWindow(sPopupView, getScreenWidth(context) / 3, WRAP_CONTENT);
+    private static void showTutorial(final Context context, final View anchor, final String tutorial, final int tab) {
+        ((ActivityMain) context).runOnUiThread(new Runnable() {
+            @Override public void run() {
+                dismiss();
+                LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                View sPopupView = layoutInflater.inflate(R.layout.popup, null);
+                sPopupWindow = new PopupWindow(sPopupView, getScreenWidth(context) / 3, WRAP_CONTENT);
 
-        int offset = tab * (getScreenWidth(context) / 3);
-        sPopupWindow.showAsDropDown(anchor, offset, 0);
+                int offset = tab * (getScreenWidth(context) / 3);
+                sPopupWindow.showAsDropDown(anchor, offset, 0);
 
-        final TextView text = (TextView) sPopupView.findViewById(R.id.popup_text);
-        text.setText(getText(tutorial));
-        final TextView btnDismiss = (TextView) sPopupView.findViewById(R.id.button_ok);
-        btnDismiss.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                if (sPopupWindow != null) sPopupWindow.dismiss();
-                Storage.instance().updateTutorial(tutorial, true);
+                final TextView text = (TextView) sPopupView.findViewById(R.id.popup_text);
+                text.setText(getText(tutorial));
+                final TextView btnDismiss = (TextView) sPopupView.findViewById(R.id.button_ok);
+                btnDismiss.setOnClickListener(new View.OnClickListener() {
+                    @Override public void onClick(View v) {
+                        if (sPopupWindow != null) sPopupWindow.dismiss();
+                        Storage.instance().updateTutorial(tutorial, true);
+                    }
+                });
             }
         });
     }

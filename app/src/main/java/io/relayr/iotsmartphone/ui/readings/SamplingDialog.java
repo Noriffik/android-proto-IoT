@@ -97,6 +97,8 @@ public class SamplingDialog extends LinearLayout {
                 final int freq = Storage.instance().saveFrequency(mMeaning, mType, frequency + minimum);
                 if (mType == WATCH)
                     EventBus.getDefault().post(new Constants.WatchSamplingUpdate(mMeaning, freq));
+                else
+                    EventBus.getDefault().post(new Constants.PhoneSamplingUpdate(mMeaning));
                 setFrequency(freq, complex);
             }
 

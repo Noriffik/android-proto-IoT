@@ -12,6 +12,7 @@ import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
@@ -143,7 +144,7 @@ public class ReadingHandler {
         if (IotApplication.isVisible(PHONE))
             EventBus.getDefault().post(new Constants.ReadingRefresh(PHONE, reading.meaning));
         if (Storage.ACTIVITY_PHONE.get(reading.meaning)) {
-            if (Storage.instance().getDeviceId(PHONE) == null) return;
+            if (Storage.instance().getDeviceId(PHONE) == null || !RelayrSdk.isUserLoggedIn()) return;
             sPhoneData += new Gson().toJson(reading).getBytes().length + 100;
             RelayrSdk.getWebSocketClient()
                     .publish(Storage.instance().getDeviceId(PHONE), reading)
@@ -187,8 +188,9 @@ public class ReadingHandler {
         ReadingHandler.readingsWatch.get(reading.meaning).add(reading);
         if (IotApplication.isVisible(WATCH))
             EventBus.getDefault().post(new Constants.ReadingRefresh(WATCH, reading.meaning));
+
         if (Storage.ACTIVITY_WATCH.get(reading.meaning)) {
-            if (Storage.instance().getDeviceId(WATCH) == null) return;
+            if (Storage.instance().getDeviceId(WATCH) == null || !RelayrSdk.isUserLoggedIn()) return;
             RelayrSdk.getWebSocketClient()
                     .publish(Storage.instance().getDeviceId(WATCH), reading)
                     .subscribeOn(Schedulers.io())
@@ -202,8 +204,8 @@ public class ReadingHandler {
     }
 
     public static void publishLocation(Location loc) {
-        final LocationReading reading = new LocationReading(loc.getLatitude(), loc.getLongitude(), loc.getAltitude());
-        publish(new Reading(0, System.currentTimeMillis(), "location", "/", reading));
+        publish(new Reading(0, System.currentTimeMillis(), "location", "/",
+                new LocationReading(loc.getLatitude(), loc.getLongitude(), loc.getAltitude())));
     }
 
     public static void calculateSpeeds() {
@@ -245,15 +247,32 @@ public class ReadingHandler {
         }
 
         public double latitude() {
-            return latitude;
+            return latitude > 0 ? 90 - latitude : latitude + 180;
         }
 
         public double longitude() {
-            return longitude;
+            return longitude + 180;
         }
 
-        public double altitude() {
-            return altitude;
+        @Override public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            LocationReading that = (LocationReading) o;
+
+            if (Double.compare(that.latitude, latitude) != 0) return false;
+            return Double.compare(that.longitude, longitude) == 0;
+
+        }
+
+        @Override public int hashCode() {
+            int result;
+            long temp;
+            temp = Double.doubleToLongBits(latitude);
+            result = (int) (temp ^ (temp >>> 32));
+            temp = Double.doubleToLongBits(longitude);
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
+            return result;
         }
     }
 }

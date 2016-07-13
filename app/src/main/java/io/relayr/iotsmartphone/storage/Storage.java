@@ -301,6 +301,8 @@ public class Storage {
         PREFS.edit().remove(RULE_ID).apply();
         PREFS.edit().remove(PHONE_ID).apply();
         PREFS.edit().remove(WATCH_ID).apply();
+        PREFS.edit().remove(WATCH_NAME).apply();
+        PREFS.edit().remove(PHONE_NAME).apply();
 
         PREFS.edit().putString(USER_ID, userId).apply();
     }
