@@ -16,6 +16,7 @@ import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
 import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.ui.readings.ReadingType;
 import io.relayr.java.model.AccelGyroscope;
 import io.relayr.java.model.action.Reading;
 
@@ -39,18 +40,21 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
         super(context, attrs, defStyle);
         mMin = -10;
         mMax = 10;
-        mSimple = false;
+        mFrameType = ReadingType.COMPLEX;
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         update();
-        calculateFrame();
     }
 
     @Override protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        valuesX.clear();
+        valuesY.clear();
+        valuesZ.clear();
+        System.gc();
     }
 
     @Override void update() {

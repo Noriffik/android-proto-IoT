@@ -3,14 +3,16 @@ package io.relayr.iotsmartphone.ui.readings.widgets;
 import android.content.Context;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.LinearLayout;
 
 import com.github.mikephil.charting.charts.Chart;
 import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import butterknife.BindColor;
 import butterknife.ButterKnife;
@@ -19,6 +21,9 @@ import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.ui.ActivityMain;
+import io.relayr.iotsmartphone.ui.readings.ReadingType;
+import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.model.action.Reading;
 import io.relayr.java.model.models.schema.ValueSchema;
 
@@ -34,6 +39,8 @@ public abstract class ReadingWidget extends LinearLayout {
     @BindColor(R.color.graph_yellow) int colYellow;
     @BindColor(R.color.axis) int colAxis;
 
+    protected List<String> axisX = new ArrayList<>(Constants.MAX_POINTS);
+
     public ReadingWidget(Context context) {
         this(context, null);
     }
@@ -44,18 +51,21 @@ public abstract class ReadingWidget extends LinearLayout {
 
     public ReadingWidget(final Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        for (int i = 0; i < Constants.MAX_POINTS; i++) axisX.add("");
     }
 
-    protected boolean mSimple;
     protected String mPath;
     protected String mMeaning;
     protected Constants.DeviceType mType;
     protected ValueSchema mSchema;
-    protected List<String> axisX = new ArrayList<>(Constants.MAX_POINTS);
 
     protected int mMin = 0, mMax = 100;
-    protected long mDiff;
+
+    protected ReadingType mFrameType = ReadingType.STATIC;
     protected int mFrame = 0;
+    protected long mDiff;
+
+    private Timer mTimer;
 
     @Override
     protected void onAttachedToWindow() {
@@ -63,9 +73,8 @@ public abstract class ReadingWidget extends LinearLayout {
         ButterKnife.bind(this);
         EventBus.getDefault().register(this);
 
-        axisX = new ArrayList<>(Constants.MAX_POINTS);
-        for (int i = 0; i < Constants.MAX_POINTS; i++) axisX.add("");
-
+        calculateFrame();
+        setTimer();
         update();
     }
 
@@ -73,17 +82,14 @@ public abstract class ReadingWidget extends LinearLayout {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         EventBus.getDefault().unregister(this);
-    }
-
-    @SuppressWarnings("unused")
-    public void onEvent(final Constants.ReadingRefresh reading) {
-        if (reading.getMeaning().equals(mMeaning) && reading.getType() == mType)
-            refresh(ReadingHandler.readings(mType).get(mMeaning));
+        killTimer();
     }
 
     @SuppressWarnings("unused")
     public void onEvent(final Constants.PhoneSamplingUpdate reading) {
-        if (reading.getMeaning().equals(mMeaning)) calculateFrame();
+        if (!reading.getMeaning().equals(mMeaning)) return;
+        calculateFrame();
+        setTimer();
     }
 
     public void setUp(String path, String meaning, ValueSchema schema, Constants.DeviceType type) {
@@ -125,9 +131,20 @@ public abstract class ReadingWidget extends LinearLayout {
     }
 
     protected void calculateFrame() {
-        if (mSimple) mFrame = calculateFrameSimple();
-        else mFrame = calculateFrameComplex();
+        switch (mFrameType) {
+            case SIMPLE:
+                mFrame = calculateFrameSimple();
+                break;
+            case COMPLEX:
+                mFrame = calculateFrameComplex();
+                break;
+            case STATIC:
+                mFrame = calculateFrameStatic();
+                break;
+        }
         mDiff = mFrame / Constants.MAX_POINTS;
+
+        Log.e(mMeaning, "frame " + mFrame + " " + mDiff);
     }
 
     private int calculateFrameComplex() {
@@ -138,5 +155,32 @@ public abstract class ReadingWidget extends LinearLayout {
     private int calculateFrameSimple() {
         final int frequency = mType == PHONE ? FREQS_PHONE.get(mMeaning) : FREQS_WATCH.get(mMeaning);
         return Constants.defaultSizes.get(mMeaning) * frequency;
+    }
+
+    private int calculateFrameStatic() {
+        return 30 * 1000;
+    }
+
+    private void setTimer() {
+        final int freq = UiUtil.getFreq(mMeaning, mType);
+
+        killTimer();
+        mTimer = new Timer();
+        mTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override public void run() {
+                ((ActivityMain) getContext()).runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        refresh(ReadingHandler.readings(mType).get(mMeaning));
+                    }
+                });
+            }
+        }, 0, freq);
+    }
+
+    private void killTimer() {
+        if (mTimer == null) return;
+        mTimer.cancel();
+        mTimer.purge();
+        mTimer = null;
     }
 }

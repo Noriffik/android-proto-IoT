@@ -60,33 +60,61 @@ public class CloudHandler {
     public static Observable<Pair<Constants.DeviceType, Device>> loadDevices(final Activity activity) {
         return Observable.create(new Observable.OnSubscribe<Pair<Constants.DeviceType, Device>>() {
             @Override
-            public void call(Subscriber<? super Pair<Constants.DeviceType, Device>> subscriber) {
+            public void call(final Subscriber<? super Pair<Constants.DeviceType, Device>> subscriber) {
                 if (Storage.instance().getDeviceId(PHONE) != null)
-                    getDeviceFromCloud(PHONE, subscriber);
-                else createDevice(activity, PHONE, subscriber);
+                    getDeviceFromCloud(PHONE)
+                            .subscribe(new SimpleObserver<Device>() {
+                                @Override public void error(Throwable e) {
+                                    if (!(e instanceof TimeoutException)) {
+                                        Storage.instance().clearDevicesData();
+                                        createDevice(activity, PHONE, subscriber);
+                                        loadWatchDevice(activity, subscriber);
+                                    } else {
+                                        subscriber.onError(e);
+                                    }
+                                }
 
-                if (!UiUtil.isWearableConnected(activity)) return;
-                if (Storage.instance().getDeviceId(WATCH) != null)
-                    getDeviceFromCloud(WATCH, subscriber);
-                else createDevice(activity, WATCH, subscriber);
+                                @Override public void success(Device device) {
+                                    Crashlytics.log(Log.DEBUG, "CloudHandler", "Loaded phone " + device.getId());
+                                    subscriber.onNext(new Pair<>(PHONE, device));
+
+                                    if (!UiUtil.isWearableConnected(activity)) return;
+                                    loadWatchDevice(activity, subscriber);
+                                }
+                            });
+                else {
+                    createDevice(activity, PHONE, subscriber);
+                    loadWatchDevice(activity, subscriber);
+                }
             }
         }).subscribeOn(Schedulers.io());
     }
 
-    private static void getDeviceFromCloud(final Constants.DeviceType type, final Subscriber<? super Pair<Constants.DeviceType, Device>> subscriber) {
-        RelayrSdk.getDeviceApi()
+    private static void loadWatchDevice(final Activity activity, final Subscriber<? super Pair<Constants.DeviceType, Device>> subscriber) {
+        if (Storage.instance().getDeviceId(WATCH) != null)
+            getDeviceFromCloud(WATCH)
+                    .subscribe(new SimpleObserver<Device>() {
+                        @Override public void error(Throwable e) {
+                            if (!(e instanceof TimeoutException)) createDevice(activity, WATCH, subscriber);
+                            else subscriber.onError(e);
+                        }
+
+                        @Override public void success(Device device) {
+                            Crashlytics.log(Log.DEBUG, "CloudHandler", "Loaded watch " + device.getId());
+                            subscriber.onNext(new Pair<>(PHONE, device));
+                        }
+                    });
+        else createDevice(activity, WATCH, subscriber);
+    }
+
+    private static Observable<Device> getDeviceFromCloud(final Constants.DeviceType type) {
+        return RelayrSdk.getDeviceApi()
                 .getDevice(Storage.instance().getDeviceId(type))
                 .timeout(5, TimeUnit.SECONDS)
-                .subscribe(new SimpleObserver<Device>() {
-                    @Override public void error(Throwable e) {
-                        Crashlytics.log(Log.DEBUG, "CloudHandler", "Failed to load " + type.name() + " device.");
-                        if (!(e instanceof TimeoutException)) Crashlytics.logException(e);
-                        subscriber.onError(e);
-                    }
-
-                    @Override public void success(Device device) {
-                        Crashlytics.log(Log.DEBUG, "CloudHandler", "Loaded device " + Storage.instance().getDeviceId(type));
-                        subscriber.onNext(new Pair<>(type, device));
+                .doOnError(new Action1<Throwable>() {
+                    @Override public void call(Throwable e) {
+                        Crashlytics.log(Log.ERROR, "CloudHandler", "Failed to load " + type.name() + " device.");
+                        Crashlytics.logException(e);
                     }
                 });
     }

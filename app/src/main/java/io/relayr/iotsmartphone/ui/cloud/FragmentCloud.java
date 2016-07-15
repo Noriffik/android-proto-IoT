@@ -12,11 +12,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import butterknife.ButterKnife;
 import butterknife.BindView;
+import butterknife.ButterKnife;
 import butterknife.OnClick;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
@@ -25,7 +26,6 @@ import io.relayr.iotsmartphone.handler.CloudHandler;
 import io.relayr.iotsmartphone.handler.ReadingHandler;
 import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.iotsmartphone.storage.Storage;
-import io.relayr.iotsmartphone.ui.utils.TutorialUtil;
 import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SimpleObserver;
 import io.relayr.java.model.Device;
@@ -35,8 +35,6 @@ import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
 import static io.relayr.iotsmartphone.storage.Constants.DeviceType.WATCH;
 
 public class FragmentCloud extends Fragment {
-
-    private static final String TAG = "FragCloud";
 
     @BindView(R.id.cloud) ImageView mCloudImg;
     @BindView(R.id.cloud_connection) View mCloudConnection;
@@ -88,8 +86,8 @@ public class FragmentCloud extends Fragment {
             setSpeedTimer();
         } else {
             if (mSpeedTimer != null) mSpeedTimer.cancel();
-            mSpeedTimer = null;
             if (mWarningDialog != null) mWarningDialog.dismiss();
+            mSpeedTimer = null;
             mWarningDialog = null;
         }
     }
@@ -154,31 +152,32 @@ public class FragmentCloud extends Fragment {
     }
 
     private void loadDeviceData() {
-        if (UiUtil.isCloudConnected())
-            CloudHandler.loadDevices(getActivity())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new SimpleObserver<Pair<Constants.DeviceType, Device>>() {
-                        @Override public void error(Throwable e) {
-                            if (mLoadingDialog != null) mLoadingDialog.dismiss();
-                            mLoadingDialog = new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
-                                    .setTitle(getString(R.string.something_went_wrong))
-                                    .setPositiveButton(getString(R.string.retry), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            dialog.dismiss();
-                                            loadDeviceData();
-                                        }
-                                    })
-                                    .create();
-                            mLoadingDialog.show();
-                        }
+        if (!UiUtil.isCloudConnected()) return;
 
-                        @Override public void success(Pair<Constants.DeviceType, Device> pair) {
-                            setUpDevice(pair.second, pair.first);
-                            if (mLoadingDialog != null) mLoadingDialog.dismiss();
-                            showWarning();
-                        }
-                    });
+        CloudHandler.loadDevices(getActivity())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SimpleObserver<Pair<Constants.DeviceType, Device>>() {
+                    @Override public void error(Throwable e) {
+                        if (mLoadingDialog != null) mLoadingDialog.dismiss();
+                        mLoadingDialog = new AlertDialog.Builder(getContext(), R.style.AppTheme_DialogOverlay)
+                                .setTitle(getString(R.string.something_went_wrong))
+                                .setPositiveButton(getString(R.string.retry), new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                        loadDeviceData();
+                                    }
+                                })
+                                .create();
+                        mLoadingDialog.show();
+                    }
+
+                    @Override public void success(Pair<Constants.DeviceType, Device> pair) {
+                        setUpDevice(pair.second, pair.first);
+                        if (mLoadingDialog != null) mLoadingDialog.dismiss();
+                        showWarning();
+                    }
+                });
     }
 
     private void setSpeedTimer() {
@@ -201,8 +200,8 @@ public class FragmentCloud extends Fragment {
 
     private String getSpeed(float speed) {
         if (speed <= 0) return "";
-        if (speed > 1024) return String.format("%.2f KB/s", speed / 1024f);
-        else return String.format("%.2f B/s", speed);
+        if (speed > 1024) return String.format(Locale.getDefault(), "%.2f KB/s", speed / 1024f);
+        else return String.format(Locale.getDefault(), "%.2f B/s", speed);
     }
 
     private void showDeviceDialog(Constants.DeviceType type) {

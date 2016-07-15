@@ -2,7 +2,6 @@ package io.relayr.iotsmartphone.ui.readings.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -16,38 +15,34 @@ import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
 import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.ui.readings.ReadingType;
 import io.relayr.java.model.action.Reading;
 
-public class ReadingWidgetGraphSimple extends ReadingWidget {
+public class ReadingWidgetGraphStatic extends ReadingWidget {
 
     @BindView(R.id.chart) LineChart mChart;
 
-    private List<Entry> entries = new ArrayList<>();
+    protected List<Entry> entries = new ArrayList<>();
 
-    public ReadingWidgetGraphSimple(Context context) {
+    public ReadingWidgetGraphStatic(Context context) {
         this(context, null);
     }
 
-    public ReadingWidgetGraphSimple(Context context, AttributeSet attrs) {
+    public ReadingWidgetGraphStatic(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public ReadingWidgetGraphSimple(final Context context, AttributeSet attrs, int defStyle) {
+    public ReadingWidgetGraphStatic(final Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         mMin = 0;
-        mMax = 110;
-        mSimple = true;
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        update();
-        calculateFrame();
+        mMax = 101;
+        mFrameType = ReadingType.STATIC;
     }
 
     @Override protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        entries.clear();
+        System.gc();
     }
 
     @Override void update() {
@@ -87,6 +82,7 @@ public class ReadingWidgetGraphSimple extends ReadingWidget {
             entries.add(new Entry(value, index));
             if (checkValue(value)) initAxises();
         }
+
         mChart.setData(new LineData(axisX, createDataSet(mMeaning, colYellow, colYellow)));
         mChart.invalidate();
     }

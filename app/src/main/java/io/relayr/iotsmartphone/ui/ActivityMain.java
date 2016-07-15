@@ -53,9 +53,10 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.BindView;
@@ -79,7 +80,6 @@ import io.relayr.iotsmartphone.ui.utils.UiUtil;
 import io.relayr.java.helper.observer.SuccessObserver;
 import io.relayr.java.model.action.Command;
 import io.relayr.java.model.action.Reading;
-import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
@@ -94,6 +94,7 @@ import static android.hardware.Sensor.TYPE_LIGHT;
 import static android.hardware.SensorManager.SENSOR_DELAY_NORMAL;
 import static android.location.LocationManager.GPS_PROVIDER;
 import static android.location.LocationManager.NETWORK_PROVIDER;
+import static android.location.LocationManager.PASSIVE_PROVIDER;
 import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.os.BatteryManager.EXTRA_LEVEL;
 import static android.os.BatteryManager.EXTRA_SCALE;
@@ -130,8 +131,6 @@ public class ActivityMain extends AppCompatActivity implements
     private long mGyroscopeChange = 0;
     private long mLightChange = 0;
 
-    private Subscription mRefreshSubs;
-
     private GoogleApiClient mGoogleApiClient;
 
     private final Fragment[] mFragments = new Fragment[3];
@@ -139,6 +138,9 @@ public class ActivityMain extends AppCompatActivity implements
 
     private ProgressDialog mInitialiseDialog;
     private AlertDialog mProblemDialog;
+
+    private Timer mTimer;
+    private Map<String, TimerTask> mTimerTasks = new HashMap<>();
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -207,7 +209,7 @@ public class ActivityMain extends AppCompatActivity implements
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) ReadingHandler.publishTouch(true);
-        else if (ev.getAction() == MotionEvent.ACTION_UP) ReadingHandler.publishTouch(false);
+        //        else if (ev.getAction() == MotionEvent.ACTION_UP) ReadingHandler.publishTouch(false);
         return super.dispatchTouchEvent(ev);
     }
 
@@ -222,6 +224,10 @@ public class ActivityMain extends AppCompatActivity implements
 
     @SuppressWarnings("unused") public void onEvent(Constants.WatchSamplingUpdate event) {
         sendToWearable(event.getMeaning(), event.getSampling());
+    }
+
+    @SuppressWarnings("unused") public void onEvent(Constants.PhoneSamplingUpdate event) {
+        createTimers(event.getMeaning());
     }
 
     @SuppressWarnings("unused") public void onEvent(Constants.Tutorial event) {
@@ -420,15 +426,18 @@ public class ActivityMain extends AppCompatActivity implements
     }
 
     private void setToolbarTitle(int position) {
-        if (position == 0)
-            setTitle(IotApplication.isVisible(PHONE) ? R.string.app_title_phone : R.string.app_title_watch);
-        else if (position == 1) setTitle(R.string.cloud_title);
-        else if (position == 2) setTitle(R.string.rules_title);
+        if (position == 0) {
+            if (!UiUtil.isWearableConnected(this)) setTitle(R.string.app_name);
+            else setTitle(IotApplication.isVisible(PHONE) ? R.string.app_title_phone : R.string.app_title_watch);
+        } else if (position == 1) {
+            setTitle(R.string.cloud_title);
+        } else if (position == 2) {
+            setTitle(R.string.rules_title);
+        }
     }
 
     private void setVisibility(int position) {
-        if (position == 0)
-            IotApplication.visible(IotApplication.sCurrent == PHONE, IotApplication.sCurrent == WATCH);
+        if (position == 0) IotApplication.visible(IotApplication.sCurrent == PHONE, IotApplication.sCurrent == WATCH);
         else if (position == 1) IotApplication.visible(false, false);
         else if (position == 2 && RuleHandler.hasRule()) IotApplication.visible(true, true);
         else IotApplication.visible(false, false);
@@ -449,27 +458,53 @@ public class ActivityMain extends AppCompatActivity implements
                 .build();
         if (!mResolvingError) mGoogleApiClient.connect();
 
-        if (mRefreshSubs == null)
-            mRefreshSubs = Observable.interval(1, TimeUnit.SECONDS)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Observer<Long>() {
-                        @Override public void onCompleted() {}
-
-                        @Override public void onError(Throwable e) {
-                            Crashlytics.log(Log.ERROR, "MTA", "Failed while refreshing");
-                            Crashlytics.logException(e);
-                        }
-
-                        @Override public void onNext(Long num) {
-                            if (num % FREQS_PHONE.get("rssi") == 0) monitorWiFi();
-                            if (num % FREQS_PHONE.get("location") == 0) monitorLocation();
-                            if (num % FREQS_PHONE.get("batteryLevel") == 0) monitorBattery();
-                            if (num % FREQS_PHONE.get("touch") == 0)
-                                ReadingHandler.publishTouch(false);
-                        }
-                    });
-
+        if (mTimer == null) createTimers(null);
         initReadings();
+    }
+
+    private void createTimers(String meaning) {
+        if (meaning == null) {
+            createTimerTask("rssi");
+            createTimerTask("location");
+            createTimerTask("batteryLevel");
+
+            if (mTimer != null) {
+                mTimer.cancel();
+                mTimer.purge();
+            } else {
+                mTimer = new Timer();
+                for (Map.Entry<String, TimerTask> tasks : mTimerTasks.entrySet())
+                    mTimer.schedule(tasks.getValue(), 0, UiUtil.getFreq(tasks.getKey(), PHONE));
+            }
+        } else {
+            if (mTimerTasks.get(meaning) == null) return;
+            mTimerTasks.get(meaning).cancel();
+            mTimerTasks.remove(meaning);
+            createTimerTask(meaning);
+            mTimer.schedule(mTimerTasks.get(meaning), 0, UiUtil.getFreq(meaning, PHONE));
+        }
+    }
+
+    private void createTimerTask(final String meaning) {
+        mTimerTasks.put(meaning, new TimerTask() {
+            @Override public void run() {
+                runOnUiThread(new TimerTask() {
+                    @Override public void run() {
+                        switch (meaning) {
+                            case "rssi":
+                                monitorWiFi();
+                                break;
+                            case "location":
+                                monitorLocation();
+                                break;
+                            case "batteryLevel":
+                                monitorBattery();
+                                break;
+                        }
+                    }
+                });
+            }
+        });
     }
 
     private void stopReadings() {
@@ -483,11 +518,17 @@ public class ActivityMain extends AppCompatActivity implements
         if (mLocationManager != null && checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION))
             mLocationManager.removeUpdates(this);
 
-        if (mRefreshSubs != null) mRefreshSubs.unsubscribe();
-        mRefreshSubs = null;
-
         if (mCommandsSubscription != null) mCommandsSubscription.unsubscribe();
         mCommandsSubscription = null;
+
+        if (mTimerTasks != null) {
+            for (TimerTask task : mTimerTasks.values()) task.cancel();
+            mTimerTasks.clear();
+        }
+        if (mTimer != null) {
+            mTimer.cancel();
+            mTimer.purge();
+        }
 
         RelayrSdk.getWebSocketClient().clean();
     }
@@ -579,18 +620,22 @@ public class ActivityMain extends AppCompatActivity implements
                         checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
 
                     mLocationManager = (LocationManager) ActivityMain.this.getSystemService(LOCATION_SERVICE);
+
                     try {
-                        mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, ActivityMain.this);
-                        monitorLocation();
-                    } catch (Exception e) {
-                        Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
+                        mLocationManager.requestLocationUpdates(PASSIVE_PROVIDER, 0, 0, ActivityMain.this);
+                    } catch (Exception e1) {
                         try {
                             mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, ActivityMain.this);
-                            monitorLocation();
-                        } catch (Exception e1) {
+                        } catch (Exception e2) {
                             Crashlytics.log(Log.ERROR, "MTA", "NETWORK_PROVIDER doesn't exist.");
+                            try {
+                                mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, ActivityMain.this);
+                            } catch (Exception e3) {
+                                Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
+                            }
                         }
                     }
+                    monitorLocation();
                 }
             }
         }, 500);
@@ -600,16 +645,18 @@ public class ActivityMain extends AppCompatActivity implements
         if (mLocationManager == null || !Storage.instance().locationGranted()) return;
         new Handler().post(new Runnable() {
             @Override public void run() {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                        checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
-                    Location location = mLocationManager.getLastKnownLocation(GPS_PROVIDER);
-                    if (location == null) location = mLocationManager.getLastKnownLocation(NETWORK_PROVIDER);
-                    if (location != null) ReadingHandler.publishLocation(location);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                        !checkPermission(ACCESS_FINE_LOCATION) && !checkPermission(ACCESS_COARSE_LOCATION)) return;
 
-                    if (location == null && !mLocationManager.isProviderEnabled(GPS_PROVIDER) &&
-                            !mLocationManager.isProviderEnabled(NETWORK_PROVIDER))
-                        showLocationDialog();
-                }
+                Location location = mLocationManager.getLastKnownLocation(PASSIVE_PROVIDER);
+                if (location == null) location = mLocationManager.getLastKnownLocation(NETWORK_PROVIDER);
+                if (location == null) location = mLocationManager.getLastKnownLocation(GPS_PROVIDER);
+
+                if (location != null) ReadingHandler.publishLocation(location);
+                else if (!mLocationManager.isProviderEnabled(PASSIVE_PROVIDER) &&
+                        !mLocationManager.isProviderEnabled(NETWORK_PROVIDER) &&
+                        !mLocationManager.isProviderEnabled(GPS_PROVIDER))
+                    showLocationDialog();
             }
         });
     }

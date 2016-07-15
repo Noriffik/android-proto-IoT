@@ -15,6 +15,7 @@ import butterknife.BindView;
 import io.relayr.iotsmartphone.R;
 import io.relayr.iotsmartphone.handler.LimitedQueue;
 import io.relayr.iotsmartphone.storage.Constants;
+import io.relayr.iotsmartphone.ui.readings.ReadingType;
 import io.relayr.java.model.action.Reading;
 
 public class ReadingWidgetGraphBar extends ReadingWidget {
@@ -35,14 +36,19 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
         super(context, attrs, defStyle);
         mMin = 0;
         mMax = 1;
+        mFrameType = ReadingType.STATIC;
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         update();
-        mFrame = 20 * 1000;
-        mDiff = mFrame / Constants.MAX_POINTS;
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        entries.clear();
+        System.gc();
     }
 
     @Override void update() {initGraph();}
@@ -76,7 +82,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
             if (index < 0) continue;
             if (index >= Constants.MAX_POINTS) break;
 
-            entries.add(new BarEntry(((Boolean) readings.get(i).value) ? .8f : 0, index));
+            entries.add(new BarEntry(((Boolean) readings.get(i).value) ? 1 : 0, index));
         }
 
         mChart.setData(new BarData(axisX, createDataSet()));

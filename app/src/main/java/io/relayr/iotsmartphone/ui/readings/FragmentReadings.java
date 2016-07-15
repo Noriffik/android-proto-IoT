@@ -151,10 +151,11 @@ public class FragmentReadings extends Fragment {
         @Override public int getItemViewType(int position) {
             final String meaning = mReadings.get(position).getMeaning();
             return meaning.equals("rssi") ? R.layout.widget_reading_graph_rssi :
-                    meaning.equals("angularSpeed") || meaning.equals("acceleration") ? R.layout.widget_reading_graph :
-                            meaning.equals("batteryLevel") || meaning.equals("luminosity") ? R.layout.widget_reading_graph_simple :
-                                    meaning.equals("touch") ? R.layout.widget_reading_graph_bar :
-                                            R.layout.widget_reading_map;
+                    meaning.equals("luminosity") ? R.layout.widget_reading_graph_lum :
+                            meaning.equals("batteryLevel") ? R.layout.widget_reading_graph_simple :
+                                    meaning.equals("angularSpeed") || meaning.equals("acceleration") ? R.layout.widget_reading_graph :
+                                            meaning.equals("touch") ? R.layout.widget_reading_graph_bar :
+                                                    R.layout.widget_reading_map;
         }
 
         @Override

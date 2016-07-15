@@ -13,7 +13,6 @@ public class Constants {
     public static final int SAMPLING_PHONE_MIN = 2;
     public static final int SAMPLING_WATCH_MIN = 5;
 
-    public static final int GRAPH_FRAME = 30000;
     public static final int MAX_POINTS = 500;
 
     public static final int NOTIF_FLASH = 23761;
@@ -48,9 +47,9 @@ public class Constants {
         defaultSizes.put("acceleration", 70);
         defaultSizes.put("angularSpeed", 70);
         defaultSizes.put("luminosity", 25);
-        defaultSizes.put("touch", 25);
-        defaultSizes.put("batteryLevel", GRAPH_FRAME / SAMPLING_PHONE_MIN);
-        defaultSizes.put("rssi", GRAPH_FRAME / SAMPLING_PHONE_MIN);
+        defaultSizes.put("touch", 50);
+        defaultSizes.put("batteryLevel", 15);
+        defaultSizes.put("rssi", 15);
         defaultSizes.put("location", 1);
     }
 
@@ -99,24 +98,6 @@ public class Constants {
 
         public String getMeaning() {
             return meaning;
-        }
-    }
-
-    public static class ReadingRefresh {
-        private final String meaning;
-        private final DeviceType type;
-
-        public ReadingRefresh(DeviceType type, String meaning) {
-            this.type = type;
-            this.meaning = meaning;
-        }
-
-        public String getMeaning() {
-            return meaning;
-        }
-
-        public DeviceType getType() {
-            return type;
         }
     }
 

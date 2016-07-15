@@ -40,18 +40,25 @@ public class ReadingWidgetMap extends ReadingWidget {
         update();
     }
 
-    @Override void update() {}
+    @Override void update() {
+        showLocation(1, 1);
+    }
 
     @Override void refresh(LimitedQueue<Reading> readings) {
         if (isShown()) setData(readings);
     }
 
-    public void setData(LimitedQueue<Reading> data) {
-        if (data == null || data.isEmpty() || mPinContainer == null) return;
+    private void setData(LimitedQueue<Reading> data) {
+        if (data == null || data.isEmpty()) return;
         final ReadingHandler.LocationReading reading = (ReadingHandler.LocationReading) data.getLast().value;
+        showLocation(reading.latitude(), reading.longitude());
+    }
 
-        final double latOffset = (mPinContainer.getBottom() - mPinContainer.getTop()) / 180f * reading.latitude();
-        final double lonOffset = (mPinContainer.getRight() - mPinContainer.getLeft()) / 360f * reading.longitude();
+    private void showLocation(double lat, double lon) {
+        if (mPinContainer == null || mPin == null) return;
+
+        final double latOffset = (mPinContainer.getBottom() - mPinContainer.getTop()) / 180f * lat;
+        final double lonOffset = (mPinContainer.getRight() - mPinContainer.getLeft()) / 360f * lon;
 
         RelativeLayout.LayoutParams mapParams = new RelativeLayout.LayoutParams(mMapImage.getWidth(), mMapImage.getHeight());
         mPinContainer.setLayoutParams(mapParams);
@@ -63,4 +70,5 @@ public class ReadingWidgetMap extends ReadingWidget {
         mPinContainer.removeAllViews();
         mPinContainer.addView(mPin);
     }
+
 }

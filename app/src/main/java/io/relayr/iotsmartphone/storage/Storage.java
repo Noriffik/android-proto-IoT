@@ -218,6 +218,13 @@ public class Storage {
         else return null;
     }
 
+    public void clearDevicesData() {
+        sPhoneId = null;
+        sWatchId = null;
+        PREFS.edit().remove(PHONE_ID).apply();
+        PREFS.edit().remove(WATCH_ID).apply();
+    }
+
     public void saveRule(String id) {
         PREFS.edit().putString(RULE_ID, id).apply();
     }

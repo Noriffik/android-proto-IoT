@@ -141,8 +141,8 @@ public class ReadingHandler {
 
     public static void publish(Reading reading) {
         ReadingHandler.readingsPhone.get(reading.meaning).add(reading);
-        if (IotApplication.isVisible(PHONE))
-            EventBus.getDefault().post(new Constants.ReadingRefresh(PHONE, reading.meaning));
+//        if (IotApplication.isVisible(PHONE))
+//            EventBus.getDefault().post(new Constants.ReadingRefresh(PHONE, reading.meaning));
         if (Storage.ACTIVITY_PHONE.get(reading.meaning)) {
             if (Storage.instance().getDeviceId(PHONE) == null || !RelayrSdk.isUserLoggedIn()) return;
             sPhoneData += new Gson().toJson(reading).getBytes().length + 100;
@@ -186,8 +186,6 @@ public class ReadingHandler {
     private static void publishWatch(Reading reading) {
         sWatchData += new Gson().toJson(reading.value).getBytes().length;
         ReadingHandler.readingsWatch.get(reading.meaning).add(reading);
-        if (IotApplication.isVisible(WATCH))
-            EventBus.getDefault().post(new Constants.ReadingRefresh(WATCH, reading.meaning));
 
         if (Storage.ACTIVITY_WATCH.get(reading.meaning)) {
             if (Storage.instance().getDeviceId(WATCH) == null || !RelayrSdk.isUserLoggedIn()) return;

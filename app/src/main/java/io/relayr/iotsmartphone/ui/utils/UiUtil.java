@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -19,7 +20,12 @@ import java.util.Map;
 
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.R;
+import io.relayr.iotsmartphone.storage.Constants;
 import io.relayr.java.model.AccelGyroscope;
+
+import static io.relayr.iotsmartphone.storage.Constants.DeviceType.PHONE;
+import static io.relayr.iotsmartphone.storage.Storage.FREQS_PHONE;
+import static io.relayr.iotsmartphone.storage.Storage.FREQS_WATCH;
 
 public class UiUtil {
 
@@ -112,5 +118,12 @@ public class UiUtil {
 
     public static double calculateVector(float a, float b, float c) {
         return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2) + Math.pow(c, 2));
+    }
+
+    public static int getFreq(String meaning, Constants.DeviceType type) {
+        if (meaning.equals("touch")) return 500;
+        int multiplier = meaning.equals("luminosity") || meaning.equals("acceleration") || meaning.equals("angularSpeed") ? 1 : 1000;
+        final int freq = (type == PHONE ? FREQS_PHONE.get(meaning) : FREQS_WATCH.get(meaning)) * multiplier;
+        return freq;
     }
 }

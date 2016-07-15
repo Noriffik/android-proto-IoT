@@ -20,6 +20,8 @@ import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import butterknife.ButterKnife;
 import butterknife.BindView;
@@ -70,6 +72,8 @@ public class RuleCondition extends LinearLayout {
     private Constants.DeviceType mType;
     private AlertDialog mMeaningsDialog;
 
+    private Timer mTimer;
+
     public RuleCondition(Context context) {
         this(context, null);
     }
@@ -110,38 +114,17 @@ public class RuleCondition extends LinearLayout {
 
         initValueControls();
         if (mType != null) setConditionValues();
-
-        EventBus.getDefault().register(this);
     }
 
     @Override protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        EventBus.getDefault().unregister(this);
-    }
-
-    @SuppressWarnings("unused")
-    public void onEvent(final Constants.ReadingRefresh refresh) {
-        if (mReading == null || mType == null || mLiveTv == null) return;
-        if (refresh.getMeaning().equals(mReading.getMeaning()) && refresh.getType() == mType) {
-            final Reading last = ReadingHandler.readings(mType).get(mReading.getMeaning()).getLast();
-            if (last == null) return;
-
-            if (mReading.getValueSchema().isNumberSchema() || mReading.getValueSchema().isIntegerSchema())
-                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, ((Number) last.value).intValue()));
-            else if (last.value instanceof AccelGyroscope.Acceleration) {
-                AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) last.value;
-                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", UiUtil.calculateVector(accel))));
-            } else if (last.value instanceof AccelGyroscope.AngularSpeed) {
-                AccelGyroscope.AngularSpeed gyro = (AccelGyroscope.AngularSpeed) last.value;
-                mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", UiUtil.calculateVector(gyro))));
-            }
-        }
     }
 
     @SuppressWarnings("unused") @OnClick(R.id.rule_widget_remove_btn)
     public void onRemoveClicked() {
         mType = null;
         mReading = null;
+        killTimer();
         toggleControls(false);
         if (mListener != null) mListener.removeCondition();
     }
@@ -186,6 +169,8 @@ public class RuleCondition extends LinearLayout {
             setInitialValues();
             setDefaultValues();
             setConditionValues();
+            setTimer(mReading.getMeaning());
+
             if (mListener != null) mListener.conditionChanged(mType, mReading, mOperation, mValue);
         }
     }
@@ -296,5 +281,40 @@ public class RuleCondition extends LinearLayout {
         mOperationTv.setText(mOperation);
         mValueEt.setText("" + mValue);
         mUnitTv.setText(UiUtil.getUnitForMeaning(getContext(), mReading.getMeaning()));
+    }
+
+    private void setTimer(String meaning) {
+        final int freq = UiUtil.getFreq(meaning, mType);
+        killTimer();
+        mTimer = new Timer();
+        mTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override public void run() {
+                ((ActivityMain) getContext()).runOnUiThread(new Runnable() {
+                    @Override public void run() {
+                        if (mReading == null || mType == null || mLiveTv == null) return;
+
+                        final Reading last = ReadingHandler.readings(mType).get(mReading.getMeaning()).getLast();
+                        if (last == null) return;
+
+                        if (mReading.getValueSchema().isNumberSchema() || mReading.getValueSchema().isIntegerSchema())
+                            mLiveTv.setText(getContext().getString(R.string.condition_reading_live, ((Number) last.value).intValue()));
+                        else if (last.value instanceof AccelGyroscope.Acceleration) {
+                            AccelGyroscope.Acceleration accel = (AccelGyroscope.Acceleration) last.value;
+                            mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", UiUtil.calculateVector(accel))));
+                        } else if (last.value instanceof AccelGyroscope.AngularSpeed) {
+                            AccelGyroscope.AngularSpeed gyro = (AccelGyroscope.AngularSpeed) last.value;
+                            mLiveTv.setText(getContext().getString(R.string.condition_reading_live, String.format("%.2f", UiUtil.calculateVector(gyro))));
+                        }
+                    }
+                });
+            }
+        }, freq, freq);
+    }
+
+    private void killTimer() {
+        if (mTimer == null) return;
+        mTimer.cancel();
+        mTimer.purge();
+        mTimer = null;
     }
 }
