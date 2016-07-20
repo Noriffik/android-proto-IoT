@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import butterknife.BindView;
@@ -26,6 +25,9 @@ public class SettingsDialog extends LinearLayout {
 
     @BindView(R.id.tutorial) SwitchCompat mTutorialSwitch;
     @BindView(R.id.tutorial_state) TextView mTutorial;
+
+    @BindView(R.id.tutorial_start) SwitchCompat mTutorialStartSwitch;
+    @BindView(R.id.tutorial_start_state) TextView mTutorialStart;
 
     public SettingsDialog(Context context) {
         this(context, null);
@@ -58,6 +60,14 @@ public class SettingsDialog extends LinearLayout {
             @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 TutorialUtil.updateTutorial(TUTORIAL, !isChecked);
                 setText(mTutorial, !isChecked);
+            }
+        });
+
+        mTutorialStartSwitch.setChecked(!Storage.instance().TutorialActivityFinished());
+        mTutorialStartSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                Storage.instance().tutorialActivity(!isChecked);
+                setText(mTutorialStart, !isChecked);
             }
         });
     }

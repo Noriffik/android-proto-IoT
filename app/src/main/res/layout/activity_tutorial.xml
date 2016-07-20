@@ -1,6 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     style="@style/MatchMatch"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ui.ActivityTutorial">
+    android:fitsSystemWindows="true">
+
+    <ImageView
+        android:id="@+id/splash"
+        style="@style/MatchMatch"
+        android:scaleType="centerCrop"
+        android:src="@drawable/cover"/>
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/tutorial_pager"
+        style="@style/MatchMatch"
+        android:layout_marginBottom="?attr/actionBarSize"
+        android:fitsSystemWindows="true"
+        android:visibility="gone"
+        tools:listitem="@layout/tutorial_pager_item"/>
+
+    <RelativeLayout
+        android:id="@+id/tutorial_indicator"
+        style="@style/MatchMatch"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/primaryDark"
+        android:layout_alignParentBottom="true"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/btn_next"
+            style="@style/SmallText"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:gravity="center_vertical"
+            android:padding="@dimen/default_padding"
+            android:text="@string/t_next"
+            android:textAllCaps="true"/>
+
+        <TextView
+            android:id="@+id/btn_finish"
+            style="@style/SmallText"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:gravity="center_vertical"
+            android:padding="@dimen/default_padding"
+            android:text="@string/t_skip"
+            android:textAllCaps="true"/>
+
+        <LinearLayout
+            android:id="@+id/tutorial_dots"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:orientation="horizontal"/>
+    </RelativeLayout>
 </RelativeLayout>

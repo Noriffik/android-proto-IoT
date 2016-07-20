@@ -58,8 +58,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import butterknife.ButterKnife;
 import butterknife.BindView;
+import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import io.relayr.android.RelayrSdk;
 import io.relayr.iotsmartphone.IotApplication;
@@ -147,11 +147,6 @@ public class ActivityMain extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        //        if (!Storage.instance().isTutorialActivityDone()) {
-        //            ActivityTutorial.start(this);
-        //            return;
-        //        }
-
         IntentFilter messageFilter = new IntentFilter(Intent.ACTION_SEND);
         MessageReceiver messageReceiver = new MessageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, messageFilter);
@@ -201,7 +196,7 @@ public class ActivityMain extends AppCompatActivity implements
                 final boolean granted = grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED;
                 Crashlytics.log(Log.INFO, "MA", "User granted permission: " + granted);
                 Storage.instance().locationPermission(granted);
-                initLocationManager();
+                initLocationManager(false);
             }
         }
     }
@@ -209,7 +204,6 @@ public class ActivityMain extends AppCompatActivity implements
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) ReadingHandler.publishTouch(true);
-        //        else if (ev.getAction() == MotionEvent.ACTION_UP) ReadingHandler.publishTouch(false);
         return super.dispatchTouchEvent(ev);
     }
 
@@ -280,7 +274,7 @@ public class ActivityMain extends AppCompatActivity implements
     }
 
     @Override public void onProviderEnabled(String provider) {
-        initLocationManager();
+        initLocationManager(false);
     }
 
     @Override public void onProviderDisabled(String provider) {
@@ -539,10 +533,10 @@ public class ActivityMain extends AppCompatActivity implements
         monitorBattery();
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            if (!Storage.instance().locationGranted()) return;
-            initLocationManager();
+            if (Storage.instance().locationGranted()) initLocationManager(false);
         } else {
-            if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) initLocationManager();
+            if (checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION))
+                initLocationManager(false);
             else
                 ActivityCompat.requestPermissions(this, new String[]{ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION}, 100);
         }
@@ -611,32 +605,35 @@ public class ActivityMain extends AppCompatActivity implements
         ReadingHandler.publish(new Reading(0, System.currentTimeMillis(), "batteryLevel", "/", bat));
     }
 
-    private void initLocationManager() {
+    private void initLocationManager(final boolean initMoreThatOne) {
         if (!Storage.instance().locationGranted()) return;
         new Handler().postDelayed(new Runnable() {
             @Override public void run() {
-                if (mLocationManager != null) return;
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-                        checkPermission(ACCESS_FINE_LOCATION) && checkPermission(ACCESS_COARSE_LOCATION)) {
+                if (mLocationManager != null && !initMoreThatOne) return;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    if (!checkPermission(ACCESS_FINE_LOCATION) && !checkPermission(ACCESS_COARSE_LOCATION)) return;
 
-                    mLocationManager = (LocationManager) ActivityMain.this.getSystemService(LOCATION_SERVICE);
+                mLocationManager = (LocationManager) ActivityMain.this.getSystemService(LOCATION_SERVICE);
 
+                try {
+                    mLocationManager.requestLocationUpdates(PASSIVE_PROVIDER, 0, 0, ActivityMain.this);
+                    if (initMoreThatOne)
+                        mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, ActivityMain.this);
+                } catch (Exception e1) {
                     try {
-                        mLocationManager.requestLocationUpdates(PASSIVE_PROVIDER, 0, 0, ActivityMain.this);
-                    } catch (Exception e1) {
+                        mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, ActivityMain.this);
+                        if (initMoreThatOne)
+                            mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, ActivityMain.this);
+                    } catch (Exception e2) {
+                        Crashlytics.log(Log.ERROR, "MTA", "NETWORK_PROVIDER doesn't exist.");
                         try {
-                            mLocationManager.requestLocationUpdates(NETWORK_PROVIDER, 0, 0, ActivityMain.this);
-                        } catch (Exception e2) {
-                            Crashlytics.log(Log.ERROR, "MTA", "NETWORK_PROVIDER doesn't exist.");
-                            try {
-                                mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, ActivityMain.this);
-                            } catch (Exception e3) {
-                                Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
-                            }
+                            mLocationManager.requestLocationUpdates(GPS_PROVIDER, 0, 0, ActivityMain.this);
+                        } catch (Exception e3) {
+                            Crashlytics.log(Log.ERROR, "MTA", "GPS_PROVIDER doesn't exist.");
                         }
                     }
-                    monitorLocation();
                 }
+                monitorLocation();
             }
         }, 500);
     }
@@ -645,8 +642,8 @@ public class ActivityMain extends AppCompatActivity implements
         if (mLocationManager == null || !Storage.instance().locationGranted()) return;
         new Handler().post(new Runnable() {
             @Override public void run() {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                        !checkPermission(ACCESS_FINE_LOCATION) && !checkPermission(ACCESS_COARSE_LOCATION)) return;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    if (!checkPermission(ACCESS_FINE_LOCATION) && !checkPermission(ACCESS_COARSE_LOCATION)) return;
 
                 Location location = mLocationManager.getLastKnownLocation(PASSIVE_PROVIDER);
                 if (location == null) location = mLocationManager.getLastKnownLocation(NETWORK_PROVIDER);

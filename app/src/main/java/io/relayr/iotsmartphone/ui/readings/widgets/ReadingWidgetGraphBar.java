@@ -23,6 +23,7 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
     @BindView(R.id.chart) BarChart mChart;
 
     private List<BarEntry> entries = new ArrayList<>();
+    private BarDataSet mBarDataSet;
 
     public ReadingWidgetGraphBar(Context context) {
         this(context, null);
@@ -90,10 +91,11 @@ public class ReadingWidgetGraphBar extends ReadingWidget {
     }
 
     private BarDataSet createDataSet() {
-        BarDataSet barDataSet = new BarDataSet(entries, mMeaning);
-        barDataSet.setColor(colYellow);
-        barDataSet.setBarSpacePercent(2f);
-        barDataSet.setDrawValues(false);
-        return barDataSet;
+        if (mBarDataSet != null) return mBarDataSet;
+        mBarDataSet = new BarDataSet(entries, mMeaning);
+        mBarDataSet.setColor(colYellow);
+        mBarDataSet.setBarSpacePercent(2f);
+        mBarDataSet.setDrawValues(false);
+        return mBarDataSet;
     }
 }

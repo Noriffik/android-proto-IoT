@@ -23,6 +23,7 @@ public class ReadingWidgetGraphStatic extends ReadingWidget {
     @BindView(R.id.chart) LineChart mChart;
 
     protected List<Entry> entries = new ArrayList<>();
+    private LineDataSet mDataSet;
 
     public ReadingWidgetGraphStatic(Context context) {
         this(context, null);
@@ -83,20 +84,22 @@ public class ReadingWidgetGraphStatic extends ReadingWidget {
             if (checkValue(value)) initAxises();
         }
 
-        mChart.setData(new LineData(axisX, createDataSet(mMeaning, colYellow, colYellow)));
+        mChart.setData(new LineData(axisX, createDataSet()));
         mChart.invalidate();
     }
 
-    private LineDataSet createDataSet(String name, int dotColor, int lineColor) {
-        LineDataSet set = new LineDataSet(entries, name);
-        set.setColor(lineColor);
-        set.setCircleColor(dotColor);
-        set.setLineWidth(1f);
-        set.setDrawCircleHole(false);
-        set.setDrawValues(false);
-        set.setCircleRadius(2);
-        set.setValueTextColor(colAxis);
-        set.setFillColor(dotColor);
-        return set;
+    private LineDataSet createDataSet() {
+        if (mDataSet != null) return mDataSet;
+
+        mDataSet = new LineDataSet(entries, mMeaning);
+        mDataSet.setColor(colYellow);
+        mDataSet.setCircleColor(colYellow);
+        mDataSet.setLineWidth(1f);
+        mDataSet.setDrawCircleHole(false);
+        mDataSet.setDrawValues(false);
+        mDataSet.setCircleRadius(2);
+        mDataSet.setValueTextColor(colAxis);
+        mDataSet.setFillColor(colYellow);
+        return mDataSet;
     }
 }

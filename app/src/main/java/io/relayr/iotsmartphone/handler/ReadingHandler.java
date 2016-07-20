@@ -85,7 +85,7 @@ public class ReadingHandler {
                 @Override public void call(final Subscriber<? super Boolean> subscriber) {
                     RelayrSdk.getDeviceModelsApi()
                             .getDeviceModelById(Storage.MODEL_PHONE)
-                            .timeout(5, TimeUnit.SECONDS)
+                            .timeout(7, TimeUnit.SECONDS)
                             .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
                                 @Override
                                 public Observable<DeviceModel> call(DeviceModel deviceModel) {
@@ -100,7 +100,7 @@ public class ReadingHandler {
                                     return RelayrSdk.getDeviceModelsApi().getDeviceModelById(Storage.MODEL_WATCH);
                                 }
                             })
-                            .timeout(5, TimeUnit.SECONDS)
+                            .timeout(7, TimeUnit.SECONDS)
                             .flatMap(new Func1<DeviceModel, Observable<DeviceModel>>() {
                                 @Override
                                 public Observable<DeviceModel> call(DeviceModel deviceModel) {
@@ -114,10 +114,12 @@ public class ReadingHandler {
                                     return Observable.just(deviceModel);
                                 }
                             })
+                            .timeout(7, TimeUnit.SECONDS)
                             .subscribeOn(Schedulers.io())
                             .subscribe(new SimpleObserver<DeviceModel>() {
                                 @Override public void error(Throwable e) {
                                     Crashlytics.log(Log.ERROR, "ReadingsHandler", "Loading models error.");
+                                    e.printStackTrace();
                                     subscriber.onNext(false);
                                 }
 
@@ -141,26 +143,25 @@ public class ReadingHandler {
 
     public static void publish(Reading reading) {
         ReadingHandler.readingsPhone.get(reading.meaning).add(reading);
-//        if (IotApplication.isVisible(PHONE))
-//            EventBus.getDefault().post(new Constants.ReadingRefresh(PHONE, reading.meaning));
-        if (Storage.ACTIVITY_PHONE.get(reading.meaning)) {
-            if (Storage.instance().getDeviceId(PHONE) == null || !RelayrSdk.isUserLoggedIn()) return;
-            sPhoneData += new Gson().toJson(reading).getBytes().length + 100;
-            RelayrSdk.getWebSocketClient()
-                    .publish(Storage.instance().getDeviceId(PHONE), reading)
-                    .subscribeOn(Schedulers.io())
-                    .subscribe(new ErrorObserver<Boolean>() {
-                        @Override public void error(Throwable e) {
-                            Crashlytics.log(Log.ERROR, TAG, "publish phone reading - error");
-                            e.printStackTrace();
-                        }
-                    });
-        }
+        if (!Storage.ACTIVITY_PHONE.get(reading.meaning)) return;
+        if (Storage.instance().getDeviceId(PHONE) == null || !RelayrSdk.isUserLoggedIn()) return;
+        sPhoneData += new Gson().toJson(reading).getBytes().length + 100;
+
+        RelayrSdk.getWebSocketClient()
+                .publish(Storage.instance().getDeviceId(PHONE), reading)
+                .subscribeOn(Schedulers.io())
+                .subscribe(new ErrorObserver<Boolean>() {
+                    @Override public void error(Throwable e) {
+                        Crashlytics.log(Log.ERROR, TAG, "publish phone reading - error");
+                        e.printStackTrace();
+                    }
+                });
     }
 
     public static void publishWatch(DataItem dataItem) {
         final String path = dataItem.getUri().getPath();
         final DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
+
         if (Constants.DEVICE_INFO_PATH.equals(path)) {
             Storage.instance().saveWatchData(dataMap.getString(Constants.DEVICE_MANUFACTURER),
                     dataMap.getString(Constants.DEVICE_MODEL), dataMap.getInt(Constants.DEVICE_SDK));
@@ -184,21 +185,21 @@ public class ReadingHandler {
     }
 
     private static void publishWatch(Reading reading) {
-        sWatchData += new Gson().toJson(reading.value).getBytes().length;
         ReadingHandler.readingsWatch.get(reading.meaning).add(reading);
 
-        if (Storage.ACTIVITY_WATCH.get(reading.meaning)) {
-            if (Storage.instance().getDeviceId(WATCH) == null || !RelayrSdk.isUserLoggedIn()) return;
-            RelayrSdk.getWebSocketClient()
-                    .publish(Storage.instance().getDeviceId(WATCH), reading)
-                    .subscribeOn(Schedulers.io())
-                    .subscribe(new ErrorObserver<Boolean>() {
-                        @Override public void error(Throwable e) {
-                            Crashlytics.log(Log.ERROR, TAG, "publish watch reading - error");
-                            e.printStackTrace();
-                        }
-                    });
-        }
+        if (!Storage.ACTIVITY_WATCH.get(reading.meaning)) return;
+        if (Storage.instance().getDeviceId(WATCH) == null || !RelayrSdk.isUserLoggedIn()) return;
+        sWatchData += new Gson().toJson(reading.value).getBytes().length;
+
+        RelayrSdk.getWebSocketClient()
+                .publish(Storage.instance().getDeviceId(WATCH), reading)
+                .subscribeOn(Schedulers.io())
+                .subscribe(new ErrorObserver<Boolean>() {
+                    @Override public void error(Throwable e) {
+                        Crashlytics.log(Log.ERROR, TAG, "publish watch reading - error");
+                        e.printStackTrace();
+                    }
+                });
     }
 
     public static void publishLocation(Location loc) {
@@ -250,27 +251,6 @@ public class ReadingHandler {
 
         public double longitude() {
             return longitude + 180;
-        }
-
-        @Override public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            LocationReading that = (LocationReading) o;
-
-            if (Double.compare(that.latitude, latitude) != 0) return false;
-            return Double.compare(that.longitude, longitude) == 0;
-
-        }
-
-        @Override public int hashCode() {
-            int result;
-            long temp;
-            temp = Double.doubleToLongBits(latitude);
-            result = (int) (temp ^ (temp >>> 32));
-            temp = Double.doubleToLongBits(longitude);
-            result = 31 * result + (int) (temp ^ (temp >>> 32));
-            return result;
         }
     }
 }

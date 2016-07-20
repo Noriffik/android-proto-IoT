@@ -2,6 +2,7 @@ package io.relayr.iotsmartphone.ui.readings.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -70,5 +71,4 @@ public class ReadingWidgetMap extends ReadingWidget {
         mPinContainer.removeAllViews();
         mPinContainer.addView(mPin);
     }
-
 }

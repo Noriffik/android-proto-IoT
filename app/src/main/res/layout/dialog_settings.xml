@@ -112,4 +112,47 @@
         </LinearLayout>
     </LinearLayout>
 
+    <LinearLayout
+        style="@style/MatchWrapHor"
+        android:layout_height="@dimen/dialog_item_height"
+        android:layout_marginTop="@dimen/default_padding"
+        android:gravity="center_vertical">
+
+        <TextView
+            style="@style/NormalText"
+            android:layout_width="0dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="15"
+            android:gravity="right"
+            android:paddingRight="@dimen/default_padding_double"
+            android:singleLine="true"
+            android:textColor="@color/accent"
+            android:textStyle="bold"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/graph_blue"/>
+
+        <LinearLayout
+            style="@style/MatchMatchHor"
+            android:layout_width="0dp"
+            android:layout_weight="40"
+            android:background="@color/primary"
+            android:gravity="center_vertical|left"
+            android:paddingLeft="@dimen/default_padding_double">
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/tutorial_start"
+                style="@style/NormalText"
+                android:gravity="center_vertical"/>
+
+            <TextView
+                android:id="@+id/tutorial_start_state"
+                style="@style/NormalText"
+                android:text="@string/tutorial_start_active"/>
+        </LinearLayout>
+    </LinearLayout>
+
 </io.relayr.iotsmartphone.ui.SettingsDialog>

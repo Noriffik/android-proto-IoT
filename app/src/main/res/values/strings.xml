@@ -96,7 +96,8 @@
     <string name="tutorial_cloud">Play with your device data.</string>
     <string name="tutorial_rules">Log in to relayr to create rules.</string>
     <string name="global_tutorial">Tutorial</string>
-    <string name="tutorial_active">tutorial active</string>
+    <string name="tutorial_active">in app tutorial</string>
+    <string name="tutorial_start_active">intro tutorial</string>
     <string name="got_it">got it</string>
     <string name="dialog_device_name_update_failed">Failed to update device name!</string>
     <string name="update_success">Update successful.</string>
@@ -105,6 +106,11 @@
     <string name="tab_cloud">relayr</string>
     <string name="tab_main">device</string>
     <string name="send_in_background">Sending data in the background uses your internet traffic and is not completely reliable.</string>
+
+    <!--TUTORIAL ACTIVITY-->
+    <string name="t_lets_start">Let\'s start</string>
+    <string name="t_next">Next</string>
+    <string name="t_skip">Skip</string>
     <string name="tut_1_title">The Global Connector</string>
     <string name="tut_1_subtitle">relayr isan IoT company for the Digital Transformation of Industries</string>
     <string name="tut_2_title">Idea</string>

@@ -35,6 +35,10 @@ android {
             debuggable true
             signingConfig signingConfigs.debug
         }
+        production {
+            debuggable true
+            signingConfig signingConfigs.debug
+        }
     }
     packagingOptions {
         exclude 'META-INF/services/javax.annotation.processing.Processor'

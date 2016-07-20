@@ -108,6 +108,7 @@ public abstract class ReadingWidget extends LinearLayout {
         chart.setDescription("");
         chart.setTouchEnabled(false);
         chart.getLegend().setEnabled(false);
+        if (!isShown()) return;
         refresh(mType == PHONE ? ReadingHandler.readingsPhone.get(mMeaning) : ReadingHandler.readingsWatch.get(mMeaning));
     }
 
@@ -143,8 +144,6 @@ public abstract class ReadingWidget extends LinearLayout {
                 break;
         }
         mDiff = mFrame / Constants.MAX_POINTS;
-
-        Log.e(mMeaning, "frame " + mFrame + " " + mDiff);
     }
 
     private int calculateFrameComplex() {
@@ -162,8 +161,6 @@ public abstract class ReadingWidget extends LinearLayout {
     }
 
     private void setTimer() {
-        final int freq = UiUtil.getFreq(mMeaning, mType);
-
         killTimer();
         mTimer = new Timer();
         mTimer.scheduleAtFixedRate(new TimerTask() {
@@ -174,7 +171,7 @@ public abstract class ReadingWidget extends LinearLayout {
                     }
                 });
             }
-        }, 0, freq);
+        }, 100, UiUtil.getFreq(mMeaning, mType));
     }
 
     private void killTimer() {

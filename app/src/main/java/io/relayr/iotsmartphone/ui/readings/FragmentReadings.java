@@ -97,6 +97,7 @@ public class FragmentReadings extends Fragment {
         mPhoneGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
         mPhoneGrid.setAdapter(mPhoneAdapter);
 
+        if (!UiUtil.isWearableConnected(getActivity())) return;
         mWatchAdapter = new ReadingsAdapter(Storage.instance().loadReadings(WATCH), WATCH);
         mWatchGrid.setLayoutManager(new StaggeredGridLayoutManager(columns, VERTICAL));
         mWatchGrid.setAdapter(mWatchAdapter);

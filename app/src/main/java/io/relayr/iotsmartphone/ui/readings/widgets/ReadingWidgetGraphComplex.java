@@ -27,6 +27,7 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
     private List<Entry> valuesX = new ArrayList<>();
     private List<Entry> valuesY = new ArrayList<>();
     private List<Entry> valuesZ = new ArrayList<>();
+    private List<ILineDataSet> mDataSets = new ArrayList<>();
 
     public ReadingWidgetGraphComplex(Context context) {
         this(context, null);
@@ -115,11 +116,11 @@ public class ReadingWidgetGraphComplex extends ReadingWidget {
     }
 
     private List<ILineDataSet> createAllDataSets() {
-        List<ILineDataSet> dataSets = new ArrayList<>();
-        dataSets.add(createDataSet("x", valuesX, colRed, colRed));
-        dataSets.add(createDataSet("y", valuesY, colGreen, colGreen));
-        dataSets.add(createDataSet("z", valuesZ, colBlue, colBlue));
-        return dataSets;
+        if (!mDataSets.isEmpty()) return mDataSets;
+        mDataSets.add(createDataSet("x", valuesX, colRed, colRed));
+        mDataSets.add(createDataSet("y", valuesY, colGreen, colGreen));
+        mDataSets.add(createDataSet("z", valuesZ, colBlue, colBlue));
+        return mDataSets;
     }
 
     private LineDataSet createDataSet(String name, List<Entry> entrys, int dotColor, int lineColor) {

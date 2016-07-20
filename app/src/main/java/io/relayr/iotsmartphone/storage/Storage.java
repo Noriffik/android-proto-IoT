@@ -346,11 +346,11 @@ public class Storage {
         return PREFS.getBoolean(tutorial, false);
     }
 
-    public void tutorialActivityDone() {
-        PREFS.edit().putBoolean(TUTORIAL_ACTIVITY, true).apply();
+    public void tutorialActivity(boolean done) {
+        PREFS.edit().putBoolean(TUTORIAL_ACTIVITY, done).apply();
     }
 
-    public boolean isTutorialActivityDone() {
+    public boolean TutorialActivityFinished() {
         return PREFS.getBoolean(TUTORIAL_ACTIVITY, false);
     }
 }
