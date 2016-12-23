@@ -118,7 +118,7 @@ public class FragmentRules extends Fragment {
     }
 
     private void setUpConditions(final RuleBuilder rule) {
-        mConditionOne.setUp(R.color.graph_yellow, rule, 0,
+        mConditionOne.setUp(R.color.accent, rule, 0,
                 new ConditionListener() {
                     @Override
                     public void conditionChanged(Constants.DeviceType type, DeviceReading reading, String operation, int value) {
@@ -144,7 +144,7 @@ public class FragmentRules extends Fragment {
         if (rule != null) mConditionOperator.setText(rule.getConditionOperator());
 
         mConditionTwo.setVisibility(rule == null ? GONE : VISIBLE);
-        mConditionTwo.setUp(R.color.graph_blue, rule, 1, new ConditionListener() {
+        mConditionTwo.setUp(R.color.accent, rule, 1, new ConditionListener() {
             @Override
             public void conditionChanged(Constants.DeviceType type, DeviceReading reading, String operation, int value) {
                 mConditionOperator.setVisibility(VISIBLE);
@@ -159,7 +159,7 @@ public class FragmentRules extends Fragment {
             }
         });
 
-        mOutcomeOne.setUp(R.color.graph_green, rule, 0, new OutcomeListener() {
+        mOutcomeOne.setUp(R.color.accent, rule, 0, new OutcomeListener() {
             @Override public void outcomeChanged(DeviceCommand command, boolean value) {
                 if (command != null) {
                     mOutcomeTwo.setVisibility(VISIBLE);
@@ -175,7 +175,7 @@ public class FragmentRules extends Fragment {
             }
         });
         mOutcomeTwo.setVisibility(rule == null ? GONE : VISIBLE);
-        mOutcomeTwo.setUp(R.color.graph_red, rule, 1, new OutcomeListener() {
+        mOutcomeTwo.setUp(R.color.accent, rule, 1, new OutcomeListener() {
             @Override public void outcomeChanged(DeviceCommand command, boolean value) {
                 RuleHandler.setOutcome(1, PHONE, command.getName(), value);
                 updateActivity();

@@ -27,7 +27,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@color/graph_red"/>
+            android:background="@color/accent"/>
 
         <LinearLayout
             style="@style/MatchMatchHor"
@@ -90,7 +90,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@color/graph_green"/>
+            android:background="@color/accent"/>
 
         <LinearLayout
             style="@style/MatchMatchHor"
@@ -133,7 +133,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@color/graph_blue"/>
+            android:background="@color/accent"/>
 
         <LinearLayout
             style="@style/MatchMatchHor"

@@ -2,8 +2,8 @@
 
     <string name="app_name">relayr Proto IoT</string>
 
-    <string name="app_title_phone">smartphone</string>
-    <string name="app_title_watch">watch</string>
+    <string name="app_title_phone">Smartphone</string>
+    <string name="app_title_watch">Watch</string>
 
     <string name="warning_no_wifi">Not connected to Wifi</string>
     <string name="error_using_flash">Error when using flash</string>

@@ -29,7 +29,9 @@ android {
         targetSdkVersion 23
         versionCode 22
         versionName "1.4.3"
+        multiDexEnabled true
     }
+
     buildTypes {
         develop {
             debuggable true
@@ -52,9 +54,7 @@ dependencies {
     compile(project(':java-sdk'))
     compile(project(':android-sdk:android-sdk'))
 
-    //repos
-//    compile 'io.relayr:android-sdk:1.0.3'
-//    compile 'io.relayr:java-sdk:1.2.1'
+    compile 'com.android.support:multidex:1.0.1'
 
     compile 'de.greenrobot:eventbus:2.4.1'
 

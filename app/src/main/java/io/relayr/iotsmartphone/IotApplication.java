@@ -2,6 +2,7 @@ package io.relayr.iotsmartphone;
 
 import android.app.Application;
 import android.content.Context;
+import android.support.multidex.MultiDex;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
@@ -23,6 +24,7 @@ public class IotApplication extends Application {
         super.onCreate();
         mContext = getApplicationContext();
 
+        MultiDex.install(this);
         Fabric.with(this, new Crashlytics());
         RelayrSdkInitializer.initSdk(this);
     }

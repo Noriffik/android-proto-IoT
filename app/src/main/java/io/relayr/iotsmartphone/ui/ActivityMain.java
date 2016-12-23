@@ -482,7 +482,7 @@ public class ActivityMain extends AppCompatActivity implements
     private void createTimerTask(final String meaning) {
         mTimerTasks.put(meaning, new TimerTask() {
             @Override public void run() {
-                runOnUiThread(new TimerTask() {
+                runOnUiThread(new Runnable() {
                     @Override public void run() {
                         switch (meaning) {
                             case "rssi":
@@ -570,8 +570,10 @@ public class ActivityMain extends AppCompatActivity implements
     private void monitorWiFi() {
         if (mConnectivityManager == null || mWifiManager == null) return;
 
-        if (!checkWifi(mConnectivityManager))
+        if (!checkWifi(mConnectivityManager)) {
             Toast.makeText(ActivityMain.this, R.string.warning_no_wifi, LENGTH_SHORT).show();
+            return;
+        }
 
         WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         if (wifiInfo != null)
